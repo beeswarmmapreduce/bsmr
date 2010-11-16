@@ -1,6 +1,8 @@
 package fi.helsinki.cs.bsmr.master;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.eclipse.jetty.util.ajax.JSON;
@@ -25,6 +27,10 @@ public class Message
 	
 	private static final String FIELD_SPLITID        = "splitId";
 	private static final String FIELD_PARTITIONID    = "partitionId";
+	
+	private static final String FIELD_SPLITLOCATION  = "splitlocation";
+	private static final String FIELD_SPLITLOCATION_SPLITID = "splitId";
+	private static final String FIELD_SPLITLOCATION_URLS    = "urls";
 	
 	private Map<Object, Object> data;
 	
@@ -128,8 +134,29 @@ public class Message
 	
 	public static Message reduceThatMessage(Partition p, Job j)
 	{
-		Message ret = new Message(Type.DO, Action.map, j);
+		Message ret = new Message(Type.DO, Action.reducetask, j);
 		ret.data.put(FIELD_PARTITIONID, p.getId());
+		return ret;
+	}
+	
+	public static Message findSplitAtMessage(Partition p, Split s, Job j)
+	{
+		Message ret = new Message(Type.DO, Action.reduce, j);
+		ret.data.put(FIELD_PARTITIONID, p.getId());
+		
+		List<String> urls = new ArrayList<String>();
+		
+		for (Worker w : j.getSplitInformation().whoHasSplit(s)) {
+			urls.add(w.getBSURL());
+		}
+		
+		Map<String, Object> splitLocation = new HashMap<String, Object>();
+		splitLocation.put(FIELD_SPLITLOCATION_SPLITID, s.getId());
+		splitLocation.put(FIELD_SPLITLOCATION_URLS, urls);
+		
+		
+		ret.data.put(FIELD_SPLITLOCATION, splitLocation);
+		
 		return ret;
 	}
 }

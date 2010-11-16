@@ -19,8 +19,8 @@ public class StartJetty
 		Server server = new Server(8080);
 
 		WebAppContext context = new WebAppContext();
-		context.setResourceBase("webapp");
-		context.setDescriptor("webapp/WEB-INF/web.xml");
+		context.setResourceBase("master/webapp");
+		context.setDescriptor("master/webapp/WEB-INF/web.xml");
 		context.setContextPath("/");
 		context.setParentLoaderPriority(true);
 		server.setHandler(context);

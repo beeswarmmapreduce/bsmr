@@ -17,12 +17,12 @@ public class PartitionStore
 	
 	public PartitionStore(Job job)
 	{
-		this.partitionsQueued = new ArrayList<Set<Worker>>(job.getPartitions());
+		this.partitionsQueued = new ArrayList<Set<Worker>>();
 		this.workQueue = new ArrayList<Partition>();
 		this.workQueuePointer = -1;
 		
 		for (int i = 0; i < job.getPartitions(); ++i) {
-			partitionsQueued.set(i, new HashSet<Worker>());
+			partitionsQueued.add(new HashSet<Worker>());
 			workQueue.add(new Partition(i));
 		}
 		

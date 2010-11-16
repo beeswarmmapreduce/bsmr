@@ -17,16 +17,15 @@ public class SplitStore
 	
 	public SplitStore(Job job)
 	{
-
-		this.splitsDone   = new ArrayList<Set<Worker>>(job.getSplits());
-		this.splitsQueued = new ArrayList<Set<Worker>>(job.getSplits());
+		
+		this.splitsDone   = new ArrayList<Set<Worker>>();
+		this.splitsQueued = new ArrayList<Set<Worker>>();
 		
 		this.workQueuePointer = -1;
 		
 		for (int i = 0; i < job.getSplits(); ++i) {
-			splitsDone.set(i, new HashSet<Worker>());
-			splitsQueued.set(i, new HashSet<Worker>());
-			
+			splitsDone.add(new HashSet<Worker>());
+			splitsQueued.add(new HashSet<Worker>());
 		}
 		
 		this.job = job;

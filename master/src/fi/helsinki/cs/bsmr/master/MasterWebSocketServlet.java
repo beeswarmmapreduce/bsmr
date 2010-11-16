@@ -16,7 +16,9 @@ public class MasterWebSocketServlet extends WebSocketServlet
 	
 	private static Logger logger = Util.getLoggerForClass(MasterWebSocketServlet.class);
 	
-	private Master master;
+	// TODO: for testing purposes only. Change to private Master master afterwards
+	//private Master master;
+	public static Master master;
 	
 	@Override
 	protected String checkOrigin(HttpServletRequest request, String host, String origin)
@@ -38,7 +40,8 @@ public class MasterWebSocketServlet extends WebSocketServlet
 	{
 		super.init();
 		
-		master = new Master();
+		// TODO: for testing, uncomment later
+		//master = new Master();
 	}
 	
 	@Override

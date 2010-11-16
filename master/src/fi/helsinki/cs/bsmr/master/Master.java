@@ -28,6 +28,34 @@ public class Master
 		jobQueue    = new LinkedList<Job>();
 	}
 
+	public void queueJob(Job j) throws JobAlreadyRunningException
+	{
+		if (j.isStarted() || j.isFinished()) {
+			logger.severe("Tried to add job "+j+" to job queue, but it's in an illegal state (started or finished)");
+			throw new JobAlreadyRunningException("Tried to add job "+j+" to job queue, but it's in an illegal state (started or finished)");
+		}
+		
+		jobQueue.add(j);
+	}
+	
+	public boolean startNextJob() throws JobAlreadyRunningException
+	{
+		if (activeJob != null && !activeJob.isFinished()) {
+			logger.severe("Tried to start next job, but we have a non-finished active job!");
+			throw new JobAlreadyRunningException("Tried to start next job, but we have a non-finished active job!");
+		}
+		
+		if (jobQueue.isEmpty()) {
+			logger.warning("Tried to start next job, but no jobs in queue");
+			return false;
+		}
+		
+		activeJob = jobQueue.remove(0);
+		activeJob.startJob();
+		
+		return true;
+	}
+	
 	public Worker createWorker()
 	{
 		return new Worker(this);
@@ -38,18 +66,6 @@ public class Master
 		return new Console(this);
 	}
 
-	public void invalidateWorker(Worker worker, Throwable t) 
-	{
-		synchronized (executeLock) 
-		{
-			removeWorker(worker);
-		}
-		
-		worker.disconnect();
-	}
-
-	
-	
 	public Message executeWorkerMessage(Worker worker, Message msg)
 	{
 		if (msg.getType() == Message.Type.DO) {
@@ -71,7 +87,7 @@ public class Master
 	}
 
 
-	public void removeWorker(Worker worker) 
+	public void removeWorker(Worker worker) throws WorkerInIllegalStateException
 	{
 		boolean removed;
 		
@@ -81,16 +97,16 @@ public class Master
 		}
 		
 		if (!removed) {
-			throw new RuntimeException("removeWorker() worker "+worker+" was not registered");
+			throw new WorkerInIllegalStateException("removeWorker() worker "+worker+" was not registered");
 		}
 	}
 	
-	public void addWorker(Worker worker)
+	public void addWorker(Worker worker) throws WorkerInIllegalStateException
 	{
 		synchronized (executeLock) 
 		{
 			if (workers.contains(worker)) {
-				throw new RuntimeException("addWorker() worker "+worker+" already exists");
+				throw new WorkerInIllegalStateException("addWorker() worker "+worker+" already exists");
 			}
 			
 			workers.add(worker);

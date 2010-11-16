@@ -20,6 +20,9 @@ public class Job
 	private SplitStore splitStore;
 	private PartitionStore partitionStore;
 	
+	private boolean isStarted;
+	private boolean isFinished;
+	
 	/* TODO: these variables are not yet set */
 	
 	private final int splits;
@@ -36,6 +39,8 @@ public class Job
 	private Job(int jobId)
 	{
 		this.jobId = jobId;
+		this.isStarted = false;
+		this.isFinished = false;
 		
 		this.splits = 100; 
 		this.partitions = 100;
@@ -61,14 +66,20 @@ public class Job
 	{
 		splitStore     = new SplitStore(this);
 		partitionStore = new PartitionStore(this);
+		isStarted      = true;
 	}
 
+	public boolean isFinished() { return isFinished; }
+	public boolean isStarted()  { return isStarted; }
+	
 	/**
 	 * Marks the job as stopped. Will remove job from the internal data structure
 	 * and messages with this job id will not be able to find the job anymore.
 	 */
 	public void endJob()
 	{
+		isFinished = true;
+		isStarted = false;
 		jobList.remove(jobId);
 	}
 	

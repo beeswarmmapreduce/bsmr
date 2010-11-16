@@ -17,7 +17,7 @@ public class Worker implements WebSocket
 	private Master master;
 	
 	private long lastHearbeat;
-	private long lastAcknowledge;
+	private long lastProgress;
 	
 	
 	Worker(Master master)
@@ -26,12 +26,16 @@ public class Worker implements WebSocket
 		
 		// Before worker starts communicating, it should be "dead":
 		this.lastHearbeat = -1;
-		this.lastAcknowledge = -1;
+		this.lastProgress = -1;
 	}
 	
 
 	public void disconnect() 
 	{
+		// Make sure nobody relies on this worker anymore
+		lastHearbeat = -1;
+		lastProgress = -1;
+		
 		out.disconnect();
 	}
 
@@ -44,9 +48,14 @@ public class Worker implements WebSocket
 		this.out = out;
 
 		// TODO: is this best here, or should we wait for the UP message?
-		this.lastHearbeat = this.lastAcknowledge = System.currentTimeMillis();
+		this.lastHearbeat = this.lastProgress = System.currentTimeMillis();
 		
-		master.addWorker(this);
+		try {
+			master.addWorker(this);
+		} catch(WorkerInIllegalStateException wiise) {
+			logger.log(Level.SEVERE, "New worker already registered?!?", wiise);
+			disconnect();
+		}
 	}
 
 	@Override
@@ -54,7 +63,12 @@ public class Worker implements WebSocket
 	{
 		logger.fine("onDisconnect()");
 		
-		master.removeWorker(this);
+		try { 
+			master.removeWorker(this);
+		} catch(WorkerInIllegalStateException wiise) {
+			logger.log(Level.SEVERE, "Disconnected worker not registered?!?", wiise);
+		}
+		
 	}
 
 
@@ -69,7 +83,6 @@ public class Worker implements WebSocket
 		
 		if (msg.getType() != Type.ACK) {
 			logger.severe("unsupported message type to worker: "+msg);
-
 			return;
 		}
 		
@@ -78,14 +91,23 @@ public class Worker implements WebSocket
 			return;
 		}
 		
-		Message reply = master.executeWorkerMessage(this, msg);
+		// This could be moved to Master, but this should be enough for a prototype
+		lastProgress = lastHearbeat;
 		
-	
+		Message reply = master.executeWorkerMessage(this, msg);
 		
 		try {
 			out.sendMessage(reply.encodeMessage());
 		} catch(IOException ie) {
-			master.invalidateWorker(this, ie);
+			logger.log(Level.SEVERE, "Could not reply to worker. Terminating connection.", ie);
+			
+			try {
+				master.removeWorker(this);
+			} catch(WorkerInIllegalStateException wiise) {
+				logger.log(Level.SEVERE, "The worker we could not send a reply to was not registered as a worker?", wiise);
+			} finally {
+				disconnect();
+			}
 		}
 
 	}
@@ -108,7 +130,7 @@ public class Worker implements WebSocket
 
 	public boolean isDead(Job job)
 	{
-		return ( (System.currentTimeMillis() - lastAcknowledge) > job.getWorkerAcknowledgeTimeout());
+		return ( (System.currentTimeMillis() - lastProgress) > job.getWorkerAcknowledgeTimeout());
 	}
 
 /** The relationship between Job and the availability of the Worker is more clear in the upper versions

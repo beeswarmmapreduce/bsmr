@@ -44,7 +44,16 @@
 		function send()
 		{
 			if (ws != null) {
-				ws.send("Hello World");
+				ws.send('{ "type": "ACK", "action": "reduce" }');
+			} else {
+				log("not connected!");
+			}
+		}
+
+		function heartbeat()
+		{
+			if (ws != null) {
+				ws.send('{ "type": "ACK", "action": "heartbeat" }');
 			} else {
 				log("not connected!");
 			}
@@ -79,6 +88,7 @@
 		<h1>Connect to me ...</h1>
 		<p><a href="#" onclick="connect()">Connect</a> 
 		   <a href="#" onclick="send()">Send!</a> 
+		   <a href="#" onclick="heartbeat()">Heartbeat</a>
 		   <a href="#" onclick="disconnect()">Disconnect!</a>
 		</p>
 		<div id="status"></div>

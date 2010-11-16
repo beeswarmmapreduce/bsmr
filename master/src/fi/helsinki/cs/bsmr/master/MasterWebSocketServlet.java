@@ -38,6 +38,7 @@ public class MasterWebSocketServlet extends WebSocketServlet
 	@Override
 	public void init() throws ServletException
 	{
+		TimeContext.markTime();
 		super.init();
 		
 		// TODO: for testing, uncomment later
@@ -47,6 +48,8 @@ public class MasterWebSocketServlet extends WebSocketServlet
 	@Override
 	protected WebSocket doWebSocketConnect(HttpServletRequest request, String service)
 	{
+		TimeContext.markTime();
+		
 		logger.finest("doWebSocketConnect()");
 		
 		if (service.equals("worker")) {

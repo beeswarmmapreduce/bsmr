@@ -1,3 +1,24 @@
-You need Jetty (developed with version 8.0.0.M1). To retrieve & untar, you can try getdeps.sh. Otherwise download it manually and make sure the jetty is available as master/jetty-distribution-8.0.0.M1
+== Dependencies ==
 
-Note! The eclipse project file refers to this directory and the libraries contain the version number of eclipse. So if you use a different version of jetty, you need to configure the eclipse build path (right click the project, Build Path->Configure Build Path, libraries tab).
+You need Jetty (developed with version 8.0.0.M1). To retrieve & untar, you can
+try getdeps.sh. Otherwise download it manually and make sure the jetty is 
+available as master/jetty-distribution-8.0.0.M1
+
+Note! The Eclipse project file refers to this directory and the libraries 
+contain the version number of Eclipse. So if you use a different version of 
+jetty, you need to configure the Eclipse build path (right click the project,
+Build Path->Configure Build Path, libraries tab).
+
+== Compiling ==
+
+In Eclipse, it's automatic. Otherwise, compile the classes using all libraries
+in jetty-../lib in the class path.
+
+== Running ==
+
+In Eclipse, right click the StartJetty class in master/src, then Run As -> Java
+Application After you've ran it once, you can find it in the "play" button 
+located on the Eclipse toolbar.
+
+Without eclipse, use the same classpath as for compiling and give StartJetty as
+the main class.

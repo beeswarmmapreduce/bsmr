@@ -19,6 +19,7 @@ public class Console implements WebSocket
 	@Override
 	public void onConnect(Outbound out) 
 	{
+		TimeContext.markTime();
 		logger.fine("connected");
 		this.out = out;
 	}
@@ -26,12 +27,14 @@ public class Console implements WebSocket
 	@Override
 	public void onDisconnect() 
 	{
+		TimeContext.markTime();
 		logger.fine("disconnected");
 	}
 
 	@Override
 	public void onMessage(byte frame, String msg) 
 	{
+		TimeContext.markTime();
 		logger.fine("console says: "+msg);
 
 	}
@@ -39,6 +42,7 @@ public class Console implements WebSocket
 	@Override
 	public void onMessage(byte arg0, byte[] arg1, int arg2, int arg3) 
 	{
+		TimeContext.markTime();
 		throw new RuntimeException("onMessage() byte format unsupported!");
 	}
 

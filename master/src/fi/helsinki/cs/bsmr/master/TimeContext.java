@@ -24,7 +24,6 @@ public class TimeContext
 	
 	private TimeContext()
 	{
-		markTime();
 	}
 	
 	public static void markTime()

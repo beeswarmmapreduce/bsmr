@@ -15,7 +15,10 @@ public class Master
 	
 	private Set<Worker> workers;
 	
-	private Object executeLock; 
+	/**
+	 * Needs to be visible for Worker (and possible Console)
+	 */
+	final Object executeLock; 
 	
 	private List<Job> jobQueue;
 	private Job activeJob;
@@ -65,25 +68,73 @@ public class Master
 	{	
 		return new Console(this);
 	}
-
-	public Message executeWorkerMessage(Worker worker, Message msg)
+	
+	public Object executeConsoleMessage(Console console, Object foo)
 	{
-		if (msg.getType() == Message.Type.DO) {
-			logger.severe("Workers can't send DO messages!");
-			return null; // TODO
+		Object ret;
+		
+		synchronized (executeLock) {
+			ret = null;
 		}
 		
+		return ret;
+	}
+
+	/**
+	 * Executes a worker message. Marks done splits or partitions and assigns new work.
+	 * This method expects to receive an ACK message with the correct job id. The worker
+	 * is already synchronized on executeLock, but the same thread can sync on the 
+	 * same object multiple times. Thus it is better to have the synchronization here
+	 * as well to keep the code coherent.
+	 * 
+	 * @param worker The worker who sent the message
+	 * @param msg The message
+	 * @return Reply message to the worker
+	 */
+	public Message executeWorkerMessage(Worker worker, Message msg)
+	{	
+		// msg will be of type ACK. worker checks this
 		synchronized (executeLock) 
 		{
-			if (msg.getAction() == Message.Action.UP) {
-				
+			if (msg.getAction() == Message.Action.up) {
+				// TODO: what?
 			}
-			// Do whatever
 			
-			// Check if everything is mapped
+			// TODO: Acknowledge the data given in the message
+			
+			
+			
+			// Check if all partitions are reduced
+			boolean allPartitionsDone = activeJob.getPartitionInformation().areAllPartitionsDone();
+			
+			// If the job is not yet marked as finished
+			if (allPartitionsDone && !activeJob.isFinished()) {
+				activeJob.finishJob();
+				// TODO: what to do next?
+			}
+			
+			// The job is finished => pause the worker
+			if (activeJob.isFinished()) {
+				return Message.pauseMessage();
+			}
+			
+			// All partitions are not done yet, but let's first check the splits:
+			if (!activeJob.getSplitInformation().areAllSplitsDone()) {
+				// Assign a map task
+				Split nextSplit = activeJob.getSplitInformation().selectSplitToWorkOn();
+				
+				return Message.mapThisMessage(nextSplit, activeJob);
+				
+			} else {
+				// All splits are done => Assign a partition
+				
+				Partition nextPartition = activeJob.getPartitionInformation().selectPartitionToWorkOn();
+				
+				return Message.reduceThatMessage(nextPartition, activeJob);
+			}
+			
 		}
 	
-		return new Message(Message.Type.DO, Message.Action.MAP, 1);
 	}
 
 

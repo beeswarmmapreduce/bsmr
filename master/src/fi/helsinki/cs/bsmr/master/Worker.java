@@ -72,11 +72,23 @@ public class Worker implements WebSocket
 	}
 
 
+	/**
+	 * Division of labor between Worker.onMessage() and Master.executeWorkerMessage() is 
+	 * still a bit unclear. Current attempt is: worker level functionality (e.g. heart beat)
+	 * while master provides access to the current work. However making sure the worker
+	 * uses the correct job id needs to be in Worker.onMessage() as one needs to react
+	 * before parsing the heart beat.
+	 * 
+	 * Note that locking which usually starts in the master is started here to avoid
+	 * concurrency issues with switching jobs. 
+	 * 
+	 * 
+	 */
 	@Override
 	public void onMessage(byte frame, String jsonMsg) 
 	{
 		if (logger.isLoggable(Level.FINE)) {
-			logger.fine( "onMessage(): '"+jsonMsg+"' (frame "+frame+")");
+			logger.finest( "onMessage(): '"+jsonMsg+"' (frame "+frame+")");
 		}	
 		
 		Message msg = Message.parseMessage(jsonMsg);
@@ -86,15 +98,31 @@ public class Worker implements WebSocket
 			return;
 		}
 		
-		if (msg.getAction() == Action.HEARTBEAT) {
-			lastHearbeat = System.currentTimeMillis();
-			return;
+		Message reply;
+		
+		synchronized (master.executeLock) {
+
+			// TODO: !jobID => reset
+			
+			if (msg.getJob() != master.getActiveJob()) {
+				// TODO: => reset
+			}
+			
+			if (msg.getAction() == Action.heartbeat) {
+				logger.fine("heartbeat");
+				lastHearbeat = System.currentTimeMillis();
+				return; // there is no reply to heart beat messages
+			}
+			
+			// This could be moved to Master, but this should be enough for a prototype
+			lastProgress = lastHearbeat;
+			
+			
+			// TODO: parse a "where is worker message"?
+			
+			reply = master.executeWorkerMessage(this, msg);
+			
 		}
-		
-		// This could be moved to Master, but this should be enough for a prototype
-		lastProgress = lastHearbeat;
-		
-		Message reply = master.executeWorkerMessage(this, msg);
 		
 		try {
 			out.sendMessage(reply.encodeMessage());
@@ -116,7 +144,6 @@ public class Worker implements WebSocket
 	public void onMessage(byte arg0, byte[] arg1, int arg2, int arg3)
 	{
 		logger.severe("onMessage() byte format unsupported!");
-		
 		throw new RuntimeException("onMessage() byte format unsupported!");
 	}
 

@@ -1,53 +1,85 @@
 package fi.helsinki.cs.bsmr.master;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import org.eclipse.jetty.util.ajax.JSON;
+
 
 public class Message 
 {
 	public enum Type {
-		DO("DO"),
-		ACK("ACK");
-		
-		private final String type;
-		Type(String str) { type = str; }
-		
-		public String toString() { return type; }
+		DO, ACK
 	}
 	
 	public enum Action {
-		UP("up"),
-		MAP("map"),
-		REDUCETASK("reducetask"),
-		REDUCE("reduce"),
-		HEARTBEAT("heartbeat"),
-		PAUSE("pause");
-		
-		private final String action;
-		Action(String str) { action = str; }
-		
-		public String toString() { return action; }	
+		up, map, reducetask, reduce, heartbeat, pause	
 	}
 	
+	private static final String FIELD_ACTION         = "action";
+	private static final String FIELD_TYPE           = "type";
+	private static final String FIELD_JOBID          = "jobId";
 	
-	private Type type;
-	private Action action;
+	private static final String FIELD_NUM_PARTITIONS = "R";
+	private static final String FIELD_NUM_SPLITS     = "M";
+	
+	private static final String FIELD_SPLITID        = "splitId";
+	private static final String FIELD_PARTITIONID    = "partitionId";
+	
+	private Map<Object, Object> data;
 	
 	private Job job;
 	
-	public Message(Type t, Action a, int jobId)
+	private Message(Type t, Action a)
 	{
-		this.type   = t;
-		this.action = a;
-		this.job    = Job.getJobById(jobId);
+		this.job    = null;
+		
+		data = new HashMap<Object, Object>();
+		data.put(FIELD_ACTION, a);
+		data.put(FIELD_TYPE,   t);
+	}
+	
+	private Message(Type t, Action a, Job j)
+	{
+		this.job    = j;
+		
+		data = new HashMap<Object, Object>();
+		data.put(FIELD_ACTION, a);
+		data.put(FIELD_TYPE,   t);
+		
+		if (job != null) {
+			data.put(FIELD_JOBID,          job.getJobId());
+			data.put(FIELD_NUM_PARTITIONS, job.getPartitions());
+			data.put(FIELD_NUM_SPLITS,     job.getSplits());
+		}
+	}
+	
+	private Message(Map<Object, Object> d)
+	{
+		this.data = d;
+		
+		data.put(FIELD_ACTION, Action.valueOf((String)data.get(FIELD_ACTION)));
+		data.put(FIELD_TYPE,   Type.valueOf((String)data.get(FIELD_TYPE)));
+		
+		if (data.containsKey(FIELD_JOBID)) {
+			Object o = data.get(FIELD_JOBID);
+			
+			if (o instanceof Integer) {
+				this.job = Job.getJobById((Integer)o);
+			} else if (o instanceof String) {
+				this.job = Job.getJobById(Integer.parseInt((String)o));
+			}
+		}
 	}
 	
 	public Type getType()
 	{
-		return type;
+		return (Type)data.get(FIELD_TYPE);
 	}
 	
 	public Action getAction()
 	{
-		return action;
+		return (Action)data.get(FIELD_ACTION);
 	}
 	
 	public Job getJob()
@@ -62,7 +94,8 @@ public class Message
 	 */
 	public static Message parseMessage(String msg)
 	{
-		return new Message(Type.ACK, Action.REDUCE, 1);
+		Map<Object, Object> tmp = (Map<Object, Object>)JSON.parse(msg);
+		return new Message(tmp);
 	}
 
 
@@ -72,18 +105,31 @@ public class Message
 	 */
 	public String encodeMessage()
 	{
-		StringBuffer ret = new StringBuffer();
-		ret.append(type+": { action: '"+action+"'");
-		if (job != null) {
-			ret.append(", jobid: "+job.getJobId());
-		}
-		ret.append(" }");
-		
-		return ret.toString();
+		return JSON.toString(data);
 	}
 	
 	public String toString()
 	{
 		return encodeMessage();
+	}
+	
+	
+	public static Message pauseMessage()
+	{
+		return new Message(Type.DO, Action.pause);
+	}
+	
+	public static Message mapThisMessage(Split s, Job j)
+	{
+		Message ret = new Message(Type.DO, Action.map, j);
+		ret.data.put(FIELD_SPLITID, s.getId());
+		return ret;
+	}
+	
+	public static Message reduceThatMessage(Partition p, Job j)
+	{
+		Message ret = new Message(Type.DO, Action.map, j);
+		ret.data.put(FIELD_PARTITIONID, p.getId());
+		return ret;
 	}
 }

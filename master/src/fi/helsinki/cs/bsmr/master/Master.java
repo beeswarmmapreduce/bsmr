@@ -102,6 +102,8 @@ public class Master
 			
 			// TODO: Acknowledge the data given in the message
 			
+			// TODO: mark unavailable workers (set heartbeat to (now - 2*heartbeat))
+			
 			
 			
 			// Check if all partitions are reduced

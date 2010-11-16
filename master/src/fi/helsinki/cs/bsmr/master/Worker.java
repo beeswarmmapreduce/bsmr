@@ -19,6 +19,8 @@ public class Worker implements WebSocket
 	private long lastHearbeat;
 	private long lastProgress;
 	
+	private String bsURL;
+	
 	
 	Worker(Master master)
 	{
@@ -44,11 +46,13 @@ public class Worker implements WebSocket
 	@Override
 	public void onConnect(Outbound out) 
 	{
+		TimeContext.markTime();
+		
 		logger.fine("onConnect()");
 		this.out = out;
 
 		// TODO: is this best here, or should we wait for the UP message?
-		this.lastHearbeat = this.lastProgress = System.currentTimeMillis();
+		this.lastHearbeat = this.lastProgress = TimeContext.now();
 		
 		try {
 			master.addWorker(this);
@@ -61,6 +65,8 @@ public class Worker implements WebSocket
 	@Override
 	public void onDisconnect()
 	{
+		TimeContext.markTime();
+		
 		logger.fine("onDisconnect()");
 		
 		try { 
@@ -87,6 +93,8 @@ public class Worker implements WebSocket
 	@Override
 	public void onMessage(byte frame, String jsonMsg) 
 	{
+		TimeContext.markTime();
+		
 		if (logger.isLoggable(Level.FINE)) {
 			logger.finest( "onMessage(): '"+jsonMsg+"' (frame "+frame+")");
 		}	
@@ -110,12 +118,12 @@ public class Worker implements WebSocket
 			
 			if (msg.getAction() == Action.heartbeat) {
 				logger.fine("heartbeat");
-				lastHearbeat = System.currentTimeMillis();
+				lastHearbeat = TimeContext.now();
 				return; // there is no reply to heart beat messages
 			}
 			
 			// This could be moved to Master, but this should be enough for a prototype
-			lastProgress = lastHearbeat;
+			lastProgress = TimeContext.now();
 			
 			
 			// TODO: parse a "where is worker message"?
@@ -143,6 +151,7 @@ public class Worker implements WebSocket
 	@Override
 	public void onMessage(byte arg0, byte[] arg1, int arg2, int arg3)
 	{
+		TimeContext.markTime();
 		logger.severe("onMessage() byte format unsupported!");
 		throw new RuntimeException("onMessage() byte format unsupported!");
 	}
@@ -151,25 +160,23 @@ public class Worker implements WebSocket
 	public boolean isAvailable(Job job)
 	{
 		if (isDead(job)) return false;
-		return ( (System.currentTimeMillis() - lastHearbeat)    < job.getWorkerHeartbeatTimeout());
+		return ( (TimeContext.now() - lastHearbeat)    < job.getWorkerHeartbeatTimeout());
 	}
 	
 
 	public boolean isDead(Job job)
 	{
-		return ( (System.currentTimeMillis() - lastProgress) > job.getWorkerAcknowledgeTimeout());
+		return ( (TimeContext.now() - lastProgress) > job.getWorkerAcknowledgeTimeout());
 	}
 
-/** The relationship between Job and the availability of the Worker is more clear in the upper versions
-	public boolean isAvailable()
+	public void setBSURL(String url)
 	{
-		if (isDead()) return false;
-		return ( (System.currentTimeMillis() - lastHearbeat)    < master.getActiveJob().getWorkerHeartbeatTimeout());
+		bsURL = url;
 	}
 	
-	public boolean isDead()
+	public String getBSURL()
 	{
-		return ( (System.currentTimeMillis() - lastAcknowledge) > master.getActiveJob().getWorkerAcknowledgeTimeout());
+		return bsURL;
 	}
-**/
+	
 }

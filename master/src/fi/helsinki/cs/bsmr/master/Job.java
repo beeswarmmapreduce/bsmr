@@ -126,5 +126,10 @@ public class Job
 	{
 		return jobId;
 	}
+
+	public Object getCode() {
+		// TODO Auto-generated method stub
+		return null;
+	}
  
 }

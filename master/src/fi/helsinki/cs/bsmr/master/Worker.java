@@ -103,7 +103,7 @@ public class Worker implements WebSocket
 			logger.finest( "onMessage(): '"+jsonMsg+"' (frame "+frame+")");
 		}	
 		
-		Message msg = Message.parseMessage(jsonMsg);
+		Message msg = Message.parseMessage(jsonMsg, master);
 		
 		if (msg.getType() == Type.DO) {
 			logger.severe("Workers cannot send DO messages: "+msg);

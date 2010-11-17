@@ -113,7 +113,7 @@ public class Master
 				activeJob.finishJob();
 				// TODO: send idle messages to everyone else
 				
-				return Message.pauseMessage(); // this sends the message to "worker"
+				return Message.pauseMessage(activeJob); // this sends the message to "worker"
 			}
 			
 			
@@ -177,6 +177,22 @@ public class Master
 	public Job getActiveJob()
 	{
 		return activeJob;
+	}
+
+	public Worker getWorkerByURL(String url)
+	{
+		if (url == null) {
+			return null;
+		}
+		
+		// TODO: this "could" be a bit faster...
+		for (Worker w : workers) {
+			if (url.equals(w.getSocketURL())) {
+				return w;
+			}
+		}
+
+		return null;
 	}
 
 }

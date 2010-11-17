@@ -44,7 +44,7 @@
 		function send()
 		{
 			if (ws != null) {
-				ws.send('{ "type": "ACK", "action": "reduceTask" }');
+				ws.send('{ "type": "ACK", "payload" : {  "action": "reduceTask" } } ' );
 			} else {
 				log("not connected!");
 			}
@@ -53,7 +53,7 @@
 		function heartbeat()
 		{
 			if (ws != null) {
-				ws.send('{ "type": "HB", "action": "idle" }');
+				ws.send('{ "type": "HB", "payload" : { "action": "idle"  } }');
 			} else {
 				log("not connected!");
 			}

@@ -41,29 +41,41 @@ public class SplitStore
 	 * 
 	 * @return Whether all splits are done on servers which are available at the moment
 	 */
-	public boolean areAllSplitsDone()
-	{
+	public boolean areAllSplitsDone(Set<Worker> unreachableWorkers)
+	{	
 		for (int i = 0; i < job.getSplits(); ++i) {
 			Set<Worker> whoHasSplit_i = whoHasSplit(new Split(i));
 			
 			if (whoHasSplit_i.isEmpty()) {
 				return false;
 			}
+			
+			if (unreachableWorkers.containsAll(whoHasSplit_i)) {
+				return false;
+			}
+			
 		}
 		
 		return true;
 	}
 	
-	public Split selectSplitToWorkOn()
+	public Split selectSplitToWorkOn(Set<Worker> unreachableWorkers)
 	{
 		int i = 0;
 		Split ret;
+		
+		
+		boolean isGoodCandidate;
 		
 		do {
 			workQueuePointer = (workQueuePointer + 1) % job.getSplits();
 			ret = new Split(workQueuePointer);
 			i++;
-		} while (whoHasSplit(ret).isEmpty() && i < job.getSplits());
+			
+			Set<Worker> workersWhoHaveSplit = whoHasSplit(ret); 
+			isGoodCandidate = workersWhoHaveSplit.isEmpty() || unreachableWorkers.containsAll(workersWhoHaveSplit);
+			
+		} while (!isGoodCandidate && i < job.getSplits());
 	
 		return ret;
 	}

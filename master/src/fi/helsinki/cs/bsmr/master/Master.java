@@ -95,14 +95,12 @@ public class Master
 	{	
 		// msg will be of type ACK. worker checks this
 		synchronized (executeLock) 
-		{
-			if (msg.getAction() == Message.Action.up) {
-				// TODO: what?
+		{	
+			if (msg.getJob() == activeJob) {
+				// TODO: acknowledge data from worker
 			}
-			
-			// TODO: Acknowledge the data given in the message
-			
-			// TODO: mark unavailable workers (set heartbeat to (now - 2*heartbeat))
+
+			// TODO: mark unavailable URLS /* FOR THIS REQUEST ONLY */
 			
 			
 			
@@ -110,30 +108,39 @@ public class Master
 			boolean allPartitionsDone = activeJob.getPartitionInformation().areAllPartitionsDone();
 			
 			// If the job is not yet marked as finished
-			if (allPartitionsDone && !activeJob.isFinished()) {
+			// !activeJob.isFinished() == Documentation. we don't execute this function if the job is finished
+			if (allPartitionsDone && !activeJob.isFinished()) { 
 				activeJob.finishJob();
-				// TODO: what to do next?
+				// TODO: send idle messages to everyone else
+				
+				return Message.pauseMessage(); // this sends the message to "worker"
 			}
 			
-			// The job is finished => pause the worker
-			if (activeJob.isFinished()) {
-				return Message.pauseMessage();
-			}
 			
 			// All partitions are not done yet, but let's first check the splits:
-			if (!activeJob.getSplitInformation().areAllSplitsDone()) {
+			if (!activeJob.getSplitInformation().areAllSplitsDone(msg.getUnareachableWorkers())) {
 				// Assign a map task
-				Split nextSplit = activeJob.getSplitInformation().selectSplitToWorkOn();
+				Split nextSplit = activeJob.getSplitInformation().selectSplitToWorkOn(msg.getUnareachableWorkers());
 				
 				return Message.mapThisMessage(nextSplit, activeJob);
+			} 
+			
+			// TODO: check if the worker is already reducing and is asking for a bsURL
+			if (msg.getJob() == activeJob && 
+			    msg.getAction() == Message.Action.reduceSplit && 
+				!activeJob.getPartitionInformation().isPartitionDone(msg.getIncompleteReducePartition())) { 
 				
+				
+				return null;
 			} else {
-				// All splits are done => Assign a partition
+				
+				// All splits are done => Assign a partition for reducing
 				
 				Partition nextPartition = activeJob.getPartitionInformation().selectPartitionToWorkOn();
 				
 				return Message.reduceThatMessage(nextPartition, activeJob);
 			}
+		
 			
 		}
 	

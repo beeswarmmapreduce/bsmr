@@ -59,4 +59,9 @@ public class PartitionStore
 		
 		workQueue.remove(p);
 	}
+
+	public boolean isPartitionDone(Partition partition) 
+	{
+		return partitionsDone.contains(partition);
+	}
 }

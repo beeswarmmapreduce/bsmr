@@ -53,7 +53,7 @@ public class Job
 	{
 		int thisJob;
 		synchronized (Job.class) {
-			thisJob = jobCounter++;
+			thisJob = jobCounter++; // TODO: this needs to be random instead
 		}
 		Job ret = new Job(thisJob, splits, partitions, heartbeatTimeout, acknowledgeTimeout);
 		jobList.put(thisJob, ret); // auto-boxing

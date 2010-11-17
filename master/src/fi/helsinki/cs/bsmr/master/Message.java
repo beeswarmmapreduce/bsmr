@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.eclipse.jetty.util.ajax.JSON;
 
@@ -11,11 +12,11 @@ import org.eclipse.jetty.util.ajax.JSON;
 public class Message 
 {
 	public enum Type {
-		DO, ACK
+		DO, ACK, HB
 	}
 	
 	public enum Action {
-		up, map, reducetask, reduce, heartbeat, pause	
+		socket, mapTask, reduceTask, reduceSplit, idle	
 	}
 	
 	private static final String FIELD_ACTION         = "action";
@@ -122,32 +123,34 @@ public class Message
 	
 	public static Message pauseMessage()
 	{
-		return new Message(Type.DO, Action.pause);
+		return new Message(Type.DO, Action.idle);
 	}
 	
 	public static Message mapThisMessage(Split s, Job j)
 	{
-		Message ret = new Message(Type.DO, Action.map, j);
+		Message ret = new Message(Type.DO, Action.mapTask, j);
 		ret.data.put(FIELD_SPLITID, s.getId());
 		return ret;
 	}
 	
 	public static Message reduceThatMessage(Partition p, Job j)
 	{
-		Message ret = new Message(Type.DO, Action.reducetask, j);
+		Message ret = new Message(Type.DO, Action.reduceTask, j);
 		ret.data.put(FIELD_PARTITIONID, p.getId());
 		return ret;
 	}
 	
 	public static Message findSplitAtMessage(Partition p, Split s, Job j)
 	{
-		Message ret = new Message(Type.DO, Action.reduce, j);
+		Message ret = new Message(Type.DO, Action.reduceSplit, j);
 		ret.data.put(FIELD_PARTITIONID, p.getId());
+		
+		
 		
 		List<String> urls = new ArrayList<String>();
 		
 		for (Worker w : j.getSplitInformation().whoHasSplit(s)) {
-			urls.add(w.getBSURL());
+			urls.add(w.getSocketURL());
 		}
 		
 		Map<String, Object> splitLocation = new HashMap<String, Object>();
@@ -158,5 +161,20 @@ public class Message
 		ret.data.put(FIELD_SPLITLOCATION, splitLocation);
 		
 		return ret;
+	}
+
+	public Set<Worker> getUnareachableWorkers() {
+		// TODO: create this
+		return null;
+	}
+
+	public String getSocketURL() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public Partition getIncompleteReducePartition() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

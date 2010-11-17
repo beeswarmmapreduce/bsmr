@@ -19,7 +19,7 @@ public class Worker implements WebSocket
 	private long lastHearbeat;
 	private long lastProgress;
 	
-	private String bsURL;
+	private String socketURL;
 	
 	
 	Worker(Master master)
@@ -67,6 +67,10 @@ public class Worker implements WebSocket
 	{
 		TimeContext.markTime();
 		
+		// Make sure nobody relies on this worker anymore
+		lastHearbeat = -1;
+		lastProgress = -1;
+		
 		logger.fine("onDisconnect()");
 		
 		try { 
@@ -101,8 +105,8 @@ public class Worker implements WebSocket
 		
 		Message msg = Message.parseMessage(jsonMsg);
 		
-		if (msg.getType() != Type.ACK) {
-			logger.severe("unsupported message type to worker: "+msg);
+		if (msg.getType() == Type.DO) {
+			logger.severe("Workers cannot send DO messages: "+msg);
 			return;
 		}
 		
@@ -110,39 +114,61 @@ public class Worker implements WebSocket
 		
 		synchronized (master.executeLock) {
 
-			// TODO: !jobID => reset
-			
-			if (msg.getJob() != master.getActiveJob()) {
-				// TODO: => reset
+			if (msg.getAction() == Message.Action.socket) {
+				setSocketURL(msg.getSocketURL());
 			}
 			
-			if (msg.getAction() == Action.heartbeat) {
-				logger.fine("heartbeat");
+			if (master.getActiveJob() == null || master.getActiveJob().isFinished() || !master.getActiveJob().isStarted()) {
+				
+				if (msg.getType() == Type.HB) {
+					logger.warning("A worker sent a non-heartbeat while no active job");
+					// TODO: send new idle?
+					reply = null; // set to idle message
+				} else {
+					reply = null;
+				}
+				
 				lastHearbeat = TimeContext.now();
-				return; // there is no reply to heart beat messages
+				lastProgress = TimeContext.now();
+				
+				
+				
+			} else {
+				
+				// The heart beat is always updated
+				lastHearbeat = TimeContext.now();
+				
+				if (msg.getType() == Type.HB) {
+					// If just a pure heart beat, we do not reply
+					logger.fine("heartbeat");
+					return;
+				}
+
+				lastProgress = TimeContext.now();
+				
+				
+				
+				// TODO: parse a "where is worker message"?
+				
+				reply = master.executeWorkerMessage(this, msg);
+				
+				
 			}
-			
-			// This could be moved to Master, but this should be enough for a prototype
-			lastProgress = TimeContext.now();
-			
-			
-			// TODO: parse a "where is worker message"?
-			
-			reply = master.executeWorkerMessage(this, msg);
-			
 		}
 		
-		try {
-			out.sendMessage(reply.encodeMessage());
-		} catch(IOException ie) {
-			logger.log(Level.SEVERE, "Could not reply to worker. Terminating connection.", ie);
-			
+		if (reply != null) {
 			try {
-				master.removeWorker(this);
-			} catch(WorkerInIllegalStateException wiise) {
-				logger.log(Level.SEVERE, "The worker we could not send a reply to was not registered as a worker?", wiise);
-			} finally {
-				disconnect();
+				out.sendMessage(reply.encodeMessage());
+			} catch(IOException ie) {
+				logger.log(Level.SEVERE, "Could not reply to worker. Terminating connection.", ie);
+				
+				try {
+					master.removeWorker(this);
+				} catch(WorkerInIllegalStateException wiise) {
+					logger.log(Level.SEVERE, "The worker we could not send a reply to was not registered as a worker?", wiise);
+				} finally {
+					disconnect();
+				}
 			}
 		}
 
@@ -169,14 +195,14 @@ public class Worker implements WebSocket
 		return ( (TimeContext.now() - lastProgress) > job.getWorkerAcknowledgeTimeout());
 	}
 
-	public void setBSURL(String url)
+	public void setSocketURL(String url)
 	{
-		bsURL = url;
+		socketURL = url;
 	}
 	
-	public String getBSURL()
+	public String getSocketURL()
 	{
-		return bsURL;
+		return socketURL;
 	}
 	
 }

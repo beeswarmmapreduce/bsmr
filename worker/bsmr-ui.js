@@ -21,6 +21,9 @@ if (typeof(bsmr) != 'undefined') {
             }
             else {
                 if (typeof(s) == 'object') {
+                    if (level == 'w' && s.type == 'HB') {
+                        level = 'h';
+                    }
                     s = JSON.stringify(s, null, '  ');
                 }
                 e.innerHTML += '<p class="' + bsmr.util.esc(level) + '"><span class="level">' + bsmr.util.esc(level) + '</span></p><pre class="msg">' + bsmr.util.esc(s) + '</pre>'; 

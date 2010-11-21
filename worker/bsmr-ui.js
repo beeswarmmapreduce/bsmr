@@ -17,7 +17,7 @@ if (typeof(bsmr) != 'undefined') {
                 level = 'log';
             }
             if (level == 'log') {
-                e.innerHTML += '<p class="' + bsmr.util.esc(level) + '"><span class="level">' + bsmr.util.esc(level) + '</span> <span class="msg">' + bsmr.util.esc(s + '') + '</span></p>'; 
+                e.innerHTML = '<p class="' + bsmr.util.esc(level) + '"><span class="level">' + bsmr.util.esc(level) + '</span> <span class="msg">' + bsmr.util.esc(s + '') + '</span></p>' + e.innerHTML; 
             }
             else {
                 if (typeof(s) == 'object') {
@@ -26,7 +26,7 @@ if (typeof(bsmr) != 'undefined') {
                     }
                     s = JSON.stringify(s, null, '  ');
                 }
-                e.innerHTML += '<p class="' + bsmr.util.esc(level) + '"><span class="level">' + bsmr.util.esc(level) + '</span></p><pre class="msg">' + bsmr.util.esc(s) + '</pre>'; 
+                e.innerHTML = '<p class="' + bsmr.util.esc(level) + '"><span class="level">' + bsmr.util.esc(level) + '</span></p><pre class="msg">' + bsmr.util.esc(s) + '</pre>' + e.innerHTML; 
             }
         }
         oldlog(s, level);

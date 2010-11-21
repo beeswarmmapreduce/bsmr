@@ -47,6 +47,9 @@
                 #legend p {
                     margin: 0.5em;
                     }
+                #legend .level {
+                    float: none !important;
+                    }
             #console {
                 background: #ddd;
                 padding: 6px 12px;
@@ -65,16 +68,21 @@
                     border-bottom: 1px dotted #000;
                     margin: 0 0 1.0em 0;
                     padding-bottom: 1.0em;
+                    padding-top: 1.0em;
+                    padding-left: 3.5em;
                     background: #eee;
                     }
                     .level {
+                        font-family: verdana, sans-serif;
                         padding: 0 8px;
                         }
                     .w .level {
+                        float: left;
                         background: #00a;
                         color: #fff;
                         }
                     .h .level {
+                        float: left;
                         background: #a00;
                         color: #fff;
                         }
@@ -82,6 +90,7 @@
                         background: #ff9;
                         }
                     .m .level {
+                        float: right;
                         background: #090;
                         color: #fff;
                         }
@@ -102,10 +111,10 @@
             <a href="javascript:bsmr.init()">start</a> |
             <a href="javascript:bsmr.stop()">stop</a>
             <div id="legend">
+                <p class="log"><span class="level">log</span> general log message</p>
                 <p class="h"><span class="level">h</span> heartbeat from worker to master</p>
                 <p class="w"><span class="level">w</span> message from worker to master</p>
                 <p class="m"><span class="level">m</span> message from master to worker</p>
-                <p class="log"><span class="level">log</span> general log message</p>
             </div>
         </div>
         <div id="console">

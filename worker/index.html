@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>bsmr worker test</title>
+        <script type="text/javascript" src="json2.js"></script>
+        <script type="text/javascript" src="bsmr.js"></script>
+        <script type="text/javascript" src="bsmr-ui.js"></script>
+        <script type="text/javascript">
+            window.addEventListener('load', bsmr.info, false);
+        </script>
+        <style type="text/css">
+            body {
+                font-family: courier, monospace;
+                font-size: 86%;
+                }
+            h1 {
+                background: #f00;
+                color: #ff0;
+                font-family: verdana, sans-serif;
+                font-weight: normal;
+                }
+                h1 img { vertical-align: middle; }
+
+            #info,
+            #control {
+                background: #eee;
+                margin-bottom: 6px;
+                padding: 6px 12px;
+                }
+                #info p {
+                    font-weight: bold;
+                    }
+            #legend {
+                font-size: 80%;
+                border-top: 1px dotted #000;
+                margin-top: 6px;
+                }
+                #legend p {
+                    margin: 0.5em;
+                    }
+            #console {
+                background: #eee;
+                padding: 6px 12px;
+                }
+                #console p {
+                    padding: 0;
+                    }
+                    #console p.log {
+                        font-size: 85%;
+                        border-bottom: 1px solid #fff;
+                        margin: 0 0 1.0em 0;
+                        padding-bottom: 1.0em;
+                        }
+                #console pre {
+                    border-bottom: 1px solid #fff;
+                    margin: 0 0 1.0em 0;
+                    padding-bottom: 1.0em;
+                    }
+                    .level {
+                        padding: 0 8px;
+                        }
+                    .w .level {
+                        background: #00a;
+                        color: #fff;
+                        }
+                    .l .level {
+                        background: #ff9;
+                        }
+                    .m .level {
+                        background: #090;
+                        color: #fff;
+                        }
+                    .log .level {
+                        background: #fff;
+                        }
+        </style>
+    </head>
+    <body>
+        <h1>
+            <!--
+            http://upload.wikimedia.org/wikipedia/commons/5/56/Hammer_sickle_clean.png
+            -->
+            <img src="Hammer_sickle_clean.png" width="64"/>
+            BS/MR Worker Test
+        </h1>
+        <div id="info"></div>
+        <div id="control">
+            <a href="javascript:bsmr.init()">start</a> |
+            <a href="javascript:bsmr.stop()">stop</a>
+            <div id="legend">
+                <p class="w"><span class="level">w</span> message from worker to master</p>
+                <p class="m"><span class="level">m</span> message from master to worker</p>
+                <!--
+                <p class="l"><span class="level">l</span> log message from worker</p>
+                -->
+                <p class="log"><span class="level">log</span> general log message</p>
+            </div>
+        </div>
+        <div id="console">
+        </div>
+    </body>
+</html>

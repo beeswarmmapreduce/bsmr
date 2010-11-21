@@ -43,6 +43,8 @@ var bsmr = (function() {
 
         init: function() {
             if (!bsmr._autoload) {
+                bsmr.log('No autoload. aborting init.');
+                bsmr._autoload = true;
                 return;
             }
 

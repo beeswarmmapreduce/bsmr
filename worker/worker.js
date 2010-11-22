@@ -184,6 +184,9 @@ var worker = (function() {
                     case 'mode':
                         worker.control.setMode(spec);
                         break;
+                    case 'hb':
+                        worker.heartbeat.heartbeat();
+                        break;
                     case 'step':
                         worker.control.step();
                         break;
@@ -344,7 +347,4 @@ if (worker._DEBUG_) {
     // FIXME: can we inject this (rather than pull it)?
     importScripts('opt/worker-debug.js');
 }
-
-/* kick off the heartbeat */
-//worker.heartbeat.heartbeat();
 

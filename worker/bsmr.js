@@ -211,13 +211,19 @@ var bsmr = (function() {
                 bsmr.master.ws.close();
             },
             greeting: function() {
-                // send the 'socket' message to master
                 try {
+                    // send the 'socket' message to master
                     var m = bsmr.createMessage(bsmr.TYPE_ACK, {
                         action: 'socket',
                         url: 'ws://127.0.0.1:' + bsmr.incoming.bs.port + bsmr.incoming.bs.resourcePrefix
                     });
                     bsmr.master.sendMessage(m);
+
+                    // start the worker heartbeat
+                    m = bsmr.createMessage(bsmr.TYPE_CTL, {
+                        action: 'hb'
+                    });
+                    bsmr.worker.sendMessage(m);
                 }
                 catch (ex) {
                     bsmr.setStatus(

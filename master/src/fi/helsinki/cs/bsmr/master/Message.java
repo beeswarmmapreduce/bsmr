@@ -88,7 +88,7 @@ public class Message
 		try {
 			this.type = Type.valueOf(typeField);
 		} catch(NullPointerException npe) {
-			throw new IllegalMessageException("No Type field");
+			throw new IllegalMessageException("No type field");
 		} catch(IllegalArgumentException iae) {
 			throw new IllegalMessageException("Message type '"+typeField+"' not recognized"); 
 		}
@@ -97,7 +97,7 @@ public class Message
 		try {
 			this.action = Action.valueOf(actionField);
 		} catch(NullPointerException npe) {
-			throw new IllegalMessageException("No Action field in payload");
+			throw new IllegalMessageException("No action field in payload");
 		} catch(IllegalArgumentException iae) {
 			throw new IllegalMessageException("Message action '"+actionField+"' not recognized");
 		}

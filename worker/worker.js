@@ -6,7 +6,6 @@
  Konrad Markus <konker@gmail.com>
 
  TODO:
-    - need to put heartbeat back in
 
  */
 
@@ -41,6 +40,7 @@ var worker = (function() {
     }
 
     MapTaskFactory = function() {}
+    /* NOTE: this is a kind of 'static' function */
     MapTaskFactory.createInstance = function(job, splitId, datasrc) {
         return new worker.MapTask(job, splitId, datasrc);
     }

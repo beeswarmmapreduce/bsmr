@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.servlet.ServletException;
+
 import org.eclipse.jetty.websocket.WebSocket;
 
 import fi.helsinki.cs.bsmr.master.Message.Action;
@@ -103,7 +105,17 @@ public class Worker implements WebSocket
 			logger.finest( "onMessage(): '"+jsonMsg+"' (frame "+frame+")");
 		}	
 		
-		Message msg = Message.parseMessage(jsonMsg, master);
+		Message msg;
+		
+		try {
+			msg = Message.parseMessage(jsonMsg, master);
+		} catch(IllegalMessageException ime) {
+			logger.log(Level.SEVERE,"Illegal message from worker", ime);
+			if (logger.isLoggable(Level.FINE)) {
+				logger.fine("illegal message contents: '"+ime.getProblematicMessage()+"'");
+			}
+			return; // TODO: should the worker be informed? .. naah
+		}
 		
 		if (msg.getType() == Type.DO) {
 			logger.severe("Workers cannot send DO messages: "+msg);

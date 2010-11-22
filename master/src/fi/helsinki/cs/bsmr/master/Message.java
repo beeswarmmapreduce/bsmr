@@ -77,12 +77,30 @@ public class Message
 		this.unreachableWorkers = null;
 	}
 	
-	private Message(Map<Object, Object> d, Master master)
+	private Message(Map<Object, Object> d, Master master) throws IllegalMessageException
 	{
 		Map<?, ?> payload = (Map<?, ?>) d.get(FIELD_PAYLOAD);
+		if (payload == null) {
+			throw new IllegalMessageException("No payload");
+		}
 		
-		this.type = Type.valueOf((String)d.get(FIELD_TYPE));
-		this.action = Action.valueOf((String)payload.get(FIELD_ACTION));
+		String typeField = (String)d.get(FIELD_TYPE);
+		try {
+			this.type = Type.valueOf(typeField);
+		} catch(NullPointerException npe) {
+			throw new IllegalMessageException("No Type field");
+		} catch(IllegalArgumentException iae) {
+			throw new IllegalMessageException("Message type '"+typeField+"' not recognized"); 
+		}
+		
+		String actionField = (String)payload.get(FIELD_ACTION);
+		try {
+			this.action = Action.valueOf(actionField);
+		} catch(NullPointerException npe) {
+			throw new IllegalMessageException("No Action field in payload");
+		} catch(IllegalArgumentException iae) {
+			throw new IllegalMessageException("Message action '"+actionField+"' not recognized");
+		}
 		
 		if (payload.containsKey(FIELD_JOBID)) {
 			Object o = payload.get(FIELD_JOBID);
@@ -137,10 +155,15 @@ public class Message
 	 * @param msg Message as string
 	 * @return Parsed Message
 	 */
-	public static Message parseMessage(String msg, Master master)
+	public static Message parseMessage(String msg, Master master) throws IllegalMessageException
 	{
 		Map<Object, Object> tmp = (Map<Object, Object>)JSON.parse(msg);
-		return new Message(tmp, master);
+		try {
+			return new Message(tmp, master);
+		} catch(IllegalMessageException ime) {
+			ime.setProblematicMessage(msg);
+			throw ime;
+		}
 	}
 
 

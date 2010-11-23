@@ -253,7 +253,7 @@ var worker = (function() {
                 var m = worker.createMessage(worker.TYPE_ACK, {
                     action: 'mapTask',
                     mapStatus: {
-                        splitId: t.splitId + "" //FIXME: remove string cast
+                        splitId: t.splitId
                     },
                     reduceStatus: null, //TODO
                     jobId: t.job.jobId
@@ -288,8 +288,8 @@ var worker = (function() {
                 var m = worker.createMessage(worker.TYPE_ACK, {
                     action: 'reduceSplit',
                     reduceStatus: {
-                        partitionId: t.partitionId + "", //FIXME: remove string cast
-                        splitId: splitId + "" //FIXME: remove string cast
+                        partitionId: t.partitionId,
+                        splitId: splitId
                     },
                     unreachable: {
                     },
@@ -307,7 +307,7 @@ var worker = (function() {
                 var m = worker.createMessage(worker.TYPE_ACK, {
                     action: 'reduceTask',
                     reduceStatus: {
-                        partitionId: t.partitionId + "" //FIXME: remove string cast
+                        partitionId: t.partitionId
                     },
                     unreachable: {
                     },

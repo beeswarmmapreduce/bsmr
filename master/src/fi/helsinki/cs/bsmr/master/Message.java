@@ -105,33 +105,44 @@ public class Message
 		}
 		
 		if (payload.containsKey(FIELD_JOBID)) {
-			Object o = payload.get(FIELD_JOBID);
-			
-			if (o instanceof Integer) {
-				this.job = Job.getJobById((Integer)o);
-			} else if (o instanceof Long) {
-				this.job = Job.getJobById( ((Long)o).intValue() );
-			} else if (o instanceof String) {
-				this.job = Job.getJobById(Integer.parseInt((String)o));
-			} else {
-				throw new IllegalMessageException("Could not parse job ID from JSON: "+o+" ("+o.getClass().getName()+")");
-			}
+			Long tmp = (Long)payload.get(FIELD_JOBID);
+			this.job = Job.getJobById( tmp.intValue() );
 		}
 		
 		this.socketUrl = (String)payload.get(FIELD_URL);
 		this.mapStatus    = createMapStatus((Map<?, ?>)payload.get(FIELD_MAPSTATUS));
 		this.reduceStatus = createReduceStatus((Map<?, ?>)payload.get(FIELD_REDUCESTATUS));
 				
-		this.unreachableWorkers = parseWorkers( (Collection<String>)payload.get(FIELD_UNREACHABLE), workers);
+		// TODO: this might fail..
+		this.unreachableWorkers = parseWorkers( payload.get(FIELD_UNREACHABLE), workers);
 	}
 	
-	private static Set<Worker> parseWorkers(Collection<String> workersAsUrls, WorkerStore workers)
+	private static Set<Worker> parseWorkers(Object workersAsUrls, WorkerStore workers)
 	{
 		if (workersAsUrls == null) return null;
 		
+		Collection<Object> set;
+		if (workersAsUrls instanceof Collection) {
+			set = (Collection)workersAsUrls;
+		} else if (workersAsUrls instanceof Map) {
+			logger.warning("Parsing workers from message using a map?? Using the keys");
+			set = ((Map)workersAsUrls).keySet();
+		} else {
+			if (workersAsUrls != null) {
+				logger.severe("Unable to use workersAsUrls parameter: "+workersAsUrls);
+			}
+			
+			return Collections.emptySet();
+		}
+		
 		Set<Worker> ret = new HashSet<Worker>();
 		
-		for (String url : workersAsUrls) {
+		for (Object o: set) {
+			if (!(o instanceof String)) {
+				logger.severe("payload contains non-string worker URLs");
+				continue;
+			}
+			String url = (String)o;
 			Worker w = workers.getWorkerByURL(url);
 			if (w != null) {
 				ret.add(w);
@@ -251,7 +262,7 @@ public class Message
 
 	public Set<Worker> getUnareachableWorkers() 
 	{
-		if (unreachableWorkers == null) return Collections.EMPTY_SET;
+		if (unreachableWorkers == null) return Collections.emptySet();
 		return unreachableWorkers;
 	}
 
@@ -286,10 +297,10 @@ public class Message
 	{
 		if (map == null) return null;
 		
-		String tmp = (String)map.get(FIELD_SPLITID);
+		Long tmp = (Long)map.get(FIELD_SPLITID);
 		if (tmp == null) return null;
 		
-		Split s = new Split(Integer.parseInt(tmp));
+		Split s = new Split(tmp.intValue());
 		return new MapStatus(s);
 	}
 	
@@ -323,14 +334,14 @@ public class Message
 	{
 		if (map == null) return null;
 		
-		String tmp1 = (String)map.get(FIELD_SPLITID);
-		String tmp2 = (String)map.get(FIELD_PARTITIONID);
+		Long tmp1 = (Long)map.get(FIELD_SPLITID);
+		Long tmp2 = (Long)map.get(FIELD_PARTITIONID);
 		
 		Split s = null;
-		if (tmp1 != null) s = new Split(Integer.parseInt(tmp1));
+		if (tmp1 != null) s = new Split(tmp1.intValue());
 		
 		Partition p = null;
-		if (tmp2 != null) p = new Partition(Integer.parseInt(tmp2));
+		if (tmp2 != null) p = new Partition(tmp2.intValue());
 
 		// TODO: no locations in ACK messsages
 		

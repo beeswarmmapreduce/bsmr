@@ -9,8 +9,6 @@ public class Job
 {
 	private static Logger logger = Util.getLoggerForClass(Job.class); 
 	
-	/** Job counter, access only via synchronizing the class Job **/
-	private static int jobCounter = 0;
 	private static Map<Integer, Job> jobList;
 	
 	/** Object fields **/
@@ -22,8 +20,6 @@ public class Job
 	
 	private boolean isStarted;
 	private boolean isFinished;
-	
-	/* TODO: these variables are not yet set */
 	
 	private final int splits;
 	private final int partitions;
@@ -61,7 +57,9 @@ public class Job
 				
 			} while (jobList.containsKey(thisJob));
 		}
+		
 		Job ret = new Job(thisJob, splits, partitions, heartbeatTimeout, acknowledgeTimeout);
+		logger.info("Created new Job "+ret);
 		jobList.put(thisJob, ret); // auto-boxing
 		
 		return ret;
@@ -138,4 +136,8 @@ public class Job
 		return null;
 	}
  
+	public String toString()
+	{
+		return "Job#"+jobId+" (M="+splits+", R="+partitions+")";
+	}
 }

@@ -1,16 +1,20 @@
 package fi.helsinki.cs.bsmr.master;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Logger;
 
 import org.eclipse.jetty.util.ajax.JSON;
 
 
 public class Message 
 {
+	private static final Logger logger = Util.getLoggerForClass(Message.class);
+	
 	public enum Type {
 		DO, ACK, HB
 	}
@@ -105,8 +109,12 @@ public class Message
 			
 			if (o instanceof Integer) {
 				this.job = Job.getJobById((Integer)o);
+			} else if (o instanceof Long) {
+				this.job = Job.getJobById( ((Long)o).intValue() );
 			} else if (o instanceof String) {
 				this.job = Job.getJobById(Integer.parseInt((String)o));
+			} else {
+				throw new IllegalMessageException("Could not parse job ID from JSON: "+o+" ("+o.getClass().getName()+")");
 			}
 		}
 		
@@ -148,8 +156,17 @@ public class Message
 		return job;
 	}
 	
+	public MapStatus getMapStatus()
+	{
+		return mapStatus;
+	}
+	
+	public ReduceStatus getReduceStatus()
+	{
+		return reduceStatus;
+	}
+	
 	/**
-	 * TODO: insert JSON
 	 * @param msg Message as string
 	 * @return Parsed Message
 	 */
@@ -166,7 +183,6 @@ public class Message
 
 
 	/**
-	 * TODO: insert JSON
 	 * @return This message encoded into a JSON string
 	 */
 	public String encodeMessage()
@@ -235,6 +251,7 @@ public class Message
 
 	public Set<Worker> getUnareachableWorkers() 
 	{
+		if (unreachableWorkers == null) return Collections.EMPTY_SET;
 		return unreachableWorkers;
 	}
 
@@ -291,8 +308,8 @@ public class Message
 			Map<Object, Object> ret = new HashMap<Object, Object>();
 			
 			ret.put(FIELD_PARTITIONID, partition.getId());
-			ret.put(FIELD_SPLITID, split.getId());
-			ret.put(FIELD_REDUCE_LOCATION, location);
+			if (split != null) ret.put(FIELD_SPLITID, split.getId());
+			if (location != null) ret.put(FIELD_REDUCE_LOCATION, location);
 			
 			return ret;
 		}

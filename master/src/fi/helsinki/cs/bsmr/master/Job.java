@@ -53,7 +53,13 @@ public class Job
 	{
 		int thisJob;
 		synchronized (Job.class) {
-			thisJob = jobCounter++; // TODO: this needs to be random instead
+			// Monotonic for (2^31-1)/100/60/60/24 days (248.5), one new ID per 1/100th of a second
+			thisJob = -1;
+			do {
+				if (thisJob > 0) { try { Thread.sleep(10); } catch(Exception e) {} }
+				thisJob = (int)((System.currentTimeMillis()/100) % Integer.MAX_VALUE);
+				
+			} while (jobList.containsKey(thisJob));
 		}
 		Job ret = new Job(thisJob, splits, partitions, heartbeatTimeout, acknowledgeTimeout);
 		jobList.put(thisJob, ret); // auto-boxing

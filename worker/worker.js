@@ -6,7 +6,46 @@
  Konrad Markus <konker@gmail.com>
 
  TODO:
+    - heartbeat
+        - reset timer when other message sent
+        - block clash of message/heartbeat?
 
+
+    - node-node comms (bs)
+
+    - storage of map intermediate results in bsmr
+    - storage of reduce results in bsmr
+        - bsmr should save results to fs
+
+    - code/data!
+        - how should these look?
+            - MAP:
+                given:
+                ---
+                function map(k, v1) {
+                    var v2 = do_something(v1);
+                    emit(k, v2);
+                }
+                --
+
+                var partitions = new Array(R);
+                for (var i=0; i<R; i++) {
+                    partitions[i] = {};
+                }
+                function __exec() {
+                    for (var k in data) {
+                        map(k, data[k]);
+                    }
+                }
+                function hash(k) {
+                    return (some_kind_of_hash(k) % R);
+                }
+                function emit(k, v) {
+                    partitions[hash(k)][k] = v;
+                }
+
+            - REDUCE:
+        
  */
 
 var worker = (function() {

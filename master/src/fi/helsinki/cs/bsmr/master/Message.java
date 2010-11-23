@@ -113,7 +113,6 @@ public class Message
 		this.mapStatus    = createMapStatus((Map<?, ?>)payload.get(FIELD_MAPSTATUS));
 		this.reduceStatus = createReduceStatus((Map<?, ?>)payload.get(FIELD_REDUCESTATUS));
 				
-		// TODO: this might fail..
 		this.unreachableWorkers = parseWorkers( payload.get(FIELD_UNREACHABLE), workers);
 	}
 	
@@ -125,7 +124,7 @@ public class Message
 		if (workersAsUrls instanceof Collection) {
 			set = (Collection)workersAsUrls;
 		} else if (workersAsUrls instanceof Map) {
-			logger.warning("Parsing workers from message using a map?? Using the keys");
+			logger.fine("Parsing workers from message using a map?? Using the keys");
 			set = ((Map)workersAsUrls).keySet();
 		} else {
 			if (workersAsUrls != null) {

@@ -17,7 +17,6 @@ if (typeof('worker') != 'undefined') {
     /* setTimeout mode task */
     worker.TMO_MapTask = function(job, splitId, datasrc) {
         worker.MapTask.call(this, job, splitId, datasrc);
-        worker.log('TMO');
     }
     worker.TMO_MapTask.prototype = new worker.MapTask();
     worker.TMO_MapTask.prototype.start = function() {
@@ -55,7 +54,6 @@ if (typeof('worker') != 'undefined') {
     /* setTimeout mode task */
     worker.TMO_ReduceTask = function(job, partitionId) {
         worker.ReduceTask.call(this, job, partitionId);
-        worker.log('TMO');
     }
     worker.TMO_ReduceTask.prototype = new worker.ReduceTask();
     worker.TMO_ReduceTask.prototype.start = function() {
@@ -103,11 +101,10 @@ if (typeof('worker') != 'undefined') {
     /* setTimeout mode task */
     worker.TMO_ReduceSplit = function(job, splitId, partitionId, location) {
         worker.ReduceSplit.call(this, job, splitId, partitionId, location);
-        worker.log('TMO');
     }
     worker.TMO_ReduceSplit.prototype = new worker.ReduceSplit();
     worker.TMO_ReduceSplit.prototype.start = function() {
-        worker.log('ReduceSplit task started (TMO)');
+        worker.log('ReduceSplit started (TMO)');
         worker.active.tid = setTimeout(function() {
             worker.active.task.done();
         }, worker.control.taskLenMs);
@@ -119,7 +116,7 @@ if (typeof('worker') != 'undefined') {
     }
     worker.IVE_ReduceSplit.prototype = new worker.ReduceSplit();
     worker.IVE_ReduceSplit.prototype.start = function() {
-        worker.log('ReduceSplit task started (IVE)');
+        worker.log('ReduceSplit started (IVE)');
     }
 
     /* amend the factory */

@@ -136,6 +136,10 @@ var bsmr = (function() {
             });
             bsmr.worker.sendMessage(m);
         },
+        idle: function() {
+            //[TODO]
+            bsmr.log('(Pretend) Idle mode');
+        },
         stop: function() {
             bsmr.master.stop();
             bsmr.worker.stop();
@@ -215,7 +219,9 @@ var bsmr = (function() {
                     // send the 'socket' message to master
                     var m = bsmr.createMessage(bsmr.TYPE_ACK, {
                         action: 'socket',
-                        url: 'ws://127.0.0.1:' + bsmr.incoming.bs.port + bsmr.incoming.bs.resourcePrefix
+                        protocol: 'ws',
+                        port: bsmr.incoming.bs.port,
+                        resource: bsmr.incoming.bs.resourcePrefix
                     });
                     bsmr.master.sendMessage(m);
 
@@ -256,7 +262,7 @@ var bsmr = (function() {
                             bsmr.worker.sendMessage(m);
                             break;
                         case 'idle':
-                            msmr.idle();
+                            bsmr.worker.sendMessage(m);
                             break;
                         default: 
                             // swallow?

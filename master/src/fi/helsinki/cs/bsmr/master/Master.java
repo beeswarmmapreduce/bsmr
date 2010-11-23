@@ -1,34 +1,35 @@
 package fi.helsinki.cs.bsmr.master;
 
+import java.io.IOException;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.eclipse.jetty.websocket.WebSocket;
 
 
-public class Master
+public class Master extends WorkerStore
 {
 	private static Logger logger = Util.getLoggerForClass(Master.class);
 	
-	private Set<Worker> workers;
-	
 	/**
 	 * Needs to be visible for Worker (and possible Console)
-	 */
-	final Object executeLock; 
+	 */ 
 	
 	private List<Job> jobQueue;
 	private Job activeJob;
 	
+	
+	
 	public Master()
 	{
-		executeLock = new Object();
-		workers     = new HashSet<Worker>();
 		activeJob   = null;
 		jobQueue    = new LinkedList<Job>();
+		workerURLs  = new HashMap<String, Worker>();
 	}
 
 	public void queueJob(Job j) throws JobAlreadyRunningException
@@ -58,12 +59,7 @@ public class Master
 		
 		return true;
 	}
-	
-	public Worker createWorker()
-	{
-		return new Worker(this);
-	}
-	
+
 	public WebSocket createConsole()
 	{	
 		return new Console(this);
@@ -73,7 +69,7 @@ public class Master
 	{
 		Object ret;
 		
-		synchronized (executeLock) {
+		synchronized (this) {
 			ret = null;
 		}
 		
@@ -94,7 +90,7 @@ public class Master
 	public Message executeWorkerMessage(Worker worker, Message msg)
 	{	
 		// msg will be of type ACK. worker checks this
-		synchronized (executeLock) 
+		synchronized (this) 
 		{	
 			if (msg.getJob() == activeJob) {
 				// TODO: acknowledge data from worker
@@ -111,9 +107,37 @@ public class Master
 			// !activeJob.isFinished() == Documentation. we don't execute this function if the job is finished
 			if (allPartitionsDone && !activeJob.isFinished()) { 
 				activeJob.finishJob();
-				// TODO: send idle messages to everyone else
 				
-				return Message.pauseMessage(activeJob); // this sends the message to "worker"
+				Message pause = Message.pauseMessage(activeJob); 
+				
+				Set<Worker> badWorkers = null;
+				
+				for (Worker w : workers) {
+					if (w == worker) continue;
+					
+					try {
+						w.sendMessage(pause);
+					} catch(IOException ie) {
+						logger.log(Level.SEVERE, "Could not pause worker. Terminating connection.", ie);
+						if (badWorkers == null) badWorkers = new HashSet<Worker>();
+						
+						badWorkers.add(w);
+					}	
+				}
+				
+				if (badWorkers != null) {
+					for (Worker bad : badWorkers) {
+						try {
+							removeWorker(bad);
+						} catch(WorkerInIllegalStateException wiise) {
+							logger.log(Level.SEVERE, "Bad worker could not be removed?..", wiise);
+						} finally {
+							bad.disconnect();
+						}
+					}
+				}
+				
+				return pause; // this sends the message to "worker"
 			}
 			
 			
@@ -145,54 +169,15 @@ public class Master
 		}
 	
 	}
-
-
-	public void removeWorker(Worker worker) throws WorkerInIllegalStateException
-	{
-		boolean removed;
-		
-		synchronized (executeLock) 
-		{			
-			removed = workers.remove(worker); 
-		}
-		
-		if (!removed) {
-			throw new WorkerInIllegalStateException("removeWorker() worker "+worker+" was not registered");
-		}
-	}
-	
-	public void addWorker(Worker worker) throws WorkerInIllegalStateException
-	{
-		synchronized (executeLock) 
-		{
-			if (workers.contains(worker)) {
-				throw new WorkerInIllegalStateException("addWorker() worker "+worker+" already exists");
-			}
-			
-			workers.add(worker);
-		}
-		
-	}
 	
 	public Job getActiveJob()
 	{
 		return activeJob;
 	}
-
-	public Worker getWorkerByURL(String url)
+	
+	public boolean isActive()
 	{
-		if (url == null) {
-			return null;
-		}
-		
-		// TODO: this "could" be a bit faster...
-		for (Worker w : workers) {
-			if (url.equals(w.getSocketURL())) {
-				return w;
-			}
-		}
-
-		return null;
+		return activeJob != null && !activeJob.isFinished() && activeJob.isStarted();
 	}
 
 }

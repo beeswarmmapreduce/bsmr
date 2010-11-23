@@ -4,11 +4,9 @@ import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.servlet.ServletException;
 
 import org.eclipse.jetty.websocket.WebSocket;
 
-import fi.helsinki.cs.bsmr.master.Message.Action;
 import fi.helsinki.cs.bsmr.master.Message.Type;
 
 public class Worker implements WebSocket 
@@ -16,17 +14,15 @@ public class Worker implements WebSocket
 	private static Logger logger = Util.getLoggerForClass(Worker.class);
 	
 	private Outbound out;
-	private Master master;
+	private WorkerStore workerStore;
 	
 	private long lastHearbeat;
 	private long lastProgress;
+
 	
-	private String socketURL;
-	
-	
-	Worker(Master master)
+	Worker(WorkerStore workerStore)
 	{
-		this.master = master;
+		this.workerStore = workerStore;
 		
 		// Before worker starts communicating, it should be "dead":
 		this.lastHearbeat = -1;
@@ -57,7 +53,7 @@ public class Worker implements WebSocket
 		this.lastHearbeat = this.lastProgress = TimeContext.now();
 		
 		try {
-			master.addWorker(this);
+			workerStore.addWorker(this);
 		} catch(WorkerInIllegalStateException wiise) {
 			logger.log(Level.SEVERE, "New worker already registered?!?", wiise);
 			disconnect();
@@ -76,7 +72,7 @@ public class Worker implements WebSocket
 		logger.fine("onDisconnect()");
 		
 		try { 
-			master.removeWorker(this);
+			workerStore.removeWorker(this);
 		} catch(WorkerInIllegalStateException wiise) {
 			logger.log(Level.SEVERE, "Disconnected worker not registered?!?", wiise);
 		}
@@ -108,7 +104,7 @@ public class Worker implements WebSocket
 		Message msg;
 		
 		try {
-			msg = Message.parseMessage(jsonMsg, master);
+			msg = Message.parseMessage(jsonMsg, workerStore);
 		} catch(IllegalMessageException ime) {
 			logger.log(Level.SEVERE,"Illegal message from worker", ime);
 			if (logger.isLoggable(Level.FINE)) {
@@ -124,13 +120,13 @@ public class Worker implements WebSocket
 		
 		Message reply;
 		
-		synchronized (master.executeLock) {
+		synchronized (workerStore) {
 
 			if (msg.getAction() == Message.Action.socket) {
-				setSocketURL(msg.getSocketURL());
+				workerStore.setWorkerURL(this, msg.getSocketURL());
 			}
 			
-			if (master.getActiveJob() == null || master.getActiveJob().isFinished() || !master.getActiveJob().isStarted()) {
+			if (!workerStore.isActive()) {
 				
 				if (msg.getType() == Type.HB) {
 					logger.warning("A worker sent a non-heartbeat while no active job");
@@ -162,7 +158,7 @@ public class Worker implements WebSocket
 				
 				// TODO: parse a "where is worker message"?
 				
-				reply = master.executeWorkerMessage(this, msg);
+				reply = workerStore.executeWorkerMessage(this, msg);
 				
 				
 			}
@@ -170,18 +166,19 @@ public class Worker implements WebSocket
 		
 		if (reply != null) {
 			try {
-				out.sendMessage(reply.encodeMessage());
+				sendMessage(reply);
 			} catch(IOException ie) {
 				logger.log(Level.SEVERE, "Could not reply to worker. Terminating connection.", ie);
 				
 				try {
-					master.removeWorker(this);
+					workerStore.removeWorker(this);
 				} catch(WorkerInIllegalStateException wiise) {
 					logger.log(Level.SEVERE, "The worker we could not send a reply to was not registered as a worker?", wiise);
 				} finally {
 					disconnect();
 				}
 			}
+			
 		}
 
 	}
@@ -207,14 +204,9 @@ public class Worker implements WebSocket
 		return ( (TimeContext.now() - lastProgress) > job.getWorkerAcknowledgeTimeout());
 	}
 
-	public void setSocketURL(String url)
+	public void sendMessage(Message reply) throws IOException
 	{
-		socketURL = url;
-	}
-	
-	public String getSocketURL()
-	{
-		return socketURL;
+		out.sendMessage(reply.encodeMessage());		
 	}
 	
 }

@@ -1,10 +1,8 @@
 package fi.helsinki.cs.bsmr.master;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -77,7 +75,7 @@ public class Message
 		this.unreachableWorkers = null;
 	}
 	
-	private Message(Map<Object, Object> d, Master master) throws IllegalMessageException
+	private Message(Map<Object, Object> d, WorkerStore workers) throws IllegalMessageException
 	{
 		Map<?, ?> payload = (Map<?, ?>) d.get(FIELD_PAYLOAD);
 		if (payload == null) {
@@ -116,17 +114,17 @@ public class Message
 		this.mapStatus    = createMapStatus((Map<?, ?>)payload.get(FIELD_MAPSTATUS));
 		this.reduceStatus = createReduceStatus((Map<?, ?>)payload.get(FIELD_REDUCESTATUS));
 				
-		this.unreachableWorkers = parseWorkers( (Collection<String>)payload.get(FIELD_UNREACHABLE), master);
+		this.unreachableWorkers = parseWorkers( (Collection<String>)payload.get(FIELD_UNREACHABLE), workers);
 	}
 	
-	private static Set<Worker> parseWorkers(Collection<String> workersAsUrls, Master master)
+	private static Set<Worker> parseWorkers(Collection<String> workersAsUrls, WorkerStore workers)
 	{
 		if (workersAsUrls == null) return null;
 		
 		Set<Worker> ret = new HashSet<Worker>();
 		
 		for (String url : workersAsUrls) {
-			Worker w = master.getWorkerByURL(url);
+			Worker w = workers.getWorkerByURL(url);
 			if (w != null) {
 				ret.add(w);
 			}
@@ -155,11 +153,11 @@ public class Message
 	 * @param msg Message as string
 	 * @return Parsed Message
 	 */
-	public static Message parseMessage(String msg, Master master) throws IllegalMessageException
+	public static Message parseMessage(String msg, WorkerStore workers) throws IllegalMessageException
 	{
 		Map<Object, Object> tmp = (Map<Object, Object>)JSON.parse(msg);
 		try {
-			return new Message(tmp, master);
+			return new Message(tmp, workers);
 		} catch(IllegalMessageException ime) {
 			ime.setProblematicMessage(msg);
 			throw ime;

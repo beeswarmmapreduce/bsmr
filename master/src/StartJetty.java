@@ -32,7 +32,8 @@ public class StartJetty
 		
 		// Add a false master and a made up job
 		Master master = new Master();
-		Job j = Job.createJob(1000, 30, 60000, 60000*60);
+		//Job j = Job.createJob(1000, 30, 60000, 60000*60);
+		Job j = Job.createJob(3, 3, 60000, 60000*60);
 		master.queueJob(j);
 		master.startNextJob();
 		

@@ -52,19 +52,17 @@ var worker = (function() {
 
         this.job = job;
         this.partitionId = partitionId;
-        this.code = eval(job.code);
+        this.code = job && eval(job.code);
 
-        for (var i=0; i<this.job.M; i++) {
-            this.splits[i] = null;
+        if (job) {
+            for (var i=0; i<this.job.M; i++) {
+                this.splits[i] = null;
+            }
         }
     }
     ReduceTask.prototype.start = function() {
         worker.log('Reduce task started');
         this.doSplit();
-    }
-    ReduceTask.prototype.done = function() {
-        worker.log('Reduce task done');
-        worker.reduce.notifyDone(this)
     }
     ReduceTask.prototype.isDone = function() {
         var n = 0; 
@@ -85,6 +83,16 @@ var worker = (function() {
                 worker.reduce.nextSplit(that);
             }, worker.control.taskLenMs);
         }
+    }
+    ReduceTask.prototype.done = function() {
+        worker.log('Reduce task done');
+        worker.reduce.notifyTaskDone(this)
+    }
+
+    ReduceTaskFactory = function() {}
+    /* NOTE: this is a kind of 'static' function */
+    ReduceTaskFactory.createInstance = function(job, partitionId) {
+        return new worker.ReduceTask(job, partitionId);
     }
 
     /* ReduceSplit class */
@@ -108,13 +116,19 @@ var worker = (function() {
             this.done();
         }, worker.control.taskLenMs)
     }
+    ReduceSplit.prototype.isDone = function() {
+        return this.done;
+    }
     ReduceSplit.prototype.done = function() {
         worker.log('ReduceSplit task done');
         this._done = true;
         worker.reduce.notifySplitDone(this);
     }
-    ReduceSplit.prototype.isDone = function() {
-        return this.done;
+
+    ReduceSplitFactory = function() {}
+    /* NOTE: this is a kind of 'static' function */
+    ReduceSplitFactory.createInstance = function(job, partitionId, splitId, location) {
+        return new worker.ReduceSplit(job, partitionId, splitId, location);
     }
 
     return {
@@ -136,6 +150,12 @@ var worker = (function() {
         /* classes */
         MapTask: MapTask,
         MapTaskFactory: MapTaskFactory,
+
+        ReduceTask: ReduceTask,
+        ReduceTaskFactory: ReduceTaskFactory,
+
+        ReduceSplit: ReduceSplit,
+        ReduceSplitFactory: ReduceSplitFactory,
 
         /* track current worker activity */
         active: {
@@ -200,7 +220,7 @@ var worker = (function() {
         },
 
         heartbeat: {
-            HB_INTERVAL_MS: 5000,
+            HB_INTERVAL_MS: 60000,
             tid: null,
 
             heartbeat: function() {
@@ -217,12 +237,12 @@ var worker = (function() {
             tasks: {},
 
             startTask: function(spec) {
-                var t = worker.MapTaskFactory.createInstance(spec.job, spec.mapStatus.splitId, 'FIXME');
+                var t = worker.MapTaskFactory.createInstance(spec.job, spec.mapStatus.splitId, 'FIXME_DATASRC');
                 worker.map.tasks[t._id] = t;
                 worker.map.tasks[t._id].start();
                 worker.active.jobId = t.job.jobId;
                 worker.active.task = t;
-                worker.active.status = 'map';
+                worker.active.status = 'working'; //'map';
             },
             notifyTaskDone: function(t) {
                 var m = worker.createMessage(worker.TYPE_ACK, {
@@ -242,12 +262,13 @@ var worker = (function() {
             tasks: [],
 
             startTask: function(spec) {
-                var t = new ReduceTask(spec.job, spec.reduceStatus.partitionId, 'FIXME');
+                //var t = new ReduceTask(spec.job, spec.reduceStatus.partitionId);
+                var t = worker.ReduceTaskFactory.createInstance(spec.job, spec.reduceStatus.partitionId);
                 worker.reduce.tasks[t.partitionId] = t;
-                worker.reduce.tasks[t.partitionId].task.start();
+                worker.reduce.tasks[t.partitionId].start();
                 worker.active.jobId = t.job.jobId;
                 worker.active.task = t;
-                worker.active.status = 'reduce';
+                worker.active.status = 'working'; //'reduce';
             },
             startSplit: function(spec) {
                 var t = new ReduceSplit(spec.job, spec.reduceStatus.partitionId, spec.reduceStatus.splitId, spec.location);
@@ -255,7 +276,7 @@ var worker = (function() {
                 worker.reduce.tasks[t.partitionId].splits[t.splitId].start();
                 worker.active.jobId = t.job.jobId;
                 worker.active.task = t;
-                worker.active.status = 'reduce';
+                worker.active.status = 'working'; //'reduce';
             },
             nextSplit: function(spec) {
                 var m = worker.createMessage(worker.TYPE_ACK, {
@@ -280,7 +301,7 @@ var worker = (function() {
                 var m = worker.createMessage(worker.TYPE_ACK, {
                     action: 'reduceTask',
                     reduceStatus: {
-                        partitionId: t.partitionId
+                        partitionId: t.partitionId + "" //FIXME: remove string cast
                     },
                     unreachable: {
                     },

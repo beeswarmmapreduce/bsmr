@@ -9,7 +9,7 @@ public class Job
 {
 	private static Logger logger = Util.getLoggerForClass(Job.class); 
 	
-	private static Map<Integer, Job> jobList;
+	private static Map<Integer, Job> jobMap;
 	
 	/** Object fields **/
 	
@@ -28,7 +28,7 @@ public class Job
 	private final long acknowledgeTimeout;
 	
 	static {
-		jobList = new HashMap<Integer, Job>();
+		jobMap = new HashMap<Integer, Job>();
 	}
 	
 	
@@ -55,12 +55,12 @@ public class Job
 				if (thisJob > 0) { try { Thread.sleep(10); } catch(Exception e) {} }
 				thisJob = (int)((System.currentTimeMillis()/100) % Integer.MAX_VALUE);
 				
-			} while (jobList.containsKey(thisJob));
+			} while (jobMap.containsKey(thisJob));
 		}
 		
 		Job ret = new Job(thisJob, splits, partitions, heartbeatTimeout, acknowledgeTimeout);
 		logger.info("Created new Job "+ret);
-		jobList.put(thisJob, ret); // auto-boxing
+		jobMap.put(thisJob, ret); // auto-boxing
 		
 		return ret;
 	}
@@ -82,7 +82,7 @@ public class Job
 	 */
 	public void removeJob()
 	{
-		jobList.remove(jobId);
+		jobMap.remove(jobId);
 	}
 	
 	public void finishJob()
@@ -123,7 +123,7 @@ public class Job
 
 	public static Job getJobById(int jobId)
 	{
-		return jobList.get(jobId); // auto-boxing
+		return jobMap.get(jobId); // auto-boxing
 	}
 
 	public int getJobId()

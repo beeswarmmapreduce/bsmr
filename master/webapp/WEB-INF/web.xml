@@ -13,10 +13,21 @@
     <load-on-startup>1</load-on-startup>
   </servlet>
 
+  <servlet>
+    <servlet-name>Splits</servlet-name>
+    <servlet-class>fi.helsinki.cs.bsmr.fs.SplitServlet</servlet-class>
+  </servlet>
+
   <servlet-mapping>
     <servlet-name>Master</servlet-name>
     <url-pattern>/bsmr/*</url-pattern>
   </servlet-mapping>
+
+  <servlet-mapping>
+    <servlet-name>Splits</servlet-name>
+    <url-pattern>/fs/splits</url-pattern>
+  </servlet-mapping>
+
   
 </web-app>
 

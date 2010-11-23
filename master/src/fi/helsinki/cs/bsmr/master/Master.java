@@ -93,7 +93,16 @@ public class Master extends WorkerStore
 		synchronized (this) 
 		{	
 			if (msg.getJob() == activeJob) {
-				// TODO: acknowledge data from worker
+				// acknowledge data from worker
+				switch (msg.getAction()) {
+				case mapTask:
+					activeJob.getSplitInformation().acknowledgeWork(worker, msg.getMapStatus().split);
+					break;
+					
+				case reduceTask:
+					activeJob.getPartitionInformation().acknowledgeWork(worker, msg.getReduceStatus().partition);
+					break;
+				}
 			}
 
 			// TODO: mark unavailable URLS /* FOR THIS REQUEST ONLY */

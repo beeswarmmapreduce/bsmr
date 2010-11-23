@@ -60,10 +60,20 @@ if (typeof('worker') != 'undefined') {
     worker.TMO_ReduceTask.prototype = new worker.ReduceTask();
     worker.TMO_ReduceTask.prototype.start = function() {
         worker.log('Reduce task started (TMO)');
-        worker.active.tid = setTimeout(function() {
-            worker.active.task.done();
-        }, worker.control.taskLenMs);
+        this.doSplit();
     }
+    worker.TMO_ReduceTask.doSplit = function() {
+        if (this.isDone()) {
+            this.done();
+        }
+        else {
+            var that = this;
+            worker.active.tid = setTimeout(function() {
+                worker.reduce.nextSplit(that);
+            }, worker.control.taskLenMs);
+        }
+    }
+
 
     /* user-interactive mode task */
     worker.IVE_ReduceTask = function(job, partitionId) {

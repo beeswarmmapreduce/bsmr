@@ -49,6 +49,7 @@ var worker = (function() {
     /* ReduceTask class */
     function ReduceTask(job, partitionId) {
         this.splits = [];
+        this._i = 0;
 
         this.job = job;
         this.partitionId = partitionId;
@@ -64,25 +65,28 @@ var worker = (function() {
         worker.log('Reduce task started');
         this.doSplit();
     }
+    ReduceTask.prototype.getNextSplitId = function() {
+        if (this._i < this.job.M) {
+            this._i += 1;
+            return this._i;
+        }
+        return null;
+    }
     ReduceTask.prototype.isDone = function() {
         var n = 0; 
-        for (var s in this.splits) {
-            if (this.splits[i].isDone()) {
+        for (var i=0; i<this.splits.length; i++) {
+            if (this.splits[i] && this.splits[i].isDone()) {
                 ++n;
             }
         }
         return (n == this.job.M);
     },
-    ReduceTask.prototype.doSplit = function(t) {
-        var that = this;
+    ReduceTask.prototype.doSplit = function() {
         if (this.isDone()) {
             this.done();
+            return;
         }
-        else {
-            worker.active.tid = setTimeout(function() {
-                worker.reduce.nextSplit(that);
-            }, worker.control.taskLenMs);
-        }
+        worker.reduce.nextSplit(this, this.getNextSplitId());
     }
     ReduceTask.prototype.done = function() {
         worker.log('Reduce task done');
@@ -111,10 +115,6 @@ var worker = (function() {
         //      worker.fetchMapData(this, l);
         // ...?
         // this.done()
-        var that = this;
-        worker.active.tid = setTimeout(function() {
-            this.done();
-        }, worker.control.taskLenMs)
     }
     ReduceSplit.prototype.isDone = function() {
         return this.done;
@@ -192,7 +192,12 @@ var worker = (function() {
                 }
             },
             step: function() {
-                worker.active.task.done();
+                if (worker.active.task instanceof worker.ReduceTask) {
+                    worker.active.task.doSplit();
+                }
+                else {
+                    worker.active.task.done();
+                }
             },
             stop: function() {
                 //[TODO?]
@@ -271,19 +276,20 @@ var worker = (function() {
                 worker.active.status = 'working'; //'reduce';
             },
             startSplit: function(spec) {
-                var t = new ReduceSplit(spec.job, spec.reduceStatus.partitionId, spec.reduceStatus.splitId, spec.location);
+                //var t = new ReduceSplit(spec.job, spec.reduceStatus.partitionId, spec.reduceStatus.splitId, spec.location);
+                var t = worker.ReduceSplitFactory.createInstance(spec.job, spec.reduceStatus.partitionId, spec.reduceStatus.splitId, spec.location);
                 worker.reduce.tasks[t.partitionId].splits[t.splitId] = t;
                 worker.reduce.tasks[t.partitionId].splits[t.splitId].start();
                 worker.active.jobId = t.job.jobId;
                 worker.active.task = t;
                 worker.active.status = 'working'; //'reduce';
             },
-            nextSplit: function(spec) {
+            nextSplit: function(t, splitId) {
                 var m = worker.createMessage(worker.TYPE_ACK, {
                     action: 'reduceSplit',
                     reduceStatus: {
-                        partitionId: t.partitionId,
-                        splitId: t.splitId
+                        partitionId: t.partitionId + "", //FIXME: remove string cast
+                        splitId: splitId + "" //FIXME: remove string cast
                     },
                     unreachable: {
                     },
@@ -295,7 +301,7 @@ var worker = (function() {
                 //[TODO: also pos. rename]
             },
             notifySplitDone: function(t) {
-                worker.reduce.tasks[t.partitionId].splits[t.splitId].doSplit();
+                worker.reduce.tasks[t.partitionId].doSplit();
             },
             notifyTaskDone: function(t) {
                 var m = worker.createMessage(worker.TYPE_ACK, {

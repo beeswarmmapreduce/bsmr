@@ -52,16 +52,17 @@ public class MasterWebSocketServlet extends WebSocketServlet
 		
 		logger.finest("doWebSocketConnect()");
 		
-		if (service.equals("worker")) {
-		
-			return master.createWorker();
+		if (service != null) {
+			if (service.equals("worker")) {
+			
+				return master.createWorker(request.getRemoteAddr());
+			}
+			
+			if (service.equals("console")) {
+				// TODO: auth?
+				return master.createConsole();
+			}
 		}
-		
-		if (service.equals("console")) {
-			// TODO: auth?
-			return master.createConsole();
-		}
-		
 		return null; // Seems there is no proper way to say "no such service"
 	}
 

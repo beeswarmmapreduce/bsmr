@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 public abstract class WorkerStore
@@ -40,9 +41,9 @@ public abstract class WorkerStore
 		}
 	}
 	
-	public Worker createWorker()
+	public Worker createWorker(String remoteAddr)
 	{
-		return new Worker(this);
+		return new Worker(this, remoteAddr);
 	}
 	
 
@@ -75,5 +76,15 @@ public abstract class WorkerStore
 	
 	public abstract Message executeWorkerMessage(Worker w, Message msg);
 	public abstract boolean isActive();
+
+	public String getWorkerURL(Worker worker) 
+	{
+		for (Entry<String, Worker> entry : workerURLs.entrySet()) {
+			if (entry.getValue() == worker) {
+				return entry.getKey();
+			}
+		}
+		return null;
+	}
 	
 }

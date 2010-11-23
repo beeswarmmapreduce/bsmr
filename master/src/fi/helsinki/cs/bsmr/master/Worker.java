@@ -15,14 +15,16 @@ public class Worker implements WebSocket
 	
 	private Outbound out;
 	private WorkerStore workerStore;
+	private String workerRemoteAddr;
 	
 	private long lastHearbeat;
 	private long lastProgress;
 
 	
-	Worker(WorkerStore workerStore)
+	Worker(WorkerStore workerStore, String remoteAddr)
 	{
 		this.workerStore = workerStore;
+		this.workerRemoteAddr = remoteAddr;
 		
 		// Before worker starts communicating, it should be "dead":
 		this.lastHearbeat = -1;
@@ -104,7 +106,7 @@ public class Worker implements WebSocket
 		Message msg;
 		
 		try {
-			msg = Message.parseMessage(jsonMsg, workerStore);
+			msg = Message.parseMessage(jsonMsg, workerStore, workerRemoteAddr);
 		} catch(IllegalMessageException ime) {
 			logger.log(Level.SEVERE,"Illegal message from worker", ime);
 			if (logger.isLoggable(Level.FINE)) {
@@ -125,7 +127,8 @@ public class Worker implements WebSocket
 			if (msg.getAction() == Message.Action.socket) {
 				workerStore.setWorkerURL(this, msg.getSocketURL());
 			}
-			
+		
+				
 			if (!workerStore.isActive()) {
 				
 				if (msg.getType() == Type.HB) {
@@ -148,13 +151,14 @@ public class Worker implements WebSocket
 				
 				if (msg.getType() == Type.HB) {
 					// If just a pure heart beat, we do not reply
-					logger.fine("heartbeat");
-					return;
+					if (msg.getAction() != Message.Action.idle) {
+						logger.fine("heartbeat");
+						return;
+					}
+					logger.info("Worker idle but there's work to do");
 				}
 
 				lastProgress = TimeContext.now();
-				
-				
 				
 				// TODO: parse a "where is worker message"?
 				
@@ -207,6 +211,12 @@ public class Worker implements WebSocket
 	public void sendMessage(Message reply) throws IOException
 	{
 		out.sendMessage(reply.encodeMessage());		
+	}
+
+
+	public String getSocketURL() 
+	{
+		return workerStore.getWorkerURL(this);
 	}
 	
 }

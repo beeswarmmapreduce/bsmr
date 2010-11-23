@@ -89,7 +89,7 @@ public class Master extends WorkerStore
 	 */
 	public Message executeWorkerMessage(Worker worker, Message msg)
 	{	
-		// msg will be of type ACK. worker checks this
+		// msg will be of type ACK (or HB when idle workers are woken up). worker checks this
 		synchronized (this) 
 		{	
 			if (msg.getJob() == activeJob) {
@@ -104,11 +104,7 @@ public class Master extends WorkerStore
 					break;
 				}
 			}
-
-			// TODO: mark unavailable URLS /* FOR THIS REQUEST ONLY */
-			
-			
-			
+						
 			// Check if all partitions are reduced
 			boolean allPartitionsDone = activeJob.getPartitionInformation().areAllPartitionsDone();
 			
@@ -163,8 +159,8 @@ public class Master extends WorkerStore
 			    msg.getAction() == Message.Action.reduceSplit && 
 				!activeJob.getPartitionInformation().isPartitionDone(msg.getIncompleteReducePartition())) { 
 				
-				
-				return null;
+				return Message.findSplitAtMessage(msg.getReduceStatus().partition, msg.getReduceStatus().split, activeJob, msg.getUnareachableWorkers());
+
 			} else {
 				
 				// All splits are done => Assign a partition for reducing

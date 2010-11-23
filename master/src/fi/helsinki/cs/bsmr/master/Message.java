@@ -1,5 +1,6 @@
 package fi.helsinki.cs.bsmr.master;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -29,7 +30,6 @@ public class Message
 	private static final String FIELD_TYPE           = "type";
 	private static final String FIELD_JOBID          = "jobId";
 	private static final String FIELD_JOB_MAP        = "job";
-	private static final String FIELD_URL            = "url";
 	
 	private static final String FIELD_MAPSTATUS      = "mapStatus";
 	private static final String FIELD_REDUCESTATUS   = "reduceStatus";
@@ -42,6 +42,11 @@ public class Message
 	private static final String FIELD_PARTITIONID    = "partitionId";
 	private static final String FIELD_REDUCE_LOCATION = "location";
 	
+	private static final String FIELD_SOCKET_PROTOCOL = "protocol";
+	private static final String FIELD_SOCKET_PORT     = "port";
+	private static final String FIELD_SOCKET_RESOURCE = "resource";
+	
+	
 	private static final String FIELD_CODE = "code";
 	
 	private Type type;
@@ -53,6 +58,7 @@ public class Message
 	private MapStatus mapStatus;
 	private ReduceStatus reduceStatus;
 	private Set<Worker> unreachableWorkers;
+	
 	
 	
 	private Message(Type t, Action a)
@@ -79,7 +85,7 @@ public class Message
 		this.unreachableWorkers = null;
 	}
 	
-	private Message(Map<Object, Object> d, WorkerStore workers) throws IllegalMessageException
+	private Message(Map<Object, Object> d, WorkerStore workers, String remoteAddr) throws IllegalMessageException
 	{
 		Map<?, ?> payload = (Map<?, ?>) d.get(FIELD_PAYLOAD);
 		if (payload == null) {
@@ -106,14 +112,37 @@ public class Message
 		
 		if (payload.containsKey(FIELD_JOBID)) {
 			Long tmp = (Long)payload.get(FIELD_JOBID);
-			this.job = Job.getJobById( tmp.intValue() );
+			if (tmp != null) {
+				this.job = Job.getJobById( tmp.intValue() );
+			}
 		}
 		
-		this.socketUrl = (String)payload.get(FIELD_URL);
+	
+		this.socketUrl = constructURL((String)payload.get(FIELD_SOCKET_PROTOCOL),
+				                      remoteAddr,payload.get(FIELD_SOCKET_PORT),
+				                      (String)payload.get(FIELD_SOCKET_RESOURCE));
 		this.mapStatus    = createMapStatus((Map<?, ?>)payload.get(FIELD_MAPSTATUS));
 		this.reduceStatus = createReduceStatus((Map<?, ?>)payload.get(FIELD_REDUCESTATUS));
 				
 		this.unreachableWorkers = parseWorkers( payload.get(FIELD_UNREACHABLE), workers);
+	}
+	
+	public static String constructURL(String protocol, String remoteAddr, Object port, String resource)
+	{
+		if (protocol == null || port == null || resource == null) return null;
+		
+		StringBuffer ret = new StringBuffer();
+		ret.append(protocol);
+		ret.append("://");
+		ret.append(remoteAddr);
+		ret.append(":");
+		ret.append(port);
+		if (resource.length() > 0 && resource.charAt(0) != '/') {
+			ret.append('/');
+		}
+		ret.append(resource);
+		
+		return ret.toString();
 	}
 	
 	private static Set<Worker> parseWorkers(Object workersAsUrls, WorkerStore workers)
@@ -127,11 +156,20 @@ public class Message
 			logger.fine("Parsing workers from message using a map?? Using the keys");
 			set = ((Map)workersAsUrls).keySet();
 		} else {
-			if (workersAsUrls != null) {
-				logger.severe("Unable to use workersAsUrls parameter: "+workersAsUrls);
+			try {
+				Object []tmp = (Object[])workersAsUrls;
+				set = new ArrayList<Object>();
+				for (Object o : tmp) {
+					set.add(o);
+				}
+			} catch(ClassCastException cce) {
+				if (workersAsUrls != null) {
+					logger.severe("Unable to use workersAsUrls parameter: "+workersAsUrls);
+				}
+				return Collections.emptySet();
 			}
 			
-			return Collections.emptySet();
+			
 		}
 		
 		Set<Worker> ret = new HashSet<Worker>();
@@ -180,11 +218,11 @@ public class Message
 	 * @param msg Message as string
 	 * @return Parsed Message
 	 */
-	public static Message parseMessage(String msg, WorkerStore workers) throws IllegalMessageException
+	public static Message parseMessage(String msg, WorkerStore workers, String remoteAddr) throws IllegalMessageException
 	{
 		Map<Object, Object> tmp = (Map<Object, Object>)JSON.parse(msg);
 		try {
-			return new Message(tmp, workers);
+			return new Message(tmp, workers, remoteAddr);
 		} catch(IllegalMessageException ime) {
 			ime.setProblematicMessage(msg);
 			throw ime;
@@ -252,10 +290,19 @@ public class Message
 		return ret;
 	}
 	
-	public static Message findSplitAtMessage(Partition p, Split s, Job j)
+	public static Message findSplitAtMessage(Partition p, Split s, Job j, Set<Worker> unreachableWorkers)
 	{
 		Message ret = new Message(Type.DO, Action.reduceSplit, j);
-		ret.reduceStatus = ret.new ReduceStatus(p, s, j.getSplitInformation().whoHasSplit(s));
+		Set<Worker> hasSplit = new HashSet<Worker>();
+		
+		for (Worker w : j.getSplitInformation().whoHasSplit(s)) {
+			
+			if (unreachableWorkers.contains(w)) continue;
+			
+			hasSplit.add(w);
+		}
+		
+		ret.reduceStatus = ret.new ReduceStatus(p, s, hasSplit);
 		return ret;
 	}
 
@@ -319,7 +366,14 @@ public class Message
 			
 			ret.put(FIELD_PARTITIONID, partition.getId());
 			if (split != null) ret.put(FIELD_SPLITID, split.getId());
-			if (location != null) ret.put(FIELD_REDUCE_LOCATION, location);
+			
+			if (location != null) {
+				Set<String> tmp = new HashSet<String>();
+				for (Worker w : location) {
+					tmp.add(w.getSocketURL());
+				}	
+				ret.put(FIELD_REDUCE_LOCATION, tmp);	
+			}
 			
 			return ret;
 		}

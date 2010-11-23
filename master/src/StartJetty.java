@@ -1,3 +1,5 @@
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -32,15 +34,22 @@ public class StartJetty
 		
 		// Add a false master and a made up job
 		Master master = new Master();
-		//Job j = Job.createJob(1000, 30, 60000, 60000*60);
-		Job j = Job.createJob(3, 3, 60000, 60000*60);
-		master.queueJob(j);
-		master.startNextJob();
 		
 		MasterWebSocketServlet.master = master;
 
 		try {
 			server.start();
+			
+			BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+			
+			while( br.readLine() != null) {
+				//Job j = Job.createJob(1000, 30, 60000, 60000*60);
+				Job j = Job.createJob(3, 3, 60000, 60000*60);
+				master.queueJob(j);
+				master.startNextJob();				
+			}
+			
+			
 			server.join();
 		} catch (Exception e) {
 			e.printStackTrace();

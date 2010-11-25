@@ -125,48 +125,46 @@ public class Worker implements WebSocket
 		if (msg.getAction() == Message.Action.socket) {
 			workerStore.setWorkerURL(this, msg.getSocketURL());
 		}
-		
-		synchronized (workerStore) {
-
-			if (!workerStore.isActive()) {
-				
-				if (msg.getType() == Type.HB) {
-					logger.warning("A worker sent a non-heartbeat while no active job");
-				}
-				
-				lastHearbeat = TimeContext.now();
-				lastProgress = TimeContext.now();
-				
-				reply = null;
-				
-			} else {
-				
-				// The heart beat is always updated
-				lastHearbeat = TimeContext.now();
-				
-				if (msg.getType() == Type.HB) {
-					// If just a pure heart beat, we do not reply
-					if (msg.getAction() != Message.Action.idle) {
-						logger.fine("heartbeat");
-						return;
-					}
-					logger.info("Worker idle but there's work to do");
-				}
-
-				lastProgress = TimeContext.now();
-				
-				
-				boolean moreToBeDone = workerStore.acknowledgeWork(this, msg);
-				
-				if (moreToBeDone) {
-					reply = workerStore.selectTaskForWorker(this, msg);
-				} else {
-					reply = null;
-				}
-				
-				
+	
+		if (!workerStore.isActive()) {
+			
+			if (msg.getType() == Type.HB) {
+				logger.warning("A worker sent a non-heartbeat while no active job");
 			}
+			
+			lastHearbeat = TimeContext.now();
+			lastProgress = TimeContext.now();
+			
+			reply = null;
+			
+		} else {
+			
+			// The heart beat is always updated
+			lastHearbeat = TimeContext.now();
+			
+			if (msg.getType() == Type.HB) {
+				// If just a pure heart beat, we do not reply
+				if (msg.getAction() != Message.Action.idle) {
+					logger.fine("heartbeat");
+					return;
+				}
+				logger.info("Worker idle but there's work to do");
+			}
+
+			lastProgress = TimeContext.now();
+			
+			
+			boolean moreToBeDone = workerStore.acknowledgeWork(this, msg);
+			
+			if (moreToBeDone) {
+				reply = workerStore.selectTaskForWorker(this, msg);
+			} else {
+				reply = null;
+			}
+			
+			
 		}
+	
 		
 		if (reply != null) {
 			try {

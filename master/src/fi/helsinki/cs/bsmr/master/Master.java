@@ -30,7 +30,7 @@ public class Master extends WorkerStore
 		jobQueue    = new LinkedList<Job>();
 	}
 
-	public void queueJob(Job j) throws JobAlreadyRunningException
+	public synchronized void queueJob(Job j) throws JobAlreadyRunningException
 	{
 		if (j.isStarted() || j.isFinished()) {
 			logger.severe("Tried to add job "+j+" to job queue, but it's in an illegal state (started or finished)");
@@ -40,8 +40,9 @@ public class Master extends WorkerStore
 		jobQueue.add(j);
 	}
 	
-	public boolean startNextJob() throws JobAlreadyRunningException
+	public synchronized boolean startNextJob() throws JobAlreadyRunningException
 	{
+		
 		if (activeJob != null && !activeJob.isFinished()) {
 			logger.severe("Tried to start next job, but we have a non-finished active job!");
 			throw new JobAlreadyRunningException("Tried to start next job, but we have a non-finished active job!");
@@ -91,7 +92,7 @@ public class Master extends WorkerStore
 		return true;
 	}
 	
-	private void finishCurrentJobAndStartNext()
+	private synchronized void finishCurrentJobAndStartNext()
 	{
 		activeJob.finishJob();
 		
@@ -140,7 +141,7 @@ public class Master extends WorkerStore
 	 * @param msg The message
 	 * @return True if there is work to be done, false if the worker should be idle.
 	 */
-	public boolean acknowledgeWork(Worker worker, Message msg)
+	public synchronized boolean acknowledgeWork(Worker worker, Message msg)
 	{
 		if (msg.getJob() == activeJob) {
 			// acknowledge data from worker
@@ -210,7 +211,7 @@ public class Master extends WorkerStore
 	 * @param msg The message
 	 * @return Reply message to the worker
 	 */
-	public Message selectTaskForWorker(Worker worker, Message msg)
+	public synchronized Message selectTaskForWorker(Worker worker, Message msg)
 	{	
 
 		// All partitions are not done yet, but let's first check the splits:

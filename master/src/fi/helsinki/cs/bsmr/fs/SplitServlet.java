@@ -23,30 +23,43 @@ public class SplitServlet extends HttpServlet
 	{
 		String []path = req.getPathInfo().split("/");
 		
-		if (path.length != 2) {
-			error("Specify path so that the url ends with /[split] (split as an integer)", req, resp);
+		if (path.length != 3) {
+			error("Specify path so that the url ends with /[job]/[split] (both as integers)", req, resp);
 			return;
 		}
 		
-		String splitAsString = path[1];
+		String jobAsString   = path[1];
+		String splitAsString = path[2];
+		int thisJob;
 		int thisSplit;
 		
 		try {
 			thisSplit = Integer.parseInt(splitAsString);
 		} catch(NullPointerException npe) {
-			error("Specify path so that the url ends with /split (split as an integer)", req, resp);
+			error("Specify path so that the url ends with /[job]/[split] (both as integers)", req, resp);
 			return;
 		} catch(NumberFormatException nfe) {
 			error("Split ("+splitAsString+") is not na number: "+nfe, req, resp);
 			return;
 		}
 		
-		retrieveSplit(thisSplit, req, resp);
+		try {
+			thisJob = Integer.parseInt(jobAsString);
+		} catch(NullPointerException npe) {
+			error("Specify path so that the url ends with /[job]/[split] (both as integers)", req, resp);
+			return;
+		} catch(NumberFormatException nfe) {
+			error("Job ("+jobAsString+") is not a number: "+nfe, req, resp);
+			return;
+		}
+		
+		retrieveSplit(thisJob, thisSplit, req, resp);
 	}
 	
-	private void retrieveSplit(int split, HttpServletRequest req, HttpServletResponse resp) 
+	private void retrieveSplit(int job, int split, HttpServletRequest req, HttpServletResponse resp) 
 		throws IOException
 	{
+		// TODO: the job parameter is not used
 		InputStream is = this.getClass().getClassLoader().getResourceAsStream("data.txt.gz");
 		if (is == null) {
 			error("could not open data.txt.gz", req, resp);

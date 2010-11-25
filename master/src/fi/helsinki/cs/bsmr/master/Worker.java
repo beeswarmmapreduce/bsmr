@@ -160,9 +160,14 @@ public class Worker implements WebSocket
 
 				lastProgress = TimeContext.now();
 				
-				// TODO: parse a "where is worker message"?
 				
-				reply = workerStore.executeWorkerMessage(this, msg);
+				boolean moreToBeDone = workerStore.acknowledgeWork(this, msg);
+				
+				if (moreToBeDone) {
+					reply = workerStore.selectTaskForWorker(this, msg);
+				} else {
+					reply = null;
+				}
 				
 				
 			}

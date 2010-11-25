@@ -1,7 +1,6 @@
 package fi.helsinki.cs.bsmr.master;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -29,7 +28,6 @@ public class Master extends WorkerStore
 	{
 		activeJob   = null;
 		jobQueue    = new LinkedList<Job>();
-		workerURLs  = new HashMap<String, Worker>();
 	}
 
 	public void queueJob(Job j) throws JobAlreadyRunningException
@@ -50,7 +48,7 @@ public class Master extends WorkerStore
 		}
 		
 		if (jobQueue.isEmpty()) {
-			logger.warning("Tried to start next job, but no jobs in queue");
+			logger.fine("Tried to start next job, but no jobs in queue");
 			return false;
 		}
 		
@@ -77,6 +75,92 @@ public class Master extends WorkerStore
 	}
 
 	/**
+	 * Acknowledges work from the worker. If the message acknowledges the last part of the current job, it will start the next job.
+	 * If no new jobs are queued, this will send idle messages to all workers and return false. 
+	 * 
+	 * @note This function can switch the active job!
+	 * 
+	 * @param worker The worker who is acknowledging work
+	 * @param msg The message
+	 * @return True if there is work to be done, false if the worker should be idle.
+	 */
+	public boolean acknowledgeWork(Worker worker, Message msg)
+	{
+
+		if (msg.getJob() == activeJob) {
+			// acknowledge data from worker
+			switch (msg.getAction()) {
+			case mapTask:
+				activeJob.getSplitInformation().acknowledgeWork(worker, msg.getMapStatus().split);
+				break;
+				
+			case reduceTask:
+				activeJob.getPartitionInformation().acknowledgeWork(worker, msg.getReduceStatus().partition);
+				break;
+			}
+		}
+	
+		// Check if all partitions are reduced
+		boolean allPartitionsDone = activeJob.getPartitionInformation().areAllPartitionsDone();
+		
+		boolean thereIsWorkToBeDone = true;
+		
+		// If the job is not yet marked as finished
+		// !activeJob.isFinished() is documentation. we don't execute this function if the job is finished
+		if (allPartitionsDone && !activeJob.isFinished()) { 
+			activeJob.finishJob();
+			
+			try {
+				thereIsWorkToBeDone = startNextJob();
+			} catch(JobAlreadyRunningException jare) {
+				logger.log(Level.SEVERE,"Programming error or concurrency issue! the previous active job was marked as finished and the attempt to start the next warns that there is a job already running!", jare);
+				return false;
+			}
+			
+		}
+		
+		if (!thereIsWorkToBeDone) 
+		{
+			// This is executed only when there was no new job in the job queue
+			pauseAllWorkers();
+			return false;
+		}
+	
+		return true;
+	}
+
+	private void pauseAllWorkers() 
+	{
+		Message pause = Message.pauseMessage(); 
+		
+		Set<Worker> badWorkers = null;
+		
+		for (Worker w : workers) {
+			
+			try {
+				w.sendMessage(pause);
+			} catch(IOException ie) {
+				logger.log(Level.SEVERE, "Could not pause worker. Terminating connection.", ie);
+				if (badWorkers == null) badWorkers = new HashSet<Worker>();
+				
+				badWorkers.add(w);
+			}	
+		}
+		
+		if (badWorkers != null) {
+			for (Worker bad : badWorkers) {
+				try {
+					removeWorker(bad);
+				} catch(WorkerInIllegalStateException wiise) {
+					logger.log(Level.SEVERE, "Bad worker could not be removed?..", wiise);
+				} finally {
+					bad.disconnect();
+				}
+			}
+		}
+	}
+
+	/**
 	 * Executes a worker message. Marks done splits or partitions and assigns new work.
 	 * This method expects to receive an ACK message with the correct job id. The worker
 	 * is already synchronized on executeLock, but the same thread can sync on the 
@@ -87,92 +171,32 @@ public class Master extends WorkerStore
 	 * @param msg The message
 	 * @return Reply message to the worker
 	 */
-	public Message executeWorkerMessage(Worker worker, Message msg)
+	public Message selectTaskForWorker(Worker worker, Message msg)
 	{	
-		// msg will be of type ACK (or HB when idle workers are woken up). worker checks this
-		synchronized (this) 
-		{	
-			if (msg.getJob() == activeJob) {
-				// acknowledge data from worker
-				switch (msg.getAction()) {
-				case mapTask:
-					activeJob.getSplitInformation().acknowledgeWork(worker, msg.getMapStatus().split);
-					break;
-					
-				case reduceTask:
-					activeJob.getPartitionInformation().acknowledgeWork(worker, msg.getReduceStatus().partition);
-					break;
-				}
-			}
-						
-			// Check if all partitions are reduced
-			boolean allPartitionsDone = activeJob.getPartitionInformation().areAllPartitionsDone();
-			
-			// If the job is not yet marked as finished
-			// !activeJob.isFinished() == Documentation. we don't execute this function if the job is finished
-			if (allPartitionsDone && !activeJob.isFinished()) { 
-				activeJob.finishJob();
-				
-				Message pause = Message.pauseMessage(activeJob); 
-				
-				Set<Worker> badWorkers = null;
-				
-				for (Worker w : workers) {
-					if (w == worker) continue;
-					
-					try {
-						w.sendMessage(pause);
-					} catch(IOException ie) {
-						logger.log(Level.SEVERE, "Could not pause worker. Terminating connection.", ie);
-						if (badWorkers == null) badWorkers = new HashSet<Worker>();
-						
-						badWorkers.add(w);
-					}	
-				}
-				
-				if (badWorkers != null) {
-					for (Worker bad : badWorkers) {
-						try {
-							removeWorker(bad);
-						} catch(WorkerInIllegalStateException wiise) {
-							logger.log(Level.SEVERE, "Bad worker could not be removed?..", wiise);
-						} finally {
-							bad.disconnect();
-						}
-					}
-				}
-				
-				return pause; // this sends the message to "worker"
-			}
-			
-			
-			// All partitions are not done yet, but let's first check the splits:
-			if (!activeJob.getSplitInformation().areAllSplitsDone(msg.getUnareachableWorkers())) {
-				// Assign a map task
-				Split nextSplit = activeJob.getSplitInformation().selectSplitToWorkOn(msg.getUnareachableWorkers());
-				
-				return Message.mapThisMessage(nextSplit, activeJob);
-			} 
-			
-			// TODO: check if the worker is already reducing and is asking for a bsURL
-			if (msg.getJob() == activeJob && 
-			    msg.getAction() == Message.Action.reduceSplit && 
-				!activeJob.getPartitionInformation().isPartitionDone(msg.getIncompleteReducePartition())) { 
-				
-				return Message.findSplitAtMessage(msg.getReduceStatus().partition, msg.getReduceStatus().split, activeJob, msg.getUnareachableWorkers());
 
-			} else {
-				
-				// All splits are done => Assign a partition for reducing
-				
-				Partition nextPartition = activeJob.getPartitionInformation().selectPartitionToWorkOn();
-				
-				return Message.reduceThatMessage(nextPartition, activeJob);
-			}
-		
+		// All partitions are not done yet, but let's first check the splits:
+		if (!activeJob.getSplitInformation().areAllSplitsDone(msg.getUnareachableWorkers())) {
+			// Assign a map task
+			Split nextSplit = activeJob.getSplitInformation().selectSplitToWorkOn(msg.getUnareachableWorkers());
 			
+			return Message.mapThisMessage(nextSplit, activeJob);
+		} 
+		
+		// TODO: check if the worker is already reducing and is asking for a bsURL
+		if (msg.getJob() == activeJob && 
+		    msg.getAction() == Message.Action.reduceSplit && 
+			!activeJob.getPartitionInformation().isPartitionDone(msg.getIncompleteReducePartition())) { 
+			
+			return Message.findSplitAtMessage(msg.getReduceStatus().partition, msg.getReduceStatus().split, activeJob, msg.getUnareachableWorkers());
+
+		} else {
+			
+			// All splits are done => Assign a partition for reducing
+			
+			Partition nextPartition = activeJob.getPartitionInformation().selectPartitionToWorkOn();
+			
+			return Message.reduceThatMessage(nextPartition, activeJob);
 		}
-	
 	}
 	
 	public Job getActiveJob()

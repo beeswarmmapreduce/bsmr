@@ -258,9 +258,9 @@ public class Message
 			jobMap.put(FIELD_NUM_PARTITIONS, job.getPartitions());
 			
 			payload.put(FIELD_JOB_MAP, jobMap);
-		}
 		
-		payload.put(FIELD_CODE, job.getCode());
+			payload.put(FIELD_CODE, job.getCode());
+		}
 		
 		return JSON.toString(data);
 	}
@@ -270,6 +270,10 @@ public class Message
 		return encodeMessage();
 	}
 	
+	public static Message pauseMessage()
+	{
+		return new Message(Type.DO, Action.idle);
+	}
 	
 	public static Message pauseMessage(Job j)
 	{

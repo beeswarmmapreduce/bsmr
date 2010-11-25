@@ -1,6 +1,8 @@
 #!/bin/sh
 
-wget http://eclipse.nordnet.fi/eclipse/jetty/8.0.0.M1/dist/jetty-distribution-8.0.0.M1.tar.bz2 && \
-tar xf jetty-distribution-8.0.0.M1.tar.bz2 && \
-rm jetty-distribution-8.0.0.M1.tar.bz2
+VERSION=8.0.0.M2
+
+wget http://eclipse.nordnet.fi/eclipse/jetty/$VERSION/dist/jetty-distribution-$VERSION.tar.bz2 && \
+tar xf jetty-distribution-$VERSION.tar.bz2 && \
+rm jetty-distribution-$VERSION.tar.bz2
 

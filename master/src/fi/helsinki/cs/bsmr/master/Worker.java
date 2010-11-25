@@ -187,14 +187,6 @@ public class Worker implements WebSocket
 
 	}
 
-	@Override
-	public void onMessage(byte arg0, byte[] arg1, int arg2, int arg3)
-	{
-		TimeContext.markTime();
-		logger.severe("onMessage() byte format unsupported!");
-		throw new RuntimeException("onMessage() byte format unsupported!");
-	}
-
 
 	public boolean isAvailable(Job job)
 	{
@@ -217,6 +209,24 @@ public class Worker implements WebSocket
 	public String getSocketURL() 
 	{
 		return workerStore.getWorkerURL(this);
+	}
+
+
+	@Override
+	public void onMessage(byte arg0, byte[] arg1, int arg2, int arg3)
+	{
+		TimeContext.markTime();
+		logger.severe("onMessage() byte format unsupported!");
+		throw new RuntimeException("onMessage() byte format unsupported!");
+	}
+
+	@Override
+	public void onFragment(boolean arg0, byte arg1, byte[] arg2, int arg3,
+			int arg4) 
+	{
+		TimeContext.markTime();
+		logger.severe("onFragment() byte format unsupported!");
+		throw new RuntimeException("onFragment() byte format unsupported!");
 	}
 	
 }

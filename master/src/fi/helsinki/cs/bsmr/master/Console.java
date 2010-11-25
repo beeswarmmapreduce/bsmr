@@ -46,4 +46,12 @@ public class Console implements WebSocket
 		throw new RuntimeException("onMessage() byte format unsupported!");
 	}
 
+	@Override
+	public void onFragment(boolean arg0, byte arg1, byte[] arg2, int arg3, int arg4) 
+	{
+		TimeContext.markTime();
+		throw new RuntimeException("onFragment() byte format unsupported!");
+		
+	}
+
 }

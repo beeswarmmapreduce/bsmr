@@ -8,6 +8,7 @@ import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.webapp.WebAppContext;
 
 import fi.helsinki.cs.bsmr.master.Job;
+import fi.helsinki.cs.bsmr.master.JobAlreadyRunningException;
 import fi.helsinki.cs.bsmr.master.Master;
 import fi.helsinki.cs.bsmr.master.MasterWebSocketServlet;
 
@@ -46,7 +47,11 @@ public class StartJetty
 				//Job j = Job.createJob(1000, 30, 60000, 60000*60);
 				Job j = Job.createJob(3, 3, 60000, 60000*60);
 				master.queueJob(j);
-				master.startNextJob();				
+				try {
+					master.startNextJob();
+				} catch(JobAlreadyRunningException jare) {
+					System.out.println("Still running the previous job");
+				}
 			}
 			
 			

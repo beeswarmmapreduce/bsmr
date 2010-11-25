@@ -51,7 +51,6 @@ public class Worker implements WebSocket
 		logger.fine("onConnect()");
 		this.out = out;
 
-		// TODO: is this best here, or should we wait for the UP message?
 		this.lastHearbeat = this.lastProgress = TimeContext.now();
 		
 		try {
@@ -112,7 +111,8 @@ public class Worker implements WebSocket
 			if (logger.isLoggable(Level.FINE)) {
 				logger.fine("illegal message contents: '"+ime.getProblematicMessage()+"'");
 			}
-			return; // TODO: should the worker be informed? .. naah
+			// TODO: there could be an error message to inform the worker
+			return;
 		}
 		
 		if (msg.getType() == Type.DO) {
@@ -121,28 +121,23 @@ public class Worker implements WebSocket
 		}
 		
 		Message reply;
+
+		if (msg.getAction() == Message.Action.socket) {
+			workerStore.setWorkerURL(this, msg.getSocketURL());
+		}
 		
 		synchronized (workerStore) {
 
-			if (msg.getAction() == Message.Action.socket) {
-				workerStore.setWorkerURL(this, msg.getSocketURL());
-			}
-		
-				
 			if (!workerStore.isActive()) {
 				
 				if (msg.getType() == Type.HB) {
 					logger.warning("A worker sent a non-heartbeat while no active job");
-					// TODO: send new idle?
-					reply = null; // set to idle message
-				} else {
-					reply = null;
 				}
 				
 				lastHearbeat = TimeContext.now();
 				lastProgress = TimeContext.now();
 				
-				
+				reply = null;
 				
 			} else {
 				

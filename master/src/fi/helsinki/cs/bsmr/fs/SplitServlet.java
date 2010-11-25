@@ -15,12 +15,38 @@ import javax.servlet.http.HttpServletResponse;
 
 public class SplitServlet extends HttpServlet 
 {
+	private static final long serialVersionUID = 1L;
+
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp)
 			throws ServletException, IOException 
 	{
-		int thisSplit = Integer.parseInt(req.getParameter("S"));
+		String []path = req.getPathInfo().split("/");
 		
+		if (path.length != 2) {
+			error("Specify path so that the url ends with /[split] (split as an integer)", req, resp);
+			return;
+		}
+		
+		String splitAsString = path[1];
+		int thisSplit;
+		
+		try {
+			thisSplit = Integer.parseInt(splitAsString);
+		} catch(NullPointerException npe) {
+			error("Specify path so that the url ends with /split (split as an integer)", req, resp);
+			return;
+		} catch(NumberFormatException nfe) {
+			error("Split ("+splitAsString+") is not na number: "+nfe, req, resp);
+			return;
+		}
+		
+		retrieveSplit(thisSplit, req, resp);
+	}
+	
+	private void retrieveSplit(int split, HttpServletRequest req, HttpServletResponse resp) 
+		throws IOException
+	{
 		InputStream is = this.getClass().getClassLoader().getResourceAsStream("data.txt.gz");
 		if (is == null) {
 			error("could not open data.txt.gz", req, resp);
@@ -28,7 +54,7 @@ public class SplitServlet extends HttpServlet
 		}
 		
 		BufferedReader br = new BufferedReader(new InputStreamReader(new GZIPInputStream(is))); 
-		br.skip(thisSplit * 32*1024);
+		br.skip(split * 32*1024);
 		
 		String s = br.readLine();
 		

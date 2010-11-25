@@ -18,6 +18,16 @@
     <servlet-class>fi.helsinki.cs.bsmr.fs.SplitServlet</servlet-class>
   </servlet>
 
+  <servlet>
+    <servlet-name>Partitions</servlet-name>
+    <servlet-class>fi.helsinki.cs.bsmr.fs.PartitionServlet</servlet-class>
+    <init-param>
+    	<param-name>savePath</param-name>
+    	<param-value>done</param-value>
+    </init-param>
+    <load-on-startup>2</load-on-startup>
+  </servlet>
+
   <servlet-mapping>
     <servlet-name>Master</servlet-name>
     <url-pattern>/bsmr/*</url-pattern>
@@ -25,7 +35,12 @@
 
   <servlet-mapping>
     <servlet-name>Splits</servlet-name>
-    <url-pattern>/fs/splits</url-pattern>
+    <url-pattern>/fs/splits/*</url-pattern>
+  </servlet-mapping>
+
+  <servlet-mapping>
+    <servlet-name>Partitions</servlet-name>
+    <url-pattern>/fs/partitions/*</url-pattern>
   </servlet-mapping>
 
   

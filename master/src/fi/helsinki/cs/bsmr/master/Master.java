@@ -55,7 +55,63 @@ public class Master extends WorkerStore
 		activeJob = jobQueue.remove(0);
 		activeJob.startJob();
 		
+		Set<Worker> badWorkers = null;
+		
+		Message dummyStatus = Message.pauseMessage();
+		
+		for (Worker w : workers) {
+			// Skip inactive workers because they might be dead and communicating with them would slow down operations
+			// TODO: if IO is async, this is not necessary!
+			if (!w.isAvailable(activeJob)) continue;
+			
+			Message msg = selectTaskForWorker(w, dummyStatus);
+			
+			try {
+				w.sendMessage(msg);
+			} catch(IOException ie) {
+				logger.log(Level.SEVERE, "Could not send work to worker. Terminating connection.", ie);
+				if (badWorkers == null) badWorkers = new HashSet<Worker>();
+				
+				badWorkers.add(w);
+			}
+		}
+
+		if (badWorkers != null) {
+			for (Worker bad : badWorkers) {
+				try {
+					removeWorker(bad);
+				} catch(WorkerInIllegalStateException wiise) {
+					logger.log(Level.SEVERE, "Bad worker could not be removed?.. perhaps it was removed by a callback", wiise);
+				} finally {
+					bad.disconnect();
+				}
+			}
+		}
+		
 		return true;
+	}
+	
+	private void finishCurrentJobAndStartNext()
+	{
+		activeJob.finishJob();
+		
+		// if there is no next job, this block will pause all workers
+		// if there is a next job, startNextJob() will send out initial work
+		//  => this function should always 
+		boolean newWorkStarted;
+		
+		try {
+			// startNextJob sends out messages to workers, 
+			newWorkStarted = startNextJob();
+		} catch(JobAlreadyRunningException jare) {
+			logger.log(Level.SEVERE,"Programming error or concurrency issue! the previous active job was marked as finished and the attempt to start the next warns that there is a job already running!", jare);
+			System.exit(1);
+			return; // Never reached
+		}
+		
+		if (!newWorkStarted) {
+			pauseAllWorkers();
+		}
 	}
 
 	public WebSocket createConsole()
@@ -86,7 +142,6 @@ public class Master extends WorkerStore
 	 */
 	public boolean acknowledgeWork(Worker worker, Message msg)
 	{
-
 		if (msg.getJob() == activeJob) {
 			// acknowledge data from worker
 			switch (msg.getAction()) {
@@ -103,29 +158,13 @@ public class Master extends WorkerStore
 		// Check if all partitions are reduced
 		boolean allPartitionsDone = activeJob.getPartitionInformation().areAllPartitionsDone();
 		
-		boolean thereIsWorkToBeDone = true;
-		
 		// If the job is not yet marked as finished
 		// !activeJob.isFinished() is documentation. we don't execute this function if the job is finished
 		if (allPartitionsDone && !activeJob.isFinished()) { 
-			activeJob.finishJob();
-			
-			try {
-				thereIsWorkToBeDone = startNextJob();
-			} catch(JobAlreadyRunningException jare) {
-				logger.log(Level.SEVERE,"Programming error or concurrency issue! the previous active job was marked as finished and the attempt to start the next warns that there is a job already running!", jare);
-				return false;
-			}
-			
-		}
-		
-		if (!thereIsWorkToBeDone) 
-		{
-			// This is executed only when there was no new job in the job queue
-			pauseAllWorkers();
+			finishCurrentJobAndStartNext();
 			return false;
 		}
-	
+		
 		return true;
 	}
 
@@ -152,7 +191,7 @@ public class Master extends WorkerStore
 				try {
 					removeWorker(bad);
 				} catch(WorkerInIllegalStateException wiise) {
-					logger.log(Level.SEVERE, "Bad worker could not be removed?..", wiise);
+					logger.log(Level.SEVERE, "Bad worker could not be removed?.. perhaps it was removed by a callback", wiise);
 				} finally {
 					bad.disconnect();
 				}
@@ -163,7 +202,7 @@ public class Master extends WorkerStore
 	/**
 	 * Executes a worker message. Marks done splits or partitions and assigns new work.
 	 * This method expects to receive an ACK message with the correct job id. The worker
-	 * is already synchronized on executeLock, but the same thread can sync on the 
+	 * is already synchronized on the master, but the same thread can sync on the 
 	 * same object multiple times. Thus it is better to have the synchronization here
 	 * as well to keep the code coherent.
 	 * 
@@ -182,7 +221,6 @@ public class Master extends WorkerStore
 			return Message.mapThisMessage(nextSplit, activeJob);
 		} 
 		
-		// TODO: check if the worker is already reducing and is asking for a bsURL
 		if (msg.getJob() == activeJob && 
 		    msg.getAction() == Message.Action.reduceSplit && 
 			!activeJob.getPartitionInformation().isPartitionDone(msg.getIncompleteReducePartition())) { 

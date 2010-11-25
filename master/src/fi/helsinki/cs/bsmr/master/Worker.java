@@ -154,15 +154,19 @@ public class Worker implements WebSocket
 			lastProgress = TimeContext.now();
 			
 			
-			boolean moreToBeDone = workerStore.acknowledgeWork(this, msg);
-			
-			if (moreToBeDone) {
-				reply = workerStore.selectTaskForWorker(this, msg);
-			} else {
-				reply = null;
+			// If these two tasks are not grouped together, bad things will happen..
+			synchronized (workerStore) {
+				
+				boolean moreToBeDone = workerStore.acknowledgeWork(this, msg);
+				
+				if (moreToBeDone) {
+					reply = workerStore.selectTaskForWorker(this, msg);
+				} else {
+					reply = null;
+				}
+
 			}
-			
-			
+
 		}
 	
 		

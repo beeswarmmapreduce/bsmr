@@ -13,16 +13,14 @@ public class PartitionStore
 	private boolean []partitionsDone;
 	private boolean allPartitionsDone; 
 	
-	private Job job;
-	
 	private List<Partition> workQueue;
-	private int workQueuePointer;
+	private int previousIndexOfWorkQueue;
 	
 	public PartitionStore(Job job)
 	{
 		this.partitionsQueued = new ArrayList<Set<Worker>>();
-		this.workQueue = new ArrayList<Partition>();
-		this.workQueuePointer = -1;
+		this.workQueue = new LinkedList<Partition>();
+		this.previousIndexOfWorkQueue = -1;
 		
 		for (int i = 0; i < job.getPartitions(); ++i) {
 			partitionsQueued.add(new HashSet<Worker>());
@@ -31,8 +29,6 @@ public class PartitionStore
 		
 		this.partitionsDone = new boolean[job.getPartitions()];
 		this.allPartitionsDone = false;
-		this.job = job;
-		
 	}
 	
 	public boolean areAllPartitionsDone()
@@ -42,9 +38,9 @@ public class PartitionStore
 	
 	public Partition selectPartitionToWorkOn(Worker toWhom)
 	{
-		workQueuePointer = (workQueuePointer + 1) % workQueue.size();
+		previousIndexOfWorkQueue = (previousIndexOfWorkQueue + 1) % workQueue.size();
 
-		Partition work = workQueue.get(workQueuePointer);
+		Partition work = workQueue.get(previousIndexOfWorkQueue);
 		
 		partitionsQueued.get(work.getId()).add(toWhom);
 		
@@ -71,7 +67,17 @@ public class PartitionStore
 		
 		partitionsQueued.get(p.getId()).remove(w);
 		
-		workQueue.remove(p);
+		// Remove partition p if it's in the work queue
+		int i = workQueue.indexOf(p);
+		if (i != -1) {
+			workQueue.remove(i);
+			// And fix work queue indexing if necessary
+			if (i <= previousIndexOfWorkQueue) {
+				previousIndexOfWorkQueue--;
+			}
+		}
+			
+			
 	}
 
 	public boolean isPartitionDone(Partition partition) 

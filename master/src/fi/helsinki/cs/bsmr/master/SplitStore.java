@@ -1,6 +1,7 @@
 package fi.helsinki.cs.bsmr.master;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -59,7 +60,7 @@ public class SplitStore
 		return true;
 	}
 	
-	public Split selectSplitToWorkOn(Set<Worker> unreachableWorkers)
+	public Split selectSplitToWorkOn(Worker toWhom, Set<Worker> unreachableWorkers)
 	{
 		int i = 0;
 		Split ret;
@@ -77,6 +78,8 @@ public class SplitStore
 			
 		} while (!isGoodCandidate && i < job.getSplits());
 	
+		splitsQueued.get(ret.getId()).add(toWhom);
+		
 		return ret;
 	}
 	
@@ -108,5 +111,15 @@ public class SplitStore
 			splitsDone.get(i).remove(w);
 			splitsQueued.get(i).remove(w);
 		}
+	}
+	
+	public Set<Worker> getAllWorkersWhoHaveDoneSplit(Split s)
+	{
+		return Collections.unmodifiableSet(splitsDone.get(s.getId()));
+	}
+	
+	public Set<Worker> getAllQueuedWorkers(Split s)
+	{
+		return Collections.unmodifiableSet(splitsQueued.get(s.getId()));
 	}
 }

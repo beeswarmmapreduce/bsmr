@@ -27,6 +27,9 @@ public class Job
 	private final long heartbeatTimeout;
 	private final long acknowledgeTimeout;
 	
+	private long startTime;
+	private long finishTime;
+	
 	static {
 		jobMap = new HashMap<Integer, Job>();
 	}
@@ -71,6 +74,7 @@ public class Job
 		splitStore     = new SplitStore(this);
 		partitionStore = new PartitionStore(this);
 		isStarted      = true;
+		startTime      = TimeContext.now();
 	}
 
 	public boolean isFinished() { return isFinished; }
@@ -88,7 +92,8 @@ public class Job
 	public void finishJob()
 	{
 		isFinished = true;
-		isStarted = false;
+		isStarted  = false;
+		finishTime = TimeContext.now();
 	}
 	
 	public long getWorkerHeartbeatTimeout()
@@ -134,6 +139,16 @@ public class Job
 	public Object getCode() {
 		// TODO Auto-generated method stub
 		return null;
+	}
+	
+	public long getStartTime()
+	{
+		return startTime;
+	}
+	
+	public long getFinishTime()
+	{
+		return finishTime;
 	}
  
 	public String toString()

@@ -1,19 +1,23 @@
-package fi.helsinki.cs.bsmr.master;
+package fi.helsinki.cs.bsmr.master.console;
 
 import java.util.logging.Logger;
 
 import org.eclipse.jetty.websocket.WebSocket;
 
+import fi.helsinki.cs.bsmr.master.TimeContext;
+import fi.helsinki.cs.bsmr.master.Util;
+import fi.helsinki.cs.bsmr.master.WorkerStore;
+
 public class Console implements WebSocket 
 {
 	private static Logger logger = Util.getLoggerForClass(Console.class);
 	
-	private Master master;
+	private WorkerStore workerStore;
 	private Outbound out;
 	
-	public Console(Master master)
+	public Console(WorkerStore workerStore)
 	{
-		this.master = master;
+		this.workerStore = workerStore;
 	}
 	
 	@Override
@@ -43,6 +47,8 @@ public class Console implements WebSocket
 	public void onMessage(byte arg0, byte[] arg1, int arg2, int arg3) 
 	{
 		TimeContext.markTime();
+		
+		
 		throw new RuntimeException("onMessage() byte format unsupported!");
 	}
 

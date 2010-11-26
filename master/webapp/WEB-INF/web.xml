@@ -14,6 +14,11 @@
   </servlet>
 
   <servlet>
+    <servlet-name>Status</servlet-name>
+    <servlet-class>fi.helsinki.cs.bsmr.master.console.StatusServlet</servlet-class>
+  </servlet>
+
+  <servlet>
     <servlet-name>Splits</servlet-name>
     <servlet-class>fi.helsinki.cs.bsmr.fs.SplitServlet</servlet-class>
   </servlet>
@@ -41,6 +46,12 @@
   <servlet-mapping>
     <servlet-name>Partitions</servlet-name>
     <url-pattern>/fs/partitions/*</url-pattern>
+  </servlet-mapping>
+
+
+  <servlet-mapping>
+    <servlet-name>Status</servlet-name>
+    <url-pattern>/status</url-pattern>
   </servlet-mapping>
 
   

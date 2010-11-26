@@ -1,6 +1,7 @@
 package fi.helsinki.cs.bsmr.master;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -9,6 +10,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.eclipse.jetty.websocket.WebSocket;
+
+import fi.helsinki.cs.bsmr.master.console.Console;
 
 
 public class Master extends WorkerStore
@@ -20,14 +23,15 @@ public class Master extends WorkerStore
 	 */ 
 	
 	private List<Job> jobQueue;
+	private List<Job> finishedJobs;
 	private Job activeJob;
-	
 	
 	
 	public Master()
 	{
-		activeJob   = null;
-		jobQueue    = new LinkedList<Job>();
+		activeJob    = null;
+		jobQueue     = new LinkedList<Job>();
+		finishedJobs = new LinkedList<Job>();
 	}
 
 	public synchronized void queueJob(Job j) throws JobAlreadyRunningException
@@ -38,6 +42,11 @@ public class Master extends WorkerStore
 		}
 		
 		jobQueue.add(j);
+	}
+	
+	public List<Job> getJobQueue()
+	{
+		return Collections.unmodifiableList(jobQueue);
 	}
 	
 	public synchronized boolean startNextJob() throws JobAlreadyRunningException
@@ -53,6 +62,10 @@ public class Master extends WorkerStore
 			return false;
 		}
 		
+		if (activeJob != null) {
+			finishedJobs.add(activeJob);
+		}
+		
 		activeJob = jobQueue.remove(0);
 		activeJob.startJob();
 		
@@ -62,7 +75,8 @@ public class Master extends WorkerStore
 		
 		for (Worker w : workers) {
 			// Skip inactive workers because they might be dead and communicating with them would slow down operations
-			// TODO: if IO is async, this is not necessary!
+			// if IO is async, this is not necessary! But.. Looking at Jetty 8.0.0.M2 sources, it seems (although
+			// it is difficult to verify) that sendMessage() is in fact synchronous.
 			if (!w.isAvailable(activeJob)) continue;
 			
 			Message msg = selectTaskForWorker(w, dummyStatus);
@@ -217,7 +231,7 @@ public class Master extends WorkerStore
 		// All partitions are not done yet, but let's first check the splits:
 		if (!activeJob.getSplitInformation().areAllSplitsDone(msg.getUnareachableWorkers())) {
 			// Assign a map task
-			Split nextSplit = activeJob.getSplitInformation().selectSplitToWorkOn(msg.getUnareachableWorkers());
+			Split nextSplit = activeJob.getSplitInformation().selectSplitToWorkOn(worker, msg.getUnareachableWorkers());
 			
 			return Message.mapThisMessage(nextSplit, activeJob);
 		} 
@@ -232,7 +246,7 @@ public class Master extends WorkerStore
 			
 			// All splits are done => Assign a partition for reducing
 			
-			Partition nextPartition = activeJob.getPartitionInformation().selectPartitionToWorkOn();
+			Partition nextPartition = activeJob.getPartitionInformation().selectPartitionToWorkOn(worker);
 			
 			return Message.reduceThatMessage(nextPartition, activeJob);
 		}

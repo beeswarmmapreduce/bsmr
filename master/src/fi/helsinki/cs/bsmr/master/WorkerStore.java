@@ -1,5 +1,6 @@
 package fi.helsinki.cs.bsmr.master;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -28,6 +29,11 @@ public abstract class WorkerStore
 		}
  
 		return workerForURL.get(url);
+	}
+	
+	public Set<Worker> getWorkers()
+	{
+		return Collections.unmodifiableSet(workers);
 	}
 
 	public void setWorkerURL(Worker worker, String socketURL)

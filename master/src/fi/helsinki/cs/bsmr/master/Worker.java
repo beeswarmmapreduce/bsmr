@@ -19,6 +19,8 @@ public class Worker implements WebSocket
 	
 	private long lastHearbeat;
 	private long lastProgress;
+	
+	private long connectTime;
 
 	
 	Worker(WorkerStore workerStore, String remoteAddr)
@@ -29,6 +31,8 @@ public class Worker implements WebSocket
 		// Before worker starts communicating, it should be "dead":
 		this.lastHearbeat = -1;
 		this.lastProgress = -1;
+		
+		this.connectTime = TimeContext.now();
 	}
 	
 
@@ -189,7 +193,6 @@ public class Worker implements WebSocket
 
 	}
 
-
 	public boolean isAvailable(Job job)
 	{
 		if (isDead(job)) return false;
@@ -213,7 +216,11 @@ public class Worker implements WebSocket
 		return workerStore.getWorkerURL(this);
 	}
 
-
+	public long getConnectTime()
+	{
+		return connectTime;
+	}
+	
 	@Override
 	public void onMessage(byte arg0, byte[] arg1, int arg2, int arg3)
 	{

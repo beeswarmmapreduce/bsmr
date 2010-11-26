@@ -24,30 +24,30 @@ public class Message
 		socket, mapTask, reduceTask, reduceSplit, idle	
 	}
 	
-	private static final String FIELD_ACTION         = "action";
+	public static final String FIELD_ACTION         = "action";
 	
-	private static final String FIELD_PAYLOAD        = "payload";
-	private static final String FIELD_TYPE           = "type";
-	private static final String FIELD_JOBID          = "jobId";
-	private static final String FIELD_JOB_MAP        = "job";
+	public static final String FIELD_PAYLOAD        = "payload";
+	public static final String FIELD_TYPE           = "type";
+	public static final String FIELD_JOBID          = "jobId";
+	public static final String FIELD_JOB_MAP        = "job";
 	
-	private static final String FIELD_MAPSTATUS      = "mapStatus";
-	private static final String FIELD_REDUCESTATUS   = "reduceStatus";
-	private static final String FIELD_UNREACHABLE    = "unreachable";
+	public static final String FIELD_MAPSTATUS      = "mapStatus";
+	public static final String FIELD_REDUCESTATUS   = "reduceStatus";
+	public static final String FIELD_UNREACHABLE    = "unreachable";
 	
-	private static final String FIELD_NUM_PARTITIONS = "R";
-	private static final String FIELD_NUM_SPLITS     = "M";
+	public static final String FIELD_NUM_PARTITIONS = "R";
+	public static final String FIELD_NUM_SPLITS     = "M";
 	
-	private static final String FIELD_SPLITID        = "splitId";
-	private static final String FIELD_PARTITIONID    = "partitionId";
-	private static final String FIELD_REDUCE_LOCATION = "location";
+	public static final String FIELD_SPLITID        = "splitId";
+	public static final String FIELD_PARTITIONID    = "partitionId";
+	public static final String FIELD_REDUCE_LOCATION = "location";
 	
-	private static final String FIELD_SOCKET_PROTOCOL = "protocol";
-	private static final String FIELD_SOCKET_PORT     = "port";
-	private static final String FIELD_SOCKET_RESOURCE = "resource";
+	public static final String FIELD_SOCKET_PROTOCOL = "protocol";
+	public static final String FIELD_SOCKET_PORT     = "port";
+	public static final String FIELD_SOCKET_RESOURCE = "resource";
 	
 	
-	private static final String FIELD_CODE = "code";
+	public static final String FIELD_CODE = "code";
 	
 	private Type type;
 	private Action action;
@@ -252,17 +252,24 @@ public class Message
 		
 		
 		if (job != null) {
-			Map<Object, Object> jobMap = new HashMap<Object, Object>();
-			jobMap.put(FIELD_JOBID, job.getJobId());
-			jobMap.put(FIELD_NUM_SPLITS, job.getSplits());
-			jobMap.put(FIELD_NUM_PARTITIONS, job.getPartitions());
+			Map<Object, Object> jobMap = getJSONMapForJob(job);
 			
 			payload.put(FIELD_JOB_MAP, jobMap);
 		
-			payload.put(FIELD_CODE, job.getCode());
+			
 		}
 		
 		return JSON.toString(data);
+	}
+
+	public static Map<Object, Object> getJSONMapForJob(Job job)
+	{
+		Map<Object, Object> jobMap = new HashMap<Object, Object>();
+		jobMap.put(FIELD_JOBID, job.getJobId());
+		jobMap.put(FIELD_NUM_SPLITS, job.getSplits());
+		jobMap.put(FIELD_NUM_PARTITIONS, job.getPartitions());
+		jobMap.put(FIELD_CODE, job.getCode());
+		return jobMap;
 	}
 	
 	public String toString()

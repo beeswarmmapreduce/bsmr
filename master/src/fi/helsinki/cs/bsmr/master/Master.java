@@ -23,15 +23,15 @@ public class Master extends WorkerStore
 	 */ 
 	
 	private List<Job> jobQueue;
-	private List<Job> finishedJobs;
+	private List<Job> jobHistory;
 	private Job activeJob;
 	
 	
 	public Master()
 	{
-		activeJob    = null;
-		jobQueue     = new LinkedList<Job>();
-		finishedJobs = new LinkedList<Job>();
+		activeJob  = null;
+		jobQueue   = new LinkedList<Job>();
+		jobHistory = new LinkedList<Job>();
 	}
 
 	public synchronized void queueJob(Job j) throws JobAlreadyRunningException
@@ -63,7 +63,7 @@ public class Master extends WorkerStore
 		}
 		
 		if (activeJob != null) {
-			finishedJobs.add(activeJob);
+			jobHistory.add(activeJob);
 		}
 		
 		activeJob = jobQueue.remove(0);
@@ -260,6 +260,11 @@ public class Master extends WorkerStore
 	public boolean isActive()
 	{
 		return activeJob != null && !activeJob.isFinished() && activeJob.isStarted();
+	}
+
+	public List<Job> getJobHistory() 
+	{
+		return Collections.unmodifiableList(jobHistory);
 	}
 
 }

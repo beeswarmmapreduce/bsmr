@@ -8,13 +8,13 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.eclipse.jetty.util.ajax.JSON;
-
-
 import fi.helsinki.cs.bsmr.master.MasterWebSocketServlet;
 import fi.helsinki.cs.bsmr.master.TimeContext;
 
-public class StatusServlet extends HttpServlet {
+public class StatusServlet extends HttpServlet 
+{
+	private static final long serialVersionUID = 1L;
+
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp)
 			throws ServletException, IOException

@@ -113,8 +113,6 @@ public class ConsoleInformation
 			Map<Object, Object> queuedPartitions = new HashMap<Object, Object>();
 			partitionMap.put("queued", queuedPartitions);
 			
-			
-			Map<Object, Object> partitionsQueued = new HashMap<Object, Object>();
 			for (int i = 0; i < currentJob.getPartitions(); i++) {
 				Partition partition = new Partition(i);
 				
@@ -126,9 +124,6 @@ public class ConsoleInformation
 					queuedPartitions.put(i, who);
 				}
 			}
-			
-			
-			
 
 		}
 		
@@ -143,7 +138,7 @@ public class ConsoleInformation
 		// Job history
 		List<Map<Object,Object>> jobHistory = new LinkedList<Map<Object, Object>>();
 		payload.put("jobHistory", jobHistory);
-		for (Job j : master.getJobQueue()) {
+		for (Job j : master.getJobHistory()) {
 			Map<Object, Object> tmp = Message.getJSONMapForJob(j);
 			tmp.put("startTime", timeToJson(j.getStartTime()));
 			tmp.put("finishTime", timeToJson(j.getFinishTime()));

@@ -1,28 +1,38 @@
 package fi.helsinki.cs.bsmr.master.console;
 
+import java.io.IOException;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.eclipse.jetty.websocket.WebSocket;
 
+import fi.helsinki.cs.bsmr.master.Master;
 import fi.helsinki.cs.bsmr.master.TimeContext;
 import fi.helsinki.cs.bsmr.master.Util;
-import fi.helsinki.cs.bsmr.master.WorkerStore;
 
 public class Console implements WebSocket 
 {
 	private static Logger logger = Util.getLoggerForClass(Console.class);
 	
-	private WorkerStore workerStore;
+	private Master master;
 	private Outbound out;
 	
-	public Console(WorkerStore workerStore)
+	private static Set<Console> consoles = new HashSet<Console>();
+	
+	public Console(Master master)
 	{
-		this.workerStore = workerStore;
+		this.master = master;
 	}
 	
 	@Override
 	public void onConnect(Outbound out) 
 	{
+		synchronized (consoles) {
+			consoles.add(this);
+		}
 		TimeContext.markTime();
 		logger.fine("connected");
 		this.out = out;
@@ -31,6 +41,9 @@ public class Console implements WebSocket
 	@Override
 	public void onDisconnect() 
 	{
+		synchronized (consoles) {
+			consoles.remove(this);
+		}
 		TimeContext.markTime();
 		logger.fine("disconnected");
 	}
@@ -48,6 +61,7 @@ public class Console implements WebSocket
 	{
 		TimeContext.markTime();
 		
+		// TODO: addjob, removejob
 		
 		throw new RuntimeException("onMessage() byte format unsupported!");
 	}
@@ -57,7 +71,22 @@ public class Console implements WebSocket
 	{
 		TimeContext.markTime();
 		throw new RuntimeException("onFragment() byte format unsupported!");
-		
 	}
 
+	public void sendStatus()
+	{
+		ConsoleInformation ci = new ConsoleInformation(master);
+		String msg = ci.toJSONString();
+		try {
+			out.sendMessage(msg);
+		} catch(IOException ie) {
+			logger.log(Level.WARNING, "Exception while sending message to console, disconnecting",ie);
+			out.disconnect();
+		}
+	}
+	
+	public static Set<Console> getConsoles()
+	{
+		return Collections.unmodifiableSet(consoles);
+	}
 }

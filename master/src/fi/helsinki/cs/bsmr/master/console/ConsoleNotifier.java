@@ -3,6 +3,7 @@ package fi.helsinki.cs.bsmr.master.console;
 import java.util.logging.Logger;
 
 import fi.helsinki.cs.bsmr.master.Master;
+import fi.helsinki.cs.bsmr.master.TimeContext;
 import fi.helsinki.cs.bsmr.master.Util;
 
 public class ConsoleNotifier implements Runnable
@@ -70,6 +71,7 @@ public class ConsoleNotifier implements Runnable
 			// If interrupted, or no master => exit
 			if (wasInterrupted || master == null) continue;
 			
+			TimeContext.markTime();
 			ConsoleInformation ci;
 			
 			synchronized (master) {
@@ -77,15 +79,13 @@ public class ConsoleNotifier implements Runnable
 			}
 			
 			synchronized (Console.class) { // See Console.onDisconnect()
-				logger.info("Informing all "+Console.getConsoles().size()+" consoles");
-				for (Console c : Console.getConsoles()) {
+				logger.info("Informing all "+master.getConsoles().size()+" consoles");
+				for (Console c : master.getConsoles()) {
 					c.sendStatus(ci);
 				}
 			}
-			
-		}
-		
 
+		}
 	}
 	
 	public synchronized void sendUpdates()

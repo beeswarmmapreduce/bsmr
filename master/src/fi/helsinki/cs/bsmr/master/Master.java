@@ -9,6 +9,8 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import fi.helsinki.cs.bsmr.master.console.Console;
+
 
 public class Master extends WorkerStore
 {
@@ -21,6 +23,8 @@ public class Master extends WorkerStore
 	private List<Job> jobQueue;
 	private List<Job> jobHistory;
 	private Job activeJob;
+
+	private Set<Console> consoles;
 	
 	
 	public Master()
@@ -28,6 +32,8 @@ public class Master extends WorkerStore
 		activeJob  = null;
 		jobQueue   = new LinkedList<Job>();
 		jobHistory = new LinkedList<Job>();
+		
+		consoles   = new HashSet<Console>();
 	}
 
 	public synchronized void queueJob(Job j) throws JobAlreadyRunningException
@@ -246,6 +252,25 @@ public class Master extends WorkerStore
 	public List<Job> getJobHistory() 
 	{
 		return Collections.unmodifiableList(jobHistory);
+	}
+
+	public void addConsole(Console c)
+	{
+		synchronized (consoles) {
+			consoles.add(c);
+		}
+	}
+
+	public void removeConsole(Console c)
+	{
+		synchronized (consoles) {
+			consoles.remove(c);
+		}	
+	}
+
+	public Set<Console> getConsoles()
+	{
+		return Collections.unmodifiableSet(consoles);
 	}
 
 }

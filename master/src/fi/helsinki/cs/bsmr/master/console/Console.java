@@ -1,9 +1,6 @@
 package fi.helsinki.cs.bsmr.master.console;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -16,10 +13,6 @@ import fi.helsinki.cs.bsmr.master.Util;
 public class Console implements WebSocket 
 {
 	private static Logger logger = Util.getLoggerForClass(Console.class);
-	
-	// TODO: this is dirty
-	private static Set<Console> consoles = new HashSet<Console>();
-	
 	
 	private Outbound out;
 	private Master master;
@@ -40,17 +33,14 @@ public class Console implements WebSocket
 		// Immediately send out a status message
 		sendStatus();
 		
-		synchronized (consoles) {
-			consoles.add(this);
-		}
+		master.addConsole(this);
+
 	}
 
 	@Override
 	public void onDisconnect() 
 	{
-		synchronized (Console.class) {
-			consoles.remove(this);
-		}
+		master.removeConsole(this);
 		TimeContext.markTime();
 		logger.fine("disconnected");
 	}
@@ -97,8 +87,4 @@ public class Console implements WebSocket
 		}
 	}
 	
-	public static Set<Console> getConsoles()
-	{
-		return Collections.unmodifiableSet(consoles);
-	}
 }

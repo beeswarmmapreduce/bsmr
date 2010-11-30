@@ -19,12 +19,21 @@
 
     - code/data!
         - how should these look?
-            - MAP:
+            - MAP/REDUCE:
                 given:
                 ---
-                function map(k, v1) {
-                    var v2 = do_something(v1);
-                    emit(k, v2);
+                function map(data) {
+                    //var v2 = do_something(v1);
+                    for (var w in data.split()) {
+                        emit(w, 1);
+                    }
+                }
+                function reduce(k, vs) {
+                    var tot = 0;
+                    for (var v in vs) {
+                        tot += vs[v];
+                    }
+                    emit(tot);
                 }
                 --
 
@@ -32,19 +41,50 @@
                 for (var i=0; i<R; i++) {
                     partitions[i] = {};
                 }
-                function __exec() {
-                    for (var k in data) {
-                        map(k, data[k]);
+                function __exec_map(splitId) {
+                    data = fs_fetch_split(splitId);
+                    (function() {
+                        var emit = _map_emit;
+                        map(data);
+                    })();
+                }
+
+                _exec_reduce(partitionId) {
+                    var ks = _get_all_keys_in_partition(partitionId);
+
+                    for (var k in ks) {
+                        (function() {
+                            var emit = function(v2) { _reduce_emit(ks[k], v2); };
+                            reduce(ks[k], _get_all_values_for(partitionId, ks[k]));
+                        })();
                     }
                 }
+
+                _get_all_keys_in_partition(partitionId) {
+                    var ret = [];
+                    for (var k in partitions[partitionId]) {
+                        ret.push(k);
+                    }
+                    return ret;
+                }
+
+                _get_all_values_for(partitionId, key) {
+                    return partitions[partitionId][key];
+                }
+
                 function hash(k) {
                     return (some_kind_of_hash(k) % R);
                 }
-                function emit(k, v) {
-                    partitions[hash(k)][k] = v;
+                function _map_emit(k, v) {
+                    if (typeof(partitions[hash(k)][k]) == 'undefined') {
+                        partitions[hash(k)][k] = [];
+                    }
+                    partitions[hash(k)][k].push(v);
+                }
+                function _reduce_emit(k, v2) {
+                    results[k] = v2;
                 }
 
-            - REDUCE:
         
  */
 

@@ -10,15 +10,13 @@ import javax.servlet.http.HttpServletResponse;
 import org.eclipse.jetty.websocket.WebSocket;
 import org.eclipse.jetty.websocket.WebSocketServlet;
 
+import fi.helsinki.cs.bsmr.master.console.Console;
+
 public class MasterWebSocketServlet extends WebSocketServlet 
 {
 	private static final long serialVersionUID = 1L;
 	
 	private static Logger logger = Util.getLoggerForClass(MasterWebSocketServlet.class);
-	
-	// TODO: for testing purposes only. Change to private Master master afterwards
-	//private Master master;
-	public static Master master;
 	
 	@Override
 	protected String checkOrigin(HttpServletRequest request, String host, String origin)
@@ -36,34 +34,24 @@ public class MasterWebSocketServlet extends WebSocketServlet
 	}
 	
 	@Override
-	public void init() throws ServletException
-	{
-		TimeContext.markTime();
-		super.init();
-		
-		// TODO: for testing, uncomment later
-		//master = new Master();
-	}
-	
-	@Override
 	protected WebSocket doWebSocketConnect(HttpServletRequest request, String service)
 	{
 		TimeContext.markTime();
 		
 		logger.finest("doWebSocketConnect()");
+	
+		Master master = BSMRContext.getMaster(request.getServletContext());
 		
 		if (service != null) {
 			if (service.equals("worker")) {
-			
 				return master.createWorker(request.getRemoteAddr());
 			}
 			
 			if (service.equals("console")) {
-				// TODO: auth?
-				return master.createConsole();
+				return new Console(master);
 			}
 		}
-		return null; // Seems there is no proper way to say "no such service"
+		return null; // TODO: how to communicate "no such service"?
 	}
 
 }

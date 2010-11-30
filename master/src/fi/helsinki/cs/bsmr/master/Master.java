@@ -9,10 +9,6 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.eclipse.jetty.websocket.WebSocket;
-
-import fi.helsinki.cs.bsmr.master.console.Console;
-
 
 public class Master extends WorkerStore
 {
@@ -129,21 +125,6 @@ public class Master extends WorkerStore
 		}
 	}
 
-	public WebSocket createConsole()
-	{	
-		return new Console(this);
-	}
-	
-	public Object executeConsoleMessage(Console console, Object foo)
-	{
-		Object ret;
-		
-		synchronized (this) {
-			ret = null;
-		}
-		
-		return ret;
-	}
 
 	/**
 	 * Acknowledges work from the worker. If the message acknowledges the last part of the current job, it will start the next job.

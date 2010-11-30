@@ -17,10 +17,13 @@ public class Console implements WebSocket
 {
 	private static Logger logger = Util.getLoggerForClass(Console.class);
 	
-	private Master master;
-	private Outbound out;
-	
+	// TODO: this is dirty
 	private static Set<Console> consoles = new HashSet<Console>();
+	
+	
+	private Outbound out;
+	private Master master;
+	
 	
 	public Console(Master master)
 	{
@@ -30,18 +33,22 @@ public class Console implements WebSocket
 	@Override
 	public void onConnect(Outbound out) 
 	{
-		synchronized (consoles) {
-			consoles.add(this);
-		}
 		TimeContext.markTime();
 		logger.fine("connected");
 		this.out = out;
+		
+		// Immediately send out a status message
+		sendStatus();
+		
+		synchronized (consoles) {
+			consoles.add(this);
+		}
 	}
 
 	@Override
 	public void onDisconnect() 
 	{
-		synchronized (consoles) {
+		synchronized (Console.class) {
 			consoles.remove(this);
 		}
 		TimeContext.markTime();
@@ -61,7 +68,7 @@ public class Console implements WebSocket
 	{
 		TimeContext.markTime();
 		
-		// TODO: addjob, removejob
+		// TODO: addjob, removejob (+startnext?)
 		
 		throw new RuntimeException("onMessage() byte format unsupported!");
 	}
@@ -72,10 +79,15 @@ public class Console implements WebSocket
 		TimeContext.markTime();
 		throw new RuntimeException("onFragment() byte format unsupported!");
 	}
-
+	
 	public void sendStatus()
 	{
 		ConsoleInformation ci = new ConsoleInformation(master);
+		sendStatus(ci);
+	}
+	
+	public void sendStatus(ConsoleInformation ci)
+	{
 		String msg = ci.toJSONString();
 		try {
 			out.sendMessage(msg);

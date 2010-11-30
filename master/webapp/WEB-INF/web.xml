@@ -7,6 +7,10 @@
 
   <display-name>TKTL BSMR Master Server</display-name>
   
+  <listener>
+  	<listener-class>fi.helsinki.cs.bsmr.master.BSMRContext</listener-class>
+  </listener>
+  
   <servlet>
     <servlet-name>Master</servlet-name>
     <servlet-class>fi.helsinki.cs.bsmr.master.MasterWebSocketServlet</servlet-class>

@@ -4,13 +4,15 @@ import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.servlet.ServletContext;
+
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.webapp.WebAppContext;
 
 import fi.helsinki.cs.bsmr.master.Job;
 import fi.helsinki.cs.bsmr.master.JobAlreadyRunningException;
 import fi.helsinki.cs.bsmr.master.Master;
-import fi.helsinki.cs.bsmr.master.MasterWebSocketServlet;
+import fi.helsinki.cs.bsmr.master.BSMRContext;
 
 public class StartJetty 
 {
@@ -33,25 +35,28 @@ public class StartJetty
 		server.setHandler(context);
 		
 		
-		// Add a false master and a made up job
-		Master master = new Master();
-		
-		MasterWebSocketServlet.master = master;
-
 		try {
 			server.start();
 			
+			ServletContext sctx = context.getServletContext();
+			Master master = BSMRContext.getMaster(sctx);
 			BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 			
 			while( br.readLine() != null) {
 				//Job j = Job.createJob(1000, 30, 60000, 60000*60);
 				Job j = Job.createJob(3, 3, 60000, 60000*60);
+				
+				
 				master.queueJob(j);
 				try {
 					master.startNextJob();
 				} catch(JobAlreadyRunningException jare) {
 					System.out.println("Still running the previous job");
 				}
+				
+				// Send update to all consoles
+				BSMRContext.getConsoleNotifier(sctx).sendUpdates();
+				
 			}
 			
 			

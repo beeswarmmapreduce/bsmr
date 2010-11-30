@@ -8,7 +8,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import fi.helsinki.cs.bsmr.master.MasterWebSocketServlet;
+import fi.helsinki.cs.bsmr.master.BSMRContext;
 import fi.helsinki.cs.bsmr.master.TimeContext;
 
 public class StatusServlet extends HttpServlet 
@@ -24,7 +24,7 @@ public class StatusServlet extends HttpServlet
 		resp.setContentType("text/plain");
 		PrintWriter pw = resp.getWriter();
 		
-		ConsoleInformation ci = new ConsoleInformation(MasterWebSocketServlet.master);
+		ConsoleInformation ci = new ConsoleInformation(BSMRContext.getMaster(req.getServletContext()));
 		pw.println(ci.toJSONString());
 		pw.close();
 	}

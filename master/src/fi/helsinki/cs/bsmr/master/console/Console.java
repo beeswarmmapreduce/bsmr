@@ -1,10 +1,16 @@
 package fi.helsinki.cs.bsmr.master.console;
 
+import java.util.Map;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.eclipse.jetty.util.ajax.JSON;
 import org.eclipse.jetty.websocket.WebSocket;
 
+import fi.helsinki.cs.bsmr.master.Job;
+import fi.helsinki.cs.bsmr.master.JobAlreadyRunningException;
 import fi.helsinki.cs.bsmr.master.MasterContext;
+import fi.helsinki.cs.bsmr.master.Message;
 import fi.helsinki.cs.bsmr.master.TimeContext;
 import fi.helsinki.cs.bsmr.master.Util;
 
@@ -44,21 +50,86 @@ public class Console implements WebSocket
 		logger.fine("disconnected");
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public void onMessage(byte frame, String msg) 
 	{
 		TimeContext.markTime();
-		logger.fine("console says: "+msg);
+		
+		Map<Object, Object> request = (Map<Object, Object>)JSON.parse(msg);
+		Object type = request.get("type");
+		Map<Object, Object> payload = (Map<Object, Object>)request.get(Message.FIELD_PAYLOAD);
+		
+		boolean ok = false;
+		
+		if ("ADDJOB".equals(type)) {
+			logger.fine("Console adds a new job");
+			if (logger.isLoggable(Level.FINEST)) {
+				logger.finest(" ADDJOB, payload: "+payload);
+			}
+			addJob(payload);
+			ok = true;
+		} 
+		if ("REMOVEJOB".equals(type)) {
+			logger.fine("Console removes a job");
+			if (logger.isLoggable(Level.FINEST)) {
+				logger.finest(" REMOVEJOB, payload: "+payload);
+			}
+			removeJob(payload);
+			ok = true;
+		}
+		
+		if (ok) {
+			sendStatus();
+		} else {
+			logger.info("Unknown message from console: "+msg);
+		}
 
+	}
+
+	private void removeJob(Map<Object, Object> payload)
+	{
+		int jobId = Integer.parseInt((String)payload.get("id"));
+		
+		Job toBeRemoved = master.getJobById(jobId);
+		if (toBeRemoved == null) {
+			logger.warning("Console tried to remove job "+jobId+", but no such job exists");
+			return;
+		}
+		logger.info("Removing job: "+toBeRemoved);
+		master.removeJob(toBeRemoved);
+	}
+
+	private void addJob(Map<Object, Object> payload)
+	{
+		int splits             = Integer.parseInt((String)payload.get(Message.FIELD_NUM_SPLITS));
+		int partitions         = Integer.parseInt((String)payload.get(Message.FIELD_NUM_PARTITIONS));
+		int heartbeatTimeout   = Integer.parseInt((String)payload.get("heartbeatTimeout"));
+		int acknowledgeTimeout = Integer.parseInt((String)payload.get("progressTimeout"));
+		String code            = (String)payload.get("code");
+		
+		Job newJob = master.createJob(splits, partitions, heartbeatTimeout, acknowledgeTimeout, code);
+		
+		logger.info("Adding new job: "+newJob);
+		try {
+			master.queueJob(newJob);
+		} catch(JobAlreadyRunningException jare) {
+			logger.log(Level.SEVERE, "This should never happen! A newly created job was already running on the master?!?", jare);
+			return;
+		}
+		
+		try {
+			master.startNextJob();
+		} catch(JobAlreadyRunningException jare) {
+			/* NOP, because this just means that there is a job already running */
+		}
+		
 	}
 
 	@Override
 	public void onMessage(byte arg0, byte[] arg1, int arg2, int arg3) 
 	{
 		TimeContext.markTime();
-		
-		// TODO: addjob, removejob (+startnext?)
-		
 		throw new RuntimeException("onMessage() byte format unsupported!");
 	}
 

@@ -41,9 +41,12 @@ public class ConsoleNotifier implements Runnable
 		thread.start();
 	}
 	
-	public synchronized void stop() throws InterruptedException 
+	public void stop() throws InterruptedException 
 	{
 		running = false;
+		synchronized (this) {
+			this.notify();
+		}
 		thread.interrupt();
 		thread.join();
 	}

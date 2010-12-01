@@ -62,29 +62,31 @@ public class Console implements WebSocket
 		
 		boolean ok = false;
 		
-		if ("ADDJOB".equals(type)) {
-			logger.fine("Console adds a new job");
-			if (logger.isLoggable(Level.FINEST)) {
-				logger.finest(" ADDJOB, payload: "+payload);
+		synchronized (master) {
+			
+			if ("ADDJOB".equals(type)) {
+				logger.fine("Console adds a new job");
+				if (logger.isLoggable(Level.FINEST)) {
+					logger.finest(" ADDJOB, payload: "+payload);
+				}
+				addJob(payload);
+				ok = true;
+			} 
+			if ("REMOVEJOB".equals(type)) {
+				logger.fine("Console removes a job");
+				if (logger.isLoggable(Level.FINEST)) {
+					logger.finest(" REMOVEJOB, payload: "+payload);
+				}
+				removeJob(payload);
+				ok = true;
 			}
-			addJob(payload);
-			ok = true;
-		} 
-		if ("REMOVEJOB".equals(type)) {
-			logger.fine("Console removes a job");
-			if (logger.isLoggable(Level.FINEST)) {
-				logger.finest(" REMOVEJOB, payload: "+payload);
+			
+			if (ok) {
+				sendStatus();
+			} else {
+				logger.info("Unknown message from console: "+msg);
 			}
-			removeJob(payload);
-			ok = true;
 		}
-		
-		if (ok) {
-			sendStatus();
-		} else {
-			logger.info("Unknown message from console: "+msg);
-		}
-
 	}
 
 	private void removeJob(Map<Object, Object> payload)

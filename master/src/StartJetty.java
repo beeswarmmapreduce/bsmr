@@ -36,13 +36,17 @@ public class StartJetty
 		try {
 			server.start();
 			
-			
 			ServletContext sctx = masterWebApp.getServletContext();
 			MasterContext master = BSMRContext.getMaster(sctx);
 			BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 			
-			while( br.readLine() != null) {
-				Job j = master.createJob(3, 3, 60000, 60000*60, "/* Don't do anything */");
+			String s;
+			while( (s= br.readLine()) != null) {
+				if ("stop".equals(s)) {
+					multiContext.removeHandler(masterWebApp);
+					break;
+				}
+				Job j = master.createJob(3, 3, 60000, 60000*60, "// Don't do anything");
 				
 				master.queueJob(j);
 				try {
@@ -52,7 +56,6 @@ public class StartJetty
 				}
 				
 				BSMRContext.getConsoleNotifier(sctx).sendUpdates();
-				
 			}
 			
 			
@@ -62,7 +65,8 @@ public class StartJetty
 		}
 	}
 
-	private static void setLogLevel(Level logLevel) {
+	private static void setLogLevel(Level logLevel) 
+	{
 		Logger.getLogger("").setLevel(logLevel);
 		for (Handler h : Logger.getLogger( "" ).getHandlers()) {
 	        h.setLevel( logLevel );

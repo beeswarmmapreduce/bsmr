@@ -59,7 +59,7 @@ public class SplitServlet extends HttpServlet
 	private void retrieveSplit(int job, int split, HttpServletRequest req, HttpServletResponse resp) 
 		throws IOException
 	{
-		// TODO: the job parameter is not used
+		// NOTE: the job parameter is not used
 		InputStream is = this.getClass().getClassLoader().getResourceAsStream("data.txt.gz");
 		if (is == null) {
 			error("could not open data.txt.gz", req, resp);

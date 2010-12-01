@@ -1,8 +1,6 @@
 package fi.helsinki.cs.bsmr.master;
 
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -78,32 +76,18 @@ public class MasterImpl extends MasterStoreImpl
 	{
 		Message pause = Message.pauseMessage(); 
 		
-		Set<Worker> badWorkers = null;
-		
 		for (Worker w : getWorkers()) {
 			
 			try {
 				w.sendMessage(pause);
 			} catch(IOException ie) {
 				logger.log(Level.SEVERE, "Could not pause worker. Terminating connection.", ie);
-				if (badWorkers == null) badWorkers = new HashSet<Worker>();
 				
-				badWorkers.add(w);
+				// NOTE: the callback for onDisconnect() will remove this worker from the worker list
+				w.disconnect();
 			}	
 		}
 		
-		// TODO: this might be in vain, we could just call disconnect() on the bad worker
-		if (badWorkers != null) {
-			for (Worker bad : badWorkers) {
-				try {
-					removeWorker(bad);
-				} catch(WorkerInIllegalStateException wiise) {
-					logger.log(Level.SEVERE, "Bad worker could not be removed?.. perhaps it was removed by a callback", wiise);
-				} finally {
-					bad.disconnect();
-				}
-			}
-		}
 	}
 
 	/**

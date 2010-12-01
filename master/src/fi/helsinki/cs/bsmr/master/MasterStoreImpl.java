@@ -152,8 +152,6 @@ public abstract class MasterStoreImpl implements MasterContext
 		activeJob = jobQueue.remove(0);
 		activeJob.startJob();
 		
-		Set<Worker> badWorkers = null;
-		
 		Message dummyStatus = Message.pauseMessage();
 		
 		for (Worker w : getWorkers()) {
@@ -168,21 +166,8 @@ public abstract class MasterStoreImpl implements MasterContext
 				w.sendMessage(msg);
 			} catch(IOException ie) {
 				logger.log(Level.SEVERE, "Could not send work to worker. Terminating connection.", ie);
-				if (badWorkers == null) badWorkers = new HashSet<Worker>();
-				
-				badWorkers.add(w);
-			}
-		}
-
-		if (badWorkers != null) {
-			for (Worker bad : badWorkers) {
-				try {
-					removeWorker(bad);
-				} catch(WorkerInIllegalStateException wiise) {
-					logger.log(Level.SEVERE, "Bad worker could not be removed?.. perhaps it was removed by a callback", wiise);
-				} finally {
-					bad.disconnect();
-				}
+				// NOTE: the callback for onDisconnect() will remove this worker from the worker list
+				w.disconnect();
 			}
 		}
 		

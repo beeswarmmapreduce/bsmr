@@ -1,7 +1,5 @@
 package fi.helsinki.cs.bsmr.master.console;
 
-import java.io.IOException;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.eclipse.jetty.websocket.WebSocket;
@@ -40,8 +38,10 @@ public class Console implements WebSocket
 	@Override
 	public void onDisconnect() 
 	{
-		master.removeConsole(this);
 		TimeContext.markTime();
+		master.removeConsole(this);
+		AsyncSender.stopSenderIfPresent(this);
+		
 		logger.fine("disconnected");
 	}
 
@@ -79,12 +79,8 @@ public class Console implements WebSocket
 	public void sendStatus(ConsoleInformation ci)
 	{
 		String msg = ci.toJSONString();
-		try {
-			out.sendMessage(msg);
-		} catch(IOException ie) {
-			logger.log(Level.WARNING, "Exception while sending message to console, disconnecting",ie);
-			out.disconnect();
-		}
+		AsyncSender sender = AsyncSender.getSender(this, out);
+		sender.sendAsyncMessage(msg);
 	}
 	
 }

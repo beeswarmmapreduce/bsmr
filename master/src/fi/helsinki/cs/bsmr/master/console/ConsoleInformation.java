@@ -155,6 +155,6 @@ public class ConsoleInformation
 	public static long timeToJson(long millis)
 	{
 		return millis;
-		//TODO: return (int)(millis/1000); <- switch to ints if longs are too wide for JS
+		//NOTE: return (int)(millis/1000); <- switch to ints if longs are too wide for JS
 	}
 }

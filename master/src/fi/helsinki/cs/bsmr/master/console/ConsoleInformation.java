@@ -23,13 +23,20 @@ import fi.helsinki.cs.bsmr.master.Worker;
 public class ConsoleInformation
 {
 	private MasterContext master;
+	private String asString;
 	
 	public ConsoleInformation(MasterContext master)
 	{
 		this.master = master;
+		this.asString = createJSONString();
 	}
 	
 	public String toJSONString()
+	{
+		return asString;
+	}
+	
+	private String createJSONString()
 	{
 		Job currentJob = master.getActiveJob();
 		

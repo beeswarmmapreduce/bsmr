@@ -35,7 +35,7 @@ public class ConsoleInformation
 		
 		Map<Object, Object> msg = new HashMap<Object, Object>();
 		
-		msg.put("type","masterStatus");
+		msg.put("type","STATUS");
 		
 		Map<Object, Object> payload = new HashMap<Object, Object>();
 		msg.put("payload", payload);
@@ -63,6 +63,9 @@ public class ConsoleInformation
 			Map<Object, Object> jobMap = Message.getJSONMapForJob(currentJob);
 			jobMap.put("startTime", timeToJson(currentJob.getStartTime()));
 			jobMap.put("finished", currentJob.isFinished());
+			if (currentJob.isFinished()) {
+				jobMap.put("finishTime", timeToJson(currentJob.getFinishTime()));
+			}
 			payload.put(Message.FIELD_JOB_MAP, jobMap);
 		
 			// Job progress

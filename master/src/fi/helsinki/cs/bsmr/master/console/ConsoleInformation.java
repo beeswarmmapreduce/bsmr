@@ -10,7 +10,7 @@ import java.util.Set;
 import org.eclipse.jetty.util.ajax.JSON;
 
 import fi.helsinki.cs.bsmr.master.Job;
-import fi.helsinki.cs.bsmr.master.Master;
+import fi.helsinki.cs.bsmr.master.MasterContext;
 import fi.helsinki.cs.bsmr.master.Message;
 import fi.helsinki.cs.bsmr.master.Partition;
 import fi.helsinki.cs.bsmr.master.PartitionStore;
@@ -22,9 +22,9 @@ import fi.helsinki.cs.bsmr.master.Worker;
 
 public class ConsoleInformation
 {
-	private Master master;
+	private MasterContext master;
 	
-	public ConsoleInformation(Master master)
+	public ConsoleInformation(MasterContext master)
 	{
 		this.master = master;
 	}

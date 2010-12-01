@@ -40,7 +40,7 @@ public class MasterWebSocketServlet extends WebSocketServlet
 		
 		logger.finest("doWebSocketConnect()");
 	
-		Master master = BSMRContext.getMaster(request.getServletContext());
+		MasterContext master = BSMRContext.getMaster(request.getServletContext());
 		
 		if (service != null) {
 			if (service.equals("worker")) {

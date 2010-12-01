@@ -2,7 +2,7 @@ package fi.helsinki.cs.bsmr.master.console;
 
 import java.util.logging.Logger;
 
-import fi.helsinki.cs.bsmr.master.Master;
+import fi.helsinki.cs.bsmr.master.MasterContext;
 import fi.helsinki.cs.bsmr.master.TimeContext;
 import fi.helsinki.cs.bsmr.master.Util;
 
@@ -15,19 +15,19 @@ public class ConsoleNotifier implements Runnable
 	private Thread thread;
 	private boolean running;
 	
-	private Master master;
+	private MasterContext master;
 	
 	public ConsoleNotifier()
 	{
 		thread = null;
 	}
 	
-	public void setMaster(Master m)
+	public void setMaster(MasterContext m)
 	{
 		this.master = m;
 	}
 	
-	public Master getMaster()
+	public MasterContext getMaster()
 	{
 		return master;
 	}

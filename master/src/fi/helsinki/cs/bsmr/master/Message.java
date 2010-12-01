@@ -85,7 +85,7 @@ public class Message
 		this.unreachableWorkers = null;
 	}
 	
-	private Message(Map<Object, Object> d, WorkerStore workers, String remoteAddr) throws IllegalMessageException
+	private Message(Map<Object, Object> d, MasterContext master, String remoteAddr) throws IllegalMessageException
 	{
 		Map<?, ?> payload = (Map<?, ?>) d.get(FIELD_PAYLOAD);
 		if (payload == null) {
@@ -113,7 +113,7 @@ public class Message
 		if (payload.containsKey(FIELD_JOBID)) {
 			Long tmp = (Long)payload.get(FIELD_JOBID);
 			if (tmp != null) {
-				this.job = Job.getJobById( tmp.intValue() );
+				this.job = master.getJobById( tmp.intValue() );
 			}
 		}
 		
@@ -124,7 +124,7 @@ public class Message
 		this.mapStatus    = createMapStatus((Map<?, ?>)payload.get(FIELD_MAPSTATUS));
 		this.reduceStatus = createReduceStatus((Map<?, ?>)payload.get(FIELD_REDUCESTATUS));
 				
-		this.unreachableWorkers = parseWorkers( payload.get(FIELD_UNREACHABLE), workers);
+		this.unreachableWorkers = parseWorkers( payload.get(FIELD_UNREACHABLE), master);
 	}
 	
 	public static String constructURL(String protocol, String remoteAddr, Object port, String resource)
@@ -145,7 +145,7 @@ public class Message
 		return ret.toString();
 	}
 	
-	private static Set<Worker> parseWorkers(Object workersAsUrls, WorkerStore workers)
+	private static Set<Worker> parseWorkers(Object workersAsUrls, MasterContext workers)
 	{
 		if (workersAsUrls == null) return null;
 		
@@ -218,11 +218,11 @@ public class Message
 	 * @param msg Message as string
 	 * @return Parsed Message
 	 */
-	public static Message parseMessage(String msg, WorkerStore workers, String remoteAddr) throws IllegalMessageException
+	public static Message parseMessage(String msg, MasterContext master, String remoteAddr) throws IllegalMessageException
 	{
 		Map<Object, Object> tmp = (Map<Object, Object>)JSON.parse(msg);
 		try {
-			return new Message(tmp, workers, remoteAddr);
+			return new Message(tmp, master, remoteAddr);
 		} catch(IllegalMessageException ime) {
 			ime.setProblematicMessage(msg);
 			throw ime;

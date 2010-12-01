@@ -1,7 +1,11 @@
 package fi.helsinki.cs.bsmr.master;
 
-public class Split 
+import java.io.Serializable;
+
+public class Split implements Serializable
 {
+	private static final long serialVersionUID = 1L;
+	
 	private int id;
 	
 	public Split(int id)

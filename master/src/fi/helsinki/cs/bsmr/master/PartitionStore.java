@@ -1,5 +1,6 @@
 package fi.helsinki.cs.bsmr.master;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -7,8 +8,10 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
-public class PartitionStore
+public class PartitionStore implements Serializable
 {
+	private static final long serialVersionUID = 1L;
+	
 	private List<Set<Worker>> partitionsQueued;
 	private boolean []partitionsDone;
 	private boolean allPartitionsDone; 

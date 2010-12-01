@@ -4,7 +4,7 @@ import java.util.logging.Logger;
 
 import org.eclipse.jetty.websocket.WebSocket;
 
-import fi.helsinki.cs.bsmr.master.Master;
+import fi.helsinki.cs.bsmr.master.MasterContext;
 import fi.helsinki.cs.bsmr.master.TimeContext;
 import fi.helsinki.cs.bsmr.master.Util;
 
@@ -13,10 +13,10 @@ public class Console implements WebSocket
 	private static Logger logger = Util.getLoggerForClass(Console.class);
 	
 	private Outbound out;
-	private Master master;
+	private MasterContext master;
 	
 	
-	public Console(Master master)
+	public Console(MasterContext master)
 	{
 		this.master = master;
 	}
@@ -32,7 +32,6 @@ public class Console implements WebSocket
 		sendStatus();
 		
 		master.addConsole(this);
-
 	}
 
 	@Override

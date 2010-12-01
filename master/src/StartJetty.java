@@ -11,8 +11,8 @@ import org.eclipse.jetty.webapp.WebAppContext;
 
 import fi.helsinki.cs.bsmr.master.Job;
 import fi.helsinki.cs.bsmr.master.JobAlreadyRunningException;
-import fi.helsinki.cs.bsmr.master.Master;
 import fi.helsinki.cs.bsmr.master.BSMRContext;
+import fi.helsinki.cs.bsmr.master.MasterContext;
 
 public class StartJetty 
 {
@@ -39,13 +39,12 @@ public class StartJetty
 			server.start();
 			
 			ServletContext sctx = context.getServletContext();
-			Master master = BSMRContext.getMaster(sctx);
+			MasterContext master = BSMRContext.getMaster(sctx);
 			BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 			
 			while( br.readLine() != null) {
-				//Job j = Job.createJob(1000, 30, 60000, 60000*60);
-				Job j = Job.createJob(3, 3, 60000, 60000*60);
-				
+				//Job j = Jmaster.createJob(1000, 30, 60000, 60000*60);
+				Job j = master.createJob(3, 3, 60000, 60000*60);
 				
 				master.queueJob(j);
 				try {

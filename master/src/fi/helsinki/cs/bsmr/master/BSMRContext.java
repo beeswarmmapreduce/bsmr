@@ -28,7 +28,7 @@ public class BSMRContext implements ServletContextListener
 		
 		
 		logger.fine("Creating Master");
-		Master master = new Master();
+		MasterImpl master = new MasterImpl();
 		setMaster(sctx, master);
 		
 		
@@ -64,12 +64,12 @@ public class BSMRContext implements ServletContextListener
 		sctx.setAttribute(ATTRIBUTE_CONSOLENOTIFIER, cn);
 	}
 
-	public static Master getMaster(ServletContext sctx)
+	public static MasterContext getMaster(ServletContext sctx)
 	{
-		return (Master)sctx.getAttribute(ATTRIBUTE_MASTER);
+		return (MasterContext)sctx.getAttribute(ATTRIBUTE_MASTER);
 	}
 	
-	public static void setMaster(ServletContext sctx, Master master)
+	public static void setMaster(ServletContext sctx, MasterContext master)
 	{
 		sctx.setAttribute(ATTRIBUTE_MASTER, master);
 	}

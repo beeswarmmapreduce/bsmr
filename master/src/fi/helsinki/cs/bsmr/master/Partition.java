@@ -1,7 +1,11 @@
 package fi.helsinki.cs.bsmr.master;
 
-public class Partition 
+import java.io.Serializable;
+
+public class Partition implements Serializable
 {
+	private static final long serialVersionUID = 1L;
+	
 	private int id;
 	
 	public Partition(int id)

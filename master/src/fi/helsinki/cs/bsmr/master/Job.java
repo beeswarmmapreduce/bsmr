@@ -1,16 +1,8 @@
 package fi.helsinki.cs.bsmr.master;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.logging.Logger;
-
 
 public class Job 
 {
-	private static Logger logger = Util.getLoggerForClass(Job.class); 
-	
-	private static Map<Integer, Job> jobMap;
-	
 	/** Object fields **/
 	
 	private int jobId;
@@ -30,12 +22,9 @@ public class Job
 	private long startTime;
 	private long finishTime;
 	
-	static {
-		jobMap = new HashMap<Integer, Job>();
-	}
 	
 	
-	private Job(int jobId, int splits, int partitions, int heartbeatTimeout, int acknowledgeTimeout)
+	Job(int jobId, int splits, int partitions, int heartbeatTimeout, int acknowledgeTimeout)
 	{
 		this.jobId = jobId;
 		this.isStarted = false;
@@ -48,26 +37,7 @@ public class Job
 		this.acknowledgeTimeout = acknowledgeTimeout;
 	}
 
-	public static Job createJob(int splits, int partitions, int heartbeatTimeout, int acknowledgeTimeout)
-	{
-		int thisJob;
-		synchronized (Job.class) {
-			// Monotonic for (2^31-1)/100/60/60/24 days (248.5), one new ID per 1/100th of a second
-			thisJob = -1;
-			do {
-				if (thisJob > 0) { try { Thread.sleep(10); } catch(Exception e) {} }
-				thisJob = (int)((System.currentTimeMillis()/100) % Integer.MAX_VALUE);
-				
-			} while (jobMap.containsKey(thisJob));
-		}
-		
-		Job ret = new Job(thisJob, splits, partitions, heartbeatTimeout, acknowledgeTimeout);
-		logger.info("Created new Job "+ret);
-		jobMap.put(thisJob, ret); // auto-boxing
-		
-		return ret;
-	}
-	
+
 	
 	public void startJob()
 	{
@@ -79,15 +49,6 @@ public class Job
 
 	public boolean isFinished() { return isFinished; }
 	public boolean isStarted()  { return isStarted; }
-	
-	/**
-	 * Marks the job as stopped. Will remove job from the internal data structure
-	 * and messages with this job id will not be able to find the job anymore.
-	 */
-	public void removeJob()
-	{
-		jobMap.remove(jobId);
-	}
 	
 	public void finishJob()
 	{
@@ -126,10 +87,6 @@ public class Job
 		return partitionStore;
 	}
 
-	public static Job getJobById(int jobId)
-	{
-		return jobMap.get(jobId); // auto-boxing
-	}
 
 	public int getJobId()
 	{

@@ -145,13 +145,14 @@ public class Message
 		return ret.toString();
 	}
 	
+	@SuppressWarnings("unchecked")
 	private static Set<Worker> parseWorkers(Object workersAsUrls, MasterContext workers)
 	{
 		if (workersAsUrls == null) return null;
 		
 		Collection<Object> set;
 		if (workersAsUrls instanceof Collection) {
-			set = (Collection)workersAsUrls;
+			set = (Collection<Object>)workersAsUrls;
 		} else if (workersAsUrls instanceof Map) {
 			logger.fine("Parsing workers from message using a map?? Using the keys");
 			set = ((Map)workersAsUrls).keySet();
@@ -218,6 +219,7 @@ public class Message
 	 * @param msg Message as string
 	 * @return Parsed Message
 	 */
+	@SuppressWarnings("unchecked")
 	public static Message parseMessage(String msg, MasterContext master, String remoteAddr) throws IllegalMessageException
 	{
 		Map<Object, Object> tmp = (Map<Object, Object>)JSON.parse(msg);
@@ -255,8 +257,6 @@ public class Message
 			Map<Object, Object> jobMap = getJSONMapForJob(job);
 			
 			payload.put(FIELD_JOB_MAP, jobMap);
-		
-			
 		}
 		
 		return JSON.toString(data);

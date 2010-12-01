@@ -7,6 +7,7 @@ import java.util.logging.Logger;
 import javax.servlet.ServletContext;
 
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.eclipse.jetty.webapp.WebAppContext;
 
 import fi.helsinki.cs.bsmr.master.Job;
@@ -14,31 +15,29 @@ import fi.helsinki.cs.bsmr.master.JobAlreadyRunningException;
 import fi.helsinki.cs.bsmr.master.BSMRContext;
 import fi.helsinki.cs.bsmr.master.MasterContext;
 
+
 public class StartJetty 
 {
 	public static void main(String[] args) throws Exception
-	{
-		Level logLevel = Level.FINE;
-		
-		Logger.getLogger("").setLevel(logLevel);
-		for (Handler h : Logger.getLogger( "" ).getHandlers()) {
-	        h.setLevel( logLevel );
-	    }
+	{		
+		setLogLevel(Level.FINE);
 		
 		Server server = new Server(8080);
 
-		WebAppContext context = new WebAppContext();
-		context.setResourceBase("master/webapp");
-		context.setDescriptor("master/webapp/WEB-INF/web.xml");
-		context.setContextPath("/");
-		context.setParentLoaderPriority(true);
-		server.setHandler(context);
+		WebAppContext masterWebApp = createMasterWebApp();
 		
+        ContextHandlerCollection multiContext = new ContextHandlerCollection();
+        multiContext.addHandler(masterWebApp);
+        multiContext.addHandler(createWorkerWebApp());
+        multiContext.addHandler(createConsoleWebApp());
+        
+        server.setHandler(multiContext);
 		
 		try {
 			server.start();
 			
-			ServletContext sctx = context.getServletContext();
+			
+			ServletContext sctx = masterWebApp.getServletContext();
 			MasterContext master = BSMRContext.getMaster(sctx);
 			BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 			
@@ -52,7 +51,6 @@ public class StartJetty
 					System.out.println("Still running the previous job");
 				}
 				
-				// Send update to all consoles
 				BSMRContext.getConsoleNotifier(sctx).sendUpdates();
 				
 			}
@@ -62,5 +60,38 @@ public class StartJetty
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+
+	private static void setLogLevel(Level logLevel) {
+		Logger.getLogger("").setLevel(logLevel);
+		for (Handler h : Logger.getLogger( "" ).getHandlers()) {
+	        h.setLevel( logLevel );
+	    }
+	}
+
+	private static WebAppContext createMasterWebApp() 
+	{
+		WebAppContext context = new WebAppContext();
+		context.setResourceBase("master/webapp");
+		context.setDescriptor("master/webapp/WEB-INF/web.xml");
+		context.setContextPath("/");
+		context.setParentLoaderPriority(true);
+		return context;
+	}
+	
+	private static WebAppContext createWorkerWebApp()
+	{
+		WebAppContext context = new WebAppContext();
+		context.setResourceBase("worker");
+		context.setContextPath("/worker");
+		return context;
+	}
+	
+	private static WebAppContext createConsoleWebApp()
+	{
+		WebAppContext context = new WebAppContext();
+		context.setResourceBase("console");
+		context.setContextPath("/console");
+		return context;
 	}
 }

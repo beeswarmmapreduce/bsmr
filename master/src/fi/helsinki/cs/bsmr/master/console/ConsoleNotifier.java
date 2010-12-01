@@ -37,7 +37,7 @@ public class ConsoleNotifier implements Runnable
 		if (thread != null) throw new IllegalThreadStateException("ConsoleNotifier already started");
 		
 		running = true;
-		thread = new Thread(this);
+		thread = new Thread(this, "ConsoleNotifier thread");
 		thread.start();
 	}
 	
@@ -58,7 +58,7 @@ public class ConsoleNotifier implements Runnable
 			synchronized (this) {
 				
 				try {
-					logger.info("Waiting for notification");
+					logger.fine("Waiting for notification");
 					this.wait(ConsoleNotifier.TIME_BETWEEN_NOTIFYS);
 					
 					wasInterrupted = false;
@@ -79,7 +79,7 @@ public class ConsoleNotifier implements Runnable
 			}
 			
 			synchronized (Console.class) { // See Console.onDisconnect()
-				logger.info("Informing all "+master.getConsoles().size()+" consoles");
+				logger.fine("Informing all "+master.getConsoles().size()+" consoles");
 				for (Console c : master.getConsoles()) {
 					c.sendStatus(ci);
 				}

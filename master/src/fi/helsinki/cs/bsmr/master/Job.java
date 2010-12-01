@@ -22,9 +22,10 @@ public class Job
 	private long startTime;
 	private long finishTime;
 	
+	private String code;
 	
 	
-	Job(int jobId, int splits, int partitions, int heartbeatTimeout, int acknowledgeTimeout)
+	Job(int jobId, int splits, int partitions, int heartbeatTimeout, int acknowledgeTimeout, String code)
 	{
 		this.jobId = jobId;
 		this.isStarted = false;
@@ -35,9 +36,9 @@ public class Job
 		
 		this.heartbeatTimeout   = heartbeatTimeout;
 		this.acknowledgeTimeout = acknowledgeTimeout;
+		
+		this.code = code;
 	}
-
-
 	
 	public void startJob()
 	{
@@ -93,9 +94,8 @@ public class Job
 		return jobId;
 	}
 
-	public Object getCode() {
-		// TODO Auto-generated method stub
-		return null;
+	public String getCode() {
+		return code;
 	}
 	
 	public long getStartTime()
@@ -111,5 +111,14 @@ public class Job
 	public String toString()
 	{
 		return "Job#"+jobId+" (M="+splits+", R="+partitions+")";
+	}
+	
+	@Override
+	public boolean equals(Object obj)
+	{
+		if (!(obj instanceof Job)) return false;
+		
+		Job b = (Job)obj;
+		return  jobId == b.jobId;
 	}
 }

@@ -43,8 +43,7 @@ public class StartJetty
 			BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 			
 			while( br.readLine() != null) {
-				//Job j = Jmaster.createJob(1000, 30, 60000, 60000*60);
-				Job j = master.createJob(3, 3, 60000, 60000*60);
+				Job j = master.createJob(3, 3, 60000, 60000*60, "/* Don't do anything */");
 				
 				master.queueJob(j);
 				try {

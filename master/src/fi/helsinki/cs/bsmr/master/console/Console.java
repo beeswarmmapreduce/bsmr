@@ -89,7 +89,7 @@ public class Console implements WebSocket
 
 	private void removeJob(Map<Object, Object> payload)
 	{
-		int jobId = Integer.parseInt((String)payload.get("id"));
+		int jobId = Util.getIntFromJSONObject(payload.get("id"));
 		
 		Job toBeRemoved = master.getJobById(jobId);
 		if (toBeRemoved == null) {
@@ -102,10 +102,10 @@ public class Console implements WebSocket
 
 	private void addJob(Map<Object, Object> payload)
 	{
-		int splits             = Integer.parseInt((String)payload.get(Message.FIELD_NUM_SPLITS));
-		int partitions         = Integer.parseInt((String)payload.get(Message.FIELD_NUM_PARTITIONS));
-		int heartbeatTimeout   = Integer.parseInt((String)payload.get("heartbeatTimeout"));
-		int acknowledgeTimeout = Integer.parseInt((String)payload.get("progressTimeout"));
+		int splits             = Util.getIntFromJSONObject(payload.get(Message.FIELD_NUM_SPLITS));
+		int partitions         = Util.getIntFromJSONObject(payload.get(Message.FIELD_NUM_PARTITIONS));
+		int heartbeatTimeout   = Util.getIntFromJSONObject(payload.get("heartbeatTimeout"));
+		int acknowledgeTimeout = Util.getIntFromJSONObject(payload.get("progressTimeout"));
 		String code            = (String)payload.get("code");
 		
 		Job newJob = master.createJob(splits, partitions, heartbeatTimeout, acknowledgeTimeout, code);

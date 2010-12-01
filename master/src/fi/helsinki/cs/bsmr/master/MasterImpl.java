@@ -49,13 +49,25 @@ public class MasterImpl extends MasterStoreImpl
 		if (msg.getJob() == activeJob) {
 			// acknowledge data from worker
 			switch (msg.getAction()) {
-			case mapTask:
-				activeJob.getSplitInformation().acknowledgeWork(worker, msg.getMapStatus().split);
+			case mapTask: {
+				Split s = msg.getMapStatus().split;
+				if (s == null || s.getId() < 0 || s.getId() >= activeJob.getSplits()) {
+					logger.severe("Worker tried to acknowledge an illegal split "+s+" ("+Message.FIELD_NUM_SPLITS+"="+activeJob.getSplits());
+				} else {
+					activeJob.getSplitInformation().acknowledgeWork(worker, s);
+				}
 				break;
+			}
 				
-			case reduceTask:
-				activeJob.getPartitionInformation().acknowledgeWork(worker, msg.getReduceStatus().partition);
+			case reduceTask: {
+				Partition p = msg.getReduceStatus().partition;
+				if (p == null || p.getId() < 0 || p.getId() >= activeJob.getPartitions()) {
+					logger.severe("Worker tried to acknowledge an illegal partition "+p+" ("+Message.FIELD_NUM_PARTITIONS+"="+activeJob.getPartitions());
+				} else {
+					activeJob.getPartitionInformation().acknowledgeWork(worker, p);
+				}
 				break;
+			}
 			}
 		}
 	
@@ -117,16 +129,30 @@ public class MasterImpl extends MasterStoreImpl
 		    msg.getAction() == Message.Action.reduceSplit && 
 			!activeJob.getPartitionInformation().isPartitionDone(msg.getIncompleteReducePartition())) { 
 			
-			return Message.findSplitAtMessage(msg.getReduceStatus().partition, msg.getReduceStatus().split, activeJob, msg.getUnareachableWorkers());
+			Partition p = msg.getReduceStatus().partition;
+			Split s     = msg.getReduceStatus().split;
+			
+			boolean ok = true;
+			
+			if (p == null || p.getId() < 0 || p.getId() >= activeJob.getPartitions()) {
+				ok = false;
+			}
+			
+			if (s == null || s.getId() < 0 || s.getId() >= activeJob.getSplits()) {
+				ok = false;
+			}
+			
+			if (ok) {
+				return Message.findSplitAtMessage(msg.getReduceStatus().partition, msg.getReduceStatus().split, activeJob, msg.getUnareachableWorkers());
+			}
 
-		} else {
-			
-			// All splits are done => Assign a partition for reducing
-			
-			Partition nextPartition = activeJob.getPartitionInformation().selectPartitionToWorkOn(worker);
-			
-			return Message.reduceThatMessage(nextPartition, activeJob);
 		}
+			
+		// All splits are done => Assign a partition for reducing  (or the client specified a non-valid partition or split
+			
+		Partition nextPartition = activeJob.getPartitionInformation().selectPartitionToWorkOn(worker);
+			
+		return Message.reduceThatMessage(nextPartition, activeJob);
 	}
 
 }

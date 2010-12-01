@@ -48,6 +48,9 @@ public abstract class MasterStoreImpl implements MasterContext
 		consoles   = new HashSet<Console>();
 	}
 
+	// **************************** Worker functionality
+	
+	@Override
 	public Worker getWorkerByURL(String url)
 	{
 		if (url == null) {
@@ -57,11 +60,13 @@ public abstract class MasterStoreImpl implements MasterContext
 		return workerForURL.get(url);
 	}
 	
+	@Override
 	public Set<Worker> getWorkers()
 	{
 		return Collections.unmodifiableSet(workers);
 	}
 
+	@Override
 	public void setWorkerURL(Worker worker, String socketURL)
 	{
 		synchronized (this) {
@@ -79,18 +84,19 @@ public abstract class MasterStoreImpl implements MasterContext
 		}
 	}
 	
-
+	@Override
 	public String getWorkerURL(Worker worker) 
 	{
 		return URLForWorker.get(worker);
 	}
 	
+	@Override
 	public Worker createWorker(String remoteAddr)
 	{
 		return new Worker(this, remoteAddr);
 	}
 	
-
+	@Override
 	public void removeWorker(Worker worker) throws WorkerInIllegalStateException
 	{
 		boolean removed;
@@ -110,6 +116,7 @@ public abstract class MasterStoreImpl implements MasterContext
 		}
 	}
 	
+	@Override
 	public void addWorker(Worker worker) throws WorkerInIllegalStateException
 	{
 		synchronized (this) 
@@ -123,7 +130,9 @@ public abstract class MasterStoreImpl implements MasterContext
 		
 	}
 
-	// Job functionality
+	// **************************** Job functionality
+	
+	@Override
 	public synchronized boolean startNextJob() throws JobAlreadyRunningException
 	{
 		if (activeJob != null && !activeJob.isFinished()) {
@@ -180,6 +189,48 @@ public abstract class MasterStoreImpl implements MasterContext
 		return true;
 	}
 
+	@Override
+	public synchronized void removeJob(Job toBeRemoved)
+	{
+		logger.fine("Removing ID -> Job mapping");
+		// Remove id -> Job mapping
+		jobMap.remove(toBeRemoved.getJobId());
+		
+		if (jobQueue.contains(toBeRemoved)) {
+			logger.fine("Removing job from Job queue");
+			jobQueue.remove(toBeRemoved);
+		}
+		
+		if (jobHistory.contains(toBeRemoved)) {
+			logger.fine("Removing job from Job history");
+			jobHistory.remove(toBeRemoved);
+		}
+		
+		if (activeJob != null &&
+			activeJob.equals(toBeRemoved)) {
+			logger.fine("Removing current active job");
+			if (!activeJob.isFinished()) {
+				logger.fine(" .. mark the job as finished");
+				activeJob.finishJob();
+			}
+			
+			// TODO: do not add removed job into the job history
+			//logger.fine(" .. move job into Job history");
+			//jobHistory.add(activeJob);
+			activeJob = null;
+			
+			logger.fine(" .. attempting to start the next job");
+			try {
+				startNextJob();
+			} catch(JobAlreadyRunningException jare) {
+				logger.log(Level.SEVERE, "We just stopped the previous job, but startNextJob() tells us there is a job running?!", jare);
+			}
+				
+		}
+		
+	}
+	
+	@Override
 	public synchronized void queueJob(Job j) throws JobAlreadyRunningException
 	{
 		if (j.isStarted() || j.isFinished()) {
@@ -190,27 +241,32 @@ public abstract class MasterStoreImpl implements MasterContext
 		jobQueue.add(j);
 	}
 	
+	@Override
 	public List<Job> getJobQueue()
 	{
 		return Collections.unmodifiableList(jobQueue);
 	}
 
+	@Override
 	public List<Job> getJobHistory() 
 	{
 		return Collections.unmodifiableList(jobHistory);
 	}
 
+	@Override
 	public Job getActiveJob()
 	{
 		return activeJob;
 	}
 	
+	@Override
 	public boolean isJobActive()
 	{
 		return activeJob != null && !activeJob.isFinished() && activeJob.isStarted();
 	}
 
-	public Job createJob(int splits, int partitions, int heartbeatTimeout, int acknowledgeTimeout)
+	@Override
+	public Job createJob(int splits, int partitions, int heartbeatTimeout, int acknowledgeTimeout, String code)
 	{
 		Job ret;
 		
@@ -222,7 +278,7 @@ public abstract class MasterStoreImpl implements MasterContext
 				thisJob = (int)((System.currentTimeMillis()/100) % Integer.MAX_VALUE);
 				
 			} while (jobMap.containsKey(thisJob));
-			ret = new Job(thisJob, splits, partitions, heartbeatTimeout, acknowledgeTimeout);
+			ret = new Job(thisJob, splits, partitions, heartbeatTimeout, acknowledgeTimeout, code);
 			jobMap.put(thisJob, ret); // auto-boxing
 		}
 		
@@ -231,13 +287,15 @@ public abstract class MasterStoreImpl implements MasterContext
 		return ret;
 	}
 	
+	@Override
 	public Job getJobById(int jobId)
 	{
 		return jobMap.get(jobId); // auto-boxing
 	}
 	
+	// **************************** Console functionality
 	
-	// Console functions
+	@Override
 	public void addConsole(Console c)
 	{
 		synchronized (consoles) {
@@ -245,6 +303,7 @@ public abstract class MasterStoreImpl implements MasterContext
 		}
 	}
 
+	@Override
 	public void removeConsole(Console c)
 	{
 		synchronized (consoles) {
@@ -252,6 +311,7 @@ public abstract class MasterStoreImpl implements MasterContext
 		}	
 	}
 
+	@Override
 	public Set<Console> getConsoles()
 	{
 		return Collections.unmodifiableSet(consoles);

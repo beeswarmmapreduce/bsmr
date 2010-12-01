@@ -23,10 +23,11 @@ public interface MasterContext
 	public Set<Worker> getWorkers();
 	
 	// Job related functionality
-	public Job     createJob(int splits, int partitions, int heartbeatTimeout, int acknowledgeTimeout);
+	public Job     createJob(int splits, int partitions, int heartbeatTimeout, int acknowledgeTimeout, String code);
 	public Job     getJobById(int jobId);
 	public void    queueJob(Job j) throws JobAlreadyRunningException;
 	public boolean startNextJob() throws JobAlreadyRunningException;
+	public void    removeJob(Job toBeRemoved);
 	
 	public List<Job> getJobQueue();
 	public List<Job> getJobHistory();
@@ -38,6 +39,5 @@ public interface MasterContext
 	public void addConsole(Console c);
 	public void removeConsole(Console c);
 	public Set<Console> getConsoles();
-	
 	
 }

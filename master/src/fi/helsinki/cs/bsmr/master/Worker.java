@@ -8,6 +8,7 @@ import java.util.logging.Logger;
 import org.eclipse.jetty.websocket.WebSocket;
 
 import fi.helsinki.cs.bsmr.master.Message.Type;
+import fi.helsinki.cs.bsmr.master.console.AsyncSender;
 
 public class Worker implements WebSocket 
 {
@@ -207,7 +208,10 @@ public class Worker implements WebSocket
 
 	public void sendMessage(Message reply) throws IOException
 	{
-		out.sendMessage(reply.encodeMessage());		
+		// TODO: is async really the best option? It might not actually be.. we shall see
+		// Should the sender be thread specific? or...
+		AsyncSender sender = AsyncSender.getSender(master);
+		sender.sendAsyncMessage(reply.encodeMessage(), out);
 	}
 
 

@@ -27,6 +27,11 @@ public class Console implements WebSocket
 		this.master = master;
 	}
 	
+	public void disconnect()
+	{
+		out.disconnect();
+	}
+	
 	@Override
 	public void onConnect(Outbound out) 
 	{
@@ -151,8 +156,8 @@ public class Console implements WebSocket
 	public void sendStatus(ConsoleInformation ci)
 	{
 		String msg = ci.toJSONString();
-		AsyncSender sender = AsyncSender.getSender(this, out);
-		sender.sendAsyncMessage(msg);
+		AsyncSender sender = AsyncSender.getSender(this);
+		sender.sendAsyncMessage(msg, out);
 	}
 	
 }

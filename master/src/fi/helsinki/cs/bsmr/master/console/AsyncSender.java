@@ -1,6 +1,7 @@
 package fi.helsinki.cs.bsmr.master.console;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -20,19 +21,24 @@ public class AsyncSender implements Runnable
 	
 	private static Map<Object, AsyncSender> senderForObject = new HashMap<Object, AsyncSender>();
 	
-	private Deque<String> messageQueue;
-	private Outbound out;
+	private Deque<Task> messageQueue;
 	private Object owner;
 	private boolean running;
 	
-	private AsyncSender(Object owner, Outbound out)
+	private Thread thread;
+	
+	private AsyncSender(Object owner)
 	{
-		this.messageQueue = new LinkedList<String>();
-		this.out = out;
+		this.messageQueue = new LinkedList<Task>();
 		this.owner = owner;
 	}
 	
-	public static AsyncSender getSender(Object o, Outbound out)
+	public static AsyncSender getSender(Object o)
+	{
+		return getSender(o, "AsyncSender for "+o);
+	}
+	
+	public static AsyncSender getSender(Object o, String title)
 	{
 		AsyncSender ret;
 		
@@ -40,16 +46,12 @@ public class AsyncSender implements Runnable
 			ret = senderForObject.get(o);
 			
 			if (ret == null) {
-				ret = new AsyncSender(o, out);
+				ret = new AsyncSender(o);
 				senderForObject.put(o, ret);
 				
-				Thread thr = new Thread(ret, "AsyncSender for "+o);
-				thr.start();
+				ret.thread = new Thread(ret, title);
+				ret.thread.start();
 			}
-		}
-		
-		if (ret.out != out) {
-			logger.severe("Sender for object "+o+" requested with a different outbound connection!?! Using the original connection instead");
 		}
 		
 		return ret;
@@ -66,13 +68,24 @@ public class AsyncSender implements Runnable
 		if (ret != null) {
 			ret.stop();
 		}
+		
 	}
 	
-	public void sendAsyncMessage(String msg)
+	public static void stopAll()
+	{
+		synchronized (senderForObject) {
+			for (AsyncSender as : senderForObject.values()) {
+				logger.info("Stopping AsyncSender "+as.thread.getName());
+				as.stop();
+			}
+		}
+	}
+	
+	public void sendAsyncMessage(String msg, Outbound out)
 	{
 		// TODO: Add queue max length where too many queued messages would kill this sender!
 		synchronized (messageQueue) {			
-			messageQueue.addLast(msg);
+			messageQueue.addLast( new Task(msg, out));
 			messageQueue.notify();
 		}
 	}
@@ -85,6 +98,9 @@ public class AsyncSender implements Runnable
 			messageQueue.clear();
 			messageQueue.notify();
 		}
+		
+		thread.interrupt();
+		// NOTE: no thread.join() because this might be called in situations where this needs to exit relatively fast
 	}
 	
 	@Override
@@ -96,6 +112,7 @@ public class AsyncSender implements Runnable
 			while(running) {
 				runOnce();
 			}
+			
 		} catch(InterruptedException ie) {
 			logger.log(Level.WARNING,"I was interrupted! Exiting..", ie);
 		} catch(NoSuchElementException nsee) {
@@ -113,21 +130,74 @@ public class AsyncSender implements Runnable
 
 	private void runOnce() throws InterruptedException, NoSuchElementException
 	{
-		String nextMessage;
+		Task nextTask;
+		
 		synchronized (messageQueue) {
 			if (messageQueue.isEmpty()) {
 				messageQueue.wait();
 			}
 		
-			nextMessage = messageQueue.pop();
+			nextTask = messageQueue.pop();
+		}
+		
+		// Stop if we were notified to stop
+		if (nextTask == null) {
+			return;
 		}
 		
 		try {
-			out.sendMessage(nextMessage);
-		} catch (IOException ie) {
-			logger.log(Level.SEVERE, "Asynchronous send failed, disconnecting endpoint "+owner, ie);
-			out.disconnect();
+			nextTask.run();
+		} catch(TaskFailedException tfe) {
+			logger.log(Level.SEVERE, "Asynchronous send failed, disconnecting endpoint "+owner+" and flushing further messages", tfe);
+			
+			synchronized (messageQueue) {
+				Collection<Task> pairsForDeadOutbound = new LinkedList<Task>();
+				for (Task t : messageQueue) {
+					if (t.out == tfe.out) {
+						pairsForDeadOutbound.add(t);
+					}
+				}
+				messageQueue.removeAll(pairsForDeadOutbound);
+			}
+			
+			tfe.out.disconnect();
 			throw new InterruptedException("Stopping AsyncSender");
+		}
+			
+		
+	}
+	
+	private class Task
+	{
+		String message;
+		Outbound out;
+		
+		public Task(String message, Outbound out)
+		{
+			this.message = message;
+			this.out = out;
+		}
+		
+		public void run() throws TaskFailedException
+		{
+			
+			try {
+				out.sendMessage(message);
+			} catch (IOException ie) {
+				throw new TaskFailedException(out, ie);
+			}
+		}
+	}
+	
+	private class TaskFailedException extends Exception
+	{
+		private static final long serialVersionUID = 1L;
+		
+		Outbound out;
+		public TaskFailedException(Outbound out, Throwable cause)
+		{
+			super(cause);
+			this.out = out;
 		}
 	}
 }

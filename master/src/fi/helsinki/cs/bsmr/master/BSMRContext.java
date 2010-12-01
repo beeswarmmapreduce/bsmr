@@ -7,6 +7,8 @@ import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 
+import fi.helsinki.cs.bsmr.master.console.AsyncSender;
+import fi.helsinki.cs.bsmr.master.console.Console;
 import fi.helsinki.cs.bsmr.master.console.ConsoleNotifier;
 
 public class BSMRContext implements ServletContextListener
@@ -27,15 +29,18 @@ public class BSMRContext implements ServletContextListener
 		logger.info("Starting BSMR Master");
 		
 		
-		logger.fine("Creating Master");
+		logger.info("Creating Master");
 		MasterImpl master = new MasterImpl();
 		setMaster(sctx, master);
 		
 		
-		logger.fine("Starting ConsoleNotifier thread");
+		logger.info("Starting ConsoleNotifier thread");
 		ConsoleNotifier cn = new ConsoleNotifier();
 		cn.setMaster(master);
 		cn.start();
+		
+		logger.info("Starting AsyncSender for workers");
+		AsyncSender.getSender(master, "Worker AsyncSender");
 		
 		setConsoleNotifier(sctx, cn);
 	}
@@ -45,12 +50,33 @@ public class BSMRContext implements ServletContextListener
 	public void contextDestroyed(ServletContextEvent evt) 
 	{
 		logger.info("Stopping BSMR Master");
-		logger.fine("Stopping ConsoleNotifier thread");
+		MasterContext master = getMaster(evt.getServletContext());
+	
+		logger.info("Stopping ConsoleNotifier thread");
 		try {
-			getConsoleNotifier(evt.getServletContext()).stop();;
+			getConsoleNotifier(evt.getServletContext()).stop();
 		} catch (InterruptedException e) {
 			logger.log(Level.SEVERE, "Could not stop ConsoleNotifier thread!", e);
 		}
+		
+		// NOTE: sync on master to prohibit disconnecting workers from modifying
+		// the structures this block iterates over
+		synchronized (master) {
+			logger.info("Disconnecting all workers");
+			for (Worker w : master.getWorkers()) {
+				w.disconnect();
+			}
+			
+			logger.info("Disconnecting all consoles");
+			for (Console c : master.getConsoles()) {
+				c.disconnect();
+			}			
+		}
+		
+		logger.info("Stopping all AsyncSenders");
+		AsyncSender.stopAll();
+
+		logger.info("BSMR Master stopped");
 	}
 
 

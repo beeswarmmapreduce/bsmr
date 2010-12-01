@@ -18,6 +18,11 @@ public class Partition implements Serializable
 		return id;
 	}
 
+	public String toString()
+	{
+		return "PartId: "+id;
+	}
+	
 	@Override
 	public int hashCode() {
 		return Partition.class.hashCode() & id;

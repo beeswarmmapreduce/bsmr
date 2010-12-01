@@ -18,6 +18,10 @@ public class Split implements Serializable
 		return id;
 	}
 
+	public String toString()
+	{
+		return "SplitId: "+id;
+	}
 
 	@Override
 	public int hashCode() {

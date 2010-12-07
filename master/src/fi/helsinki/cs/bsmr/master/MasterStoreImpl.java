@@ -163,7 +163,7 @@ public abstract class MasterStoreImpl implements MasterContext
 			Message msg = selectTaskForWorker(w, dummyStatus);
 			
 			try {
-				w.sendMessage(msg);
+				w.sendAsyncMessage(msg, 1000); // TODO: use a static 1s ramp up for now. Add it to Job parameters if deemed necessary
 			} catch(IOException ie) {
 				logger.log(Level.SEVERE, "Could not send work to worker. Terminating connection.", ie);
 				// NOTE: the callback for onDisconnect() will remove this worker from the worker list

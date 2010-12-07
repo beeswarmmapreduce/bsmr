@@ -125,7 +125,7 @@ public class Worker implements WebSocket
 			return;
 		}
 		
-		Message reply;
+		String reply;
 
 		if (msg.getAction() == Message.Action.socket) {
 			master.setWorkerURL(this, msg.getSocketURL());
@@ -165,7 +165,8 @@ public class Worker implements WebSocket
 				boolean moreToBeDone = master.acknowledgeWork(this, msg);
 				
 				if (moreToBeDone) {
-					reply = master.selectTaskForWorker(this, msg);
+					Message tmp = master.selectTaskForWorker(this, msg);
+					reply = tmp.encodeMessage();
 				} else {
 					reply = null;
 				}
@@ -177,17 +178,10 @@ public class Worker implements WebSocket
 		
 		if (reply != null) {
 			try {
-				sendMessage(reply);
+				sendSyncMessage(reply);
 			} catch(IOException ie) {
-				logger.log(Level.SEVERE, "Could not reply to worker. Terminating connection.", ie);
-				
-				try {
-					master.removeWorker(this);
-				} catch(WorkerInIllegalStateException wiise) {
-					logger.log(Level.SEVERE, "The worker we could not send a reply to was not registered as a worker?", wiise);
-				} finally {
-					disconnect();
-				}
+				logger.log(Level.SEVERE, "Could not reply to worker. Terminating connection.", ie);			
+				disconnect();
 			}
 			
 		}
@@ -206,12 +200,25 @@ public class Worker implements WebSocket
 		return ( (TimeContext.now() - lastProgress) > job.getWorkerAcknowledgeTimeout());
 	}
 
-	public void sendMessage(Message reply) throws IOException
+	public void sendAsyncMessage(Message reply) throws IOException
 	{
-		// TODO: is async really the best option? It might not actually be.. we shall see
-		// Should the sender be thread specific? or...
-		AsyncSender sender = AsyncSender.getSender(master);
+		AsyncSender sender = AsyncSender.getSender(master);		
 		sender.sendAsyncMessage(reply.encodeMessage(), out);
+	}
+	
+	public void sendAsyncMessage(Message reply, long cumulativeDelay) throws IOException
+	{
+		AsyncSender sender = AsyncSender.getSender(master);		
+		sender.sendAsyncMessage(reply.encodeMessage(), out, cumulativeDelay);
+	}
+	
+	public void sendSyncMessage(String reply) throws IOException
+	{
+		synchronized (out) { // See synchronization at AsyncSender$Task.run()
+			
+			// TODO: We could remove any message to this "out" from the AsyncSender
+			out.sendMessage(reply);
+		}
 	}
 
 

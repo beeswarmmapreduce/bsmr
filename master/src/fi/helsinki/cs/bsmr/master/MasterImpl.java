@@ -86,12 +86,12 @@ public class MasterImpl extends MasterStoreImpl
 
 	private void pauseAllWorkers() 
 	{
-		Message pause = Message.pauseMessage(); 
+		String pause = Message.pauseMessage().encodeMessage(); 
 		
 		for (Worker w : getWorkers()) {
 			
 			try {
-				w.sendMessage(pause);
+				w.sendSyncMessage(pause);
 			} catch(IOException ie) {
 				logger.log(Level.SEVERE, "Could not pause worker. Terminating connection.", ie);
 				

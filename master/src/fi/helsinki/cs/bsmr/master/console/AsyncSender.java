@@ -80,6 +80,15 @@ public class AsyncSender implements Runnable
 			}
 		}
 	}
+
+	public void sendAsyncMessage(String msg, Outbound out, long cumulativeDelay)
+	{
+		// TODO: Add queue max length where too many queued messages would kill this sender!
+		synchronized (messageQueue) {			
+			messageQueue.addLast( new Task(msg, out, cumulativeDelay));
+			messageQueue.notify();
+		}
+	}
 	
 	public void sendAsyncMessage(String msg, Outbound out)
 	{
@@ -160,7 +169,9 @@ public class AsyncSender implements Runnable
 				messageQueue.removeAll(pairsForDeadOutbound);
 			}
 			
-			tfe.out.disconnect();
+			if (tfe.out != null) {
+				tfe.out.disconnect();
+			}
 			throw new InterruptedException("Stopping AsyncSender");
 		}
 			
@@ -171,20 +182,35 @@ public class AsyncSender implements Runnable
 	{
 		String message;
 		Outbound out;
+		long delay;
 		
 		public Task(String message, Outbound out)
 		{
+			this(message,out,0);
+		}
+		
+		public Task(String message, Outbound out, long delay)
+		{
 			this.message = message;
 			this.out = out;
+			this.delay = delay;
 		}
 		
 		public void run() throws TaskFailedException
 		{
 			
 			try {
-				out.sendMessage(message);
+				if (delay > 0) {
+					Thread.sleep(delay);
+				}
+				
+				synchronized (out) {
+					out.sendMessage(message);
+				}
 			} catch (IOException ie) {
 				throw new TaskFailedException(out, ie);
+			} catch (InterruptedException ie) {
+				throw new TaskFailedException(ie);
 			}
 		}
 	}
@@ -198,6 +224,12 @@ public class AsyncSender implements Runnable
 		{
 			super(cause);
 			this.out = out;
+		}
+		
+		public TaskFailedException(Throwable cause)
+		{
+			super(cause);
+			this.out = null;
 		}
 	}
 }

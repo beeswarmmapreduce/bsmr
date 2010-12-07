@@ -117,11 +117,9 @@ public class MasterImpl extends MasterStoreImpl
 	{	
 		Job activeJob = getActiveJob();
 		
-		// All partitions are not done yet, but let's first check the splits:
-		if (!activeJob.getSplitInformation().areAllSplitsDone(msg.getUnareachableWorkers())) {
-			// Assign a map task
-			Split nextSplit = activeJob.getSplitInformation().selectSplitToWorkOn(worker, msg.getUnareachableWorkers());
-			
+		Split nextSplit = activeJob.getSplitInformation().selectSplitToWorkOn(worker, msg.getUnareachableWorkers());
+		
+		if (nextSplit != null) {			
 			return Message.mapThisMessage(nextSplit, activeJob);
 		} 
 		

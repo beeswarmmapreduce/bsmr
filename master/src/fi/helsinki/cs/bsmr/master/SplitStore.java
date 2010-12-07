@@ -39,29 +39,7 @@ public class SplitStore implements Serializable
 		return new AvailableWorkerSet(splitsDone.get(s.getId()), job);
 	}
 	
-	/**
-	 * TODO: this is _slow_. Maybe the answer should be cached 
-	 * 
-	 * @return Whether all splits are done on servers which are available at the moment
-	 */
-	public boolean areAllSplitsDone(Set<Worker> unreachableWorkers)
-	{	
-		for (int i = 0; i < job.getSplits(); ++i) {
-			Set<Worker> whoHasSplit_i = whoHasSplit(new Split(i));
-			
-			if (whoHasSplit_i.isEmpty()) {
-				return false;
-			}
-			
-			if (unreachableWorkers.containsAll(whoHasSplit_i)) {
-				return false;
-			}
-			
-		}
-		
-		return true;
-	}
-	
+
 	public Split selectSplitToWorkOn(Worker toWhom, Set<Worker> unreachableWorkers)
 	{
 		int i = 0;
@@ -80,6 +58,10 @@ public class SplitStore implements Serializable
 			
 		} while (!isGoodCandidate && i < job.getSplits());
 	
+		if (!isGoodCandidate) {
+			return null;
+		}
+		
 		splitsQueued.get(ret.getId()).add(toWhom);
 		
 		return ret;

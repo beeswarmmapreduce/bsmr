@@ -25,7 +25,7 @@ public class Partition implements Serializable
 	
 	@Override
 	public int hashCode() {
-		return Partition.class.hashCode() & id;
+		return Partition.class.hashCode() ^ id;
 	}
 	
 	@Override

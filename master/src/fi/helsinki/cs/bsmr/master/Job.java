@@ -25,6 +25,16 @@ public class Job
 	private String code;
 	
 	
+	/**
+	 * Create a new job
+	 * 
+	 * @param jobId Unique identifier for this job.
+	 * @param splits The number of splits in this job.
+	 * @param partitions The number of partitions in this job.
+	 * @param heartbeatTimeout The heart beat timeout.
+	 * @param acknowledgeTimeout The acknowledgment timeout.
+	 * @param code The code the workers are sent.
+	 */
 	Job(int jobId, int splits, int partitions, int heartbeatTimeout, int acknowledgeTimeout, String code)
 	{
 		this.jobId = jobId;
@@ -40,6 +50,9 @@ public class Job
 		this.code = code;
 	}
 	
+	/**
+	 * Start this job and initialize the SplitStore and PartitionStore for this job.
+	 */
 	public void startJob()
 	{
 		splitStore     = new SplitStore(this);
@@ -50,7 +63,10 @@ public class Job
 
 	public boolean isFinished() { return isFinished; }
 	public boolean isStarted()  { return isStarted; }
-	
+
+	/**
+	 * Mark this job as finished.
+	 */
 	public void finishJob()
 	{
 		isFinished = true;
@@ -68,21 +84,35 @@ public class Job
 		return acknowledgeTimeout;
 	}
 	
+	/**
+	 * @return The number of splits in this job.
+	 */
 	public int getSplits()
 	{
 		return splits;
 	}
 	
+	/**
+	 * @return The number of partitions in this job
+	 */
 	public int getPartitions()
 	{
 		return partitions;
 	}
 
+	/**
+	 * Get more detailed information about the status of all splits in the job.
+	 * @return Information about splits.
+	 */
 	public SplitStore getSplitInformation()
 	{
 		return splitStore;
 	}
 	
+	/**
+	 * Get more detailed information about the status of all partitions in the job.
+	 * @return Information about the partitions.
+	 */
 	public PartitionStore getPartitionInformation()
 	{
 		return partitionStore;

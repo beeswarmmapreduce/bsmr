@@ -25,7 +25,7 @@ public class Split implements Serializable
 
 	@Override
 	public int hashCode() {
-		return Split.class.hashCode() & id;
+		return Split.class.hashCode() ^ id;
 	}
 	
 	@Override

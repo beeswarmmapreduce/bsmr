@@ -8,6 +8,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
+import fi.helsinki.cs.bsmr.master.console.ConsoleInformation;
+
 public class PartitionStore implements Serializable
 {
 	private static final long serialVersionUID = 1L;
@@ -19,6 +21,12 @@ public class PartitionStore implements Serializable
 	private List<Partition> workQueue;
 	private int previousIndexOfWorkQueue;
 	
+	/**
+	 * Create a new PartitionStore for the job. The Job is only used for initializing the
+	 * data structures and is not needed to assess the state of workers.
+	 * 
+	 * @param job The job this PartitionStore is for
+	 */
 	public PartitionStore(Job job)
 	{
 		this.partitionsQueued = new ArrayList<Set<Worker>>();
@@ -34,11 +42,25 @@ public class PartitionStore implements Serializable
 		this.allPartitionsDone = false;
 	}
 	
+	/**
+	 * Tests whether all partitions are reduced.
+	 * 
+	 * @return True if all partitions are reduced and false if otherwise. 
+	 */
 	public boolean areAllPartitionsDone()
 	{
 		return allPartitionsDone;
 	}
 	
+	/**
+	 * Select next partition to reduce. The partition is selected by selecting a partition
+	 * from a work queue of non-reduced partitions. The PartitionStore has an index pointing to the
+	 * previously selected partition that is updated when this call is made. The selected
+	 * partition will be set as queued for the worker in question.
+	 * 
+	 * @param toWhom The worker we are selecting a Partition for.
+	 * @return The next partition to work on.
+	 */
 	public Partition selectPartitionToWorkOn(Worker toWhom)
 	{
 		previousIndexOfWorkQueue = (previousIndexOfWorkQueue + 1) % workQueue.size();
@@ -51,9 +73,14 @@ public class PartitionStore implements Serializable
 	}
 
 	/**
-	 * Partition work is permanent. When an acknowledgment is received, that partition is saved to the
-	 * central FS. Thus we do not keep state of who has done what.
-	 * @return
+	 * Acknowledge that a worker has reduced a partition. We do not save who has reduced which partition
+	 * as that information is not required as the resulting data has been saved to the FS before acknowledgment.
+	 * The acknowledged partition is removed from the work queue and the queue index is updated as necessary.
+	 * The method also updates the worker queue for the partition in question (by removing this worker from the
+	 * queue). 
+	 * 
+	 * @param w The worker who is acknowledging work
+	 * @param p The partition that is being acknowledged
 	 */
 	public void acknowledgeWork(Worker w, Partition p)
 	{
@@ -82,12 +109,38 @@ public class PartitionStore implements Serializable
 			
 			
 	}
+	
+	/**
+	 * Remove all data marked for the worker. Note that any data acknowledged by the
+	 * worker has been saved to the FS, so there is no need to de-acknowledge them.
+	 * 
+	 * @param w The worker to be removed
+	 */
+	public void removeWorkerInformation(Worker w)
+	{
+		for (Set<Worker> workers : partitionsQueued) {
+			workers.remove(w);
+		}
+	}
 
+	/**
+	 * Tells us whether a specific partition has been reduced or not.
+	 * 
+	 * @param partition The partition in question.
+	 * @return True if the partition has been reduced, false if otherwise
+	 */
 	public boolean isPartitionDone(Partition partition) 
 	{
 		return partitionsDone[partition.getId()];
 	}
 	
+	/**
+	 * Calculate ranges of partitions which have been reduced. This is only needed by the Console
+	 * interface.
+	 *  
+	 * @return A List of Lists of Integers. Each sublist contains two integers: the start and 
+	 *         the end of the reduced range. Both the start and end are inclusive.   
+	 */
 	public List<List<Integer>> getDonePartitionRanges()
 	{
 		List<List<Integer>> ret = new LinkedList<List<Integer>>();
@@ -134,6 +187,12 @@ public class PartitionStore implements Serializable
 		return ret;
 	}
 
+	/**
+	 * Returns all workers for whom a partition has been queued for.
+	 * 
+	 * @param partition The partition in question
+	 * @return An unmodifiable set of workers for whom the partition has been queued
+	 */
 	public Set<Worker> getAllQueuedWorkers(Partition partition)
 	{
 		return Collections.unmodifiableSet(partitionsQueued.get(partition.getId()));

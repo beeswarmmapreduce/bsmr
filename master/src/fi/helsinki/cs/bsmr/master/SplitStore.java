@@ -18,6 +18,11 @@ public class SplitStore implements Serializable
 
 	private int workQueuePointer;
 	
+	/**
+	 * Create a new SplitStore for the job. The Job controls the number of splits and the availability of workers.
+	 *  
+	 * @param job The Job this SplitStore is created for
+	 */
 	public SplitStore(Job job)
 	{
 		
@@ -34,19 +39,37 @@ public class SplitStore implements Serializable
 		this.job = job;
 	}
 	
+	/**
+	 * Provide a set of available Workers who have calculated a split. the availability of the workers depends on the
+	 * Job this SplitStore has been created for. 
+	 * 
+	 * @param s The split we want workers for
+	 * @return A set of available workers.
+	 */
 	public Set<Worker> whoHasSplit(Split s)
 	{
 		return new AvailableWorkerSet(splitsDone.get(s.getId()), job);
 	}
 	
 
+	/**
+	 * Finds next split to work on. It skips splits that have already been calculated by other workers. Workers who
+	 * have become unavailable (or dead) or workers specified as unreachable are taken into considered. The SplitStore
+	 * keeps a pointer to the work queue so that subsequent calls will provide different sets.
+	 * 
+	 * If all splits have been calculated by available and reachable workers, this method will return a null split. 
+	 * 
+	 * @param toWhom Which worker is asking for a split. The selected split will be set as queued for this worker.
+	 * @param unreachableWorkers Workers that the caller cannot contact. These workers need to be considered as unavailable.
+	 * @return The split to work on or null if all splits have been calculated.
+	 */
 	public Split selectSplitToWorkOn(Worker toWhom, Set<Worker> unreachableWorkers)
 	{
 		int i = 0;
 		Split ret;
 		
 		
-		boolean isGoodCandidate;
+		boolean foundGoodCandidate;
 		
 		do {
 			workQueuePointer = (workQueuePointer + 1) % job.getSplits();
@@ -54,11 +77,11 @@ public class SplitStore implements Serializable
 			i++;
 			
 			Set<Worker> workersWhoHaveSplit = whoHasSplit(ret); 
-			isGoodCandidate = workersWhoHaveSplit.isEmpty() || unreachableWorkers.containsAll(workersWhoHaveSplit);
+			foundGoodCandidate = workersWhoHaveSplit.isEmpty() || unreachableWorkers.containsAll(workersWhoHaveSplit);
 			
-		} while (!isGoodCandidate && i < job.getSplits());
+		} while (!foundGoodCandidate && i < job.getSplits());
 	
-		if (!isGoodCandidate) {
+		if (!foundGoodCandidate) {
 			return null;
 		}
 		
@@ -68,10 +91,10 @@ public class SplitStore implements Serializable
 	}
 	
 	/**
-	 * Mark split s as done in worker w and unmark it as queued.
+	 * Mark split as calculated by worker and remove it from the queue.
 	 * 
-	 * @param w The worker
-	 * @param s The split
+	 * @param w The worker who is acknowledging work.
+	 * @param s The split to be acknowledged
 	 */
 	public void acknowledgeWork(Worker w, Split s)
 	{
@@ -85,11 +108,11 @@ public class SplitStore implements Serializable
 	}
 	
 	/**
-	 * Actually remove all data marked for the worker.
+	 * Remove all data marked for the worker.
 	 * 
 	 * @param w The worker to be removed
 	 */
-	public void workerTrulyRemoved(Worker w)
+	public void removeWorkerInformation(Worker w)
 	{
 		for (int i = 0; i < job.getSplits(); ++i) {
 			splitsDone.get(i).remove(w);
@@ -97,11 +120,25 @@ public class SplitStore implements Serializable
 		}
 	}
 	
+	/**
+	 * Retrieve a set of workers who have calculated a split regardless of the status of the workers.
+	 * The returned set might contain unavailable or dead workers.
+	 * 
+	 * @param s The split we are interested in.
+	 * @return An unmodifiable set of workers.
+	 */
 	public Set<Worker> getAllWorkersWhoHaveDoneSplit(Split s)
 	{
 		return Collections.unmodifiableSet(splitsDone.get(s.getId()));
 	}
 	
+	/**
+	 * Retrieve a set of workers for whom the split in question has been queued regardless of the status
+	 * of the workers. The returned set might contain unavailable or dead workers.
+	 * 
+	 * @param s The split we are interested in.
+	 * @return An unmodifiable set of workers.
+	 */
 	public Set<Worker> getAllQueuedWorkers(Split s)
 	{
 		return Collections.unmodifiableSet(splitsQueued.get(s.getId()));

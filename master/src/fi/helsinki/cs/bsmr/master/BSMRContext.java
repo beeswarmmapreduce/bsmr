@@ -11,6 +11,18 @@ import fi.helsinki.cs.bsmr.master.console.AsyncSender;
 import fi.helsinki.cs.bsmr.master.console.Console;
 import fi.helsinki.cs.bsmr.master.console.ConsoleNotifier;
 
+/**
+ * An object responsible for starting and stopping the master. This object is registered as a listener class
+ * so it receives events for when the server starts and stops this web application.
+ * 
+ * At startup this creates the MasterImpl, the ConsoleNotifier and Worker AsyncSender threads. The MasterImpl
+ * and ConsoleNotifier are store in the ServletContext. At shutdown all threads are stopped and WebSocket clients
+ * (Workers and Consoles) are disconnected.
+ * 
+ * 
+ * @author stsavola
+ *
+ */
 public class BSMRContext implements ServletContextListener
 {
 	private static Logger logger = Util.getLoggerForClass(BSMRContext.class);
@@ -38,11 +50,10 @@ public class BSMRContext implements ServletContextListener
 		ConsoleNotifier cn = new ConsoleNotifier();
 		cn.setMaster(master);
 		cn.start();
+		setConsoleNotifier(sctx, cn);
 		
 		logger.info("Starting AsyncSender for workers");
 		AsyncSender.getSender(master, "Worker AsyncSender");
-		
-		setConsoleNotifier(sctx, cn);
 	}
 	
 	

@@ -4,11 +4,27 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
 
+/**
+ * This is a Set wrapper which disregards workers who are unavailable. Using this
+ * structure there is no need to copy the full set of workers and then remove unavailable
+ * workers. Note that only a subset of Set functionality is supported. Unsupported
+ * functions will throw a RuntimeException
+ * 
+ * @author stsavola
+ *
+ */
 public class AvailableWorkerSet implements Set<Worker> 
 {
 	private Set<Worker> superSet;
 	private Job job;
 	
+	/**
+	 * Create a set of workers which filters out the workers who are unavailable.
+	 * 
+	 * @param set The full set
+	 * @param job The job whose heart beat and acknowledgment timeout parameters are used 
+	 *            to classify worker state.
+	 */
 	public AvailableWorkerSet(Set<Worker> set, Job job) 
 	{
 		this.superSet = set;
@@ -17,8 +33,8 @@ public class AvailableWorkerSet implements Set<Worker>
 
 
 	@Override
-	public boolean contains(Object arg0) {
-		Worker w = (Worker)arg0;
+	public boolean contains(Object o) {
+		Worker w = (Worker)o;
 		return (superSet.contains(w) && w.isAvailable(job));
 	}
 

@@ -127,6 +127,16 @@ public class Message
 		this.unreachableWorkers = parseWorkers( payload.get(FIELD_UNREACHABLE), master);
 	}
 	
+	/**
+	 * A simple utility function to construct a URL String for a protocol, remote address, port
+	 * and resource.
+	 * 
+	 * @param protocol The protocol to use (ws)
+	 * @param remoteAddr The remote address (123.45.67.89)
+	 * @param port The port the endpoint is listening at (12345)
+	 * @param resource The "path" in the URL after the address and port
+	 * @return The constructed url: [protocol]://[remoteAddr]:[port]/[resource]
+	 */
 	public static String constructURL(String protocol, String remoteAddr, Object port, String resource)
 	{
 		if (protocol == null || port == null || resource == null) return null;
@@ -216,8 +226,13 @@ public class Message
 	}
 	
 	/**
+	 * Parse a JSON message to the internal representation.
+	 * 
 	 * @param msg Message as string
-	 * @return Parsed Message
+	 * @param master The master the worker for whom the message came for belongs to
+	 * @param remoteAddr The remote address of the worker
+	 * @return The parsed message
+	 * @throws IllegalMessageException If there is a syntax error in the message
 	 */
 	@SuppressWarnings("unchecked")
 	public static Message parseMessage(String msg, MasterContext master, String remoteAddr) throws IllegalMessageException
@@ -233,6 +248,10 @@ public class Message
 
 
 	/**
+	 * Construct a JSON string for this message. This method needs to be called
+	 * within the "big lock" as concurrent modifications to the current Job might
+	 * cause the encoding to fail.
+	 * 
 	 * @return This message encoded into a JSON string
 	 */
 	public String encodeMessage()
@@ -262,6 +281,13 @@ public class Message
 		return JSON.toString(data);
 	}
 
+	/**
+	 * A helper method to create a rudimentary Map object for a Job. The Map is supposed
+	 * to be used for JSON conversion.
+	 * 
+	 * @param job The job to create a map for
+	 * @return The map
+	 */
 	public static Map<Object, Object> getJSONMapForJob(Job job)
 	{
 		Map<Object, Object> jobMap = new HashMap<Object, Object>();
@@ -272,21 +298,33 @@ public class Message
 		return jobMap;
 	}
 	
+	/**
+	 * A synonym for encodeMessage()
+	 * 
+	 * @see Message#encodeMessage()
+	 */
 	public String toString()
 	{
 		return encodeMessage();
 	}
 	
+	/**
+	 * Create a job-agnostic idle message
+	 * 
+	 * @return
+	 */
 	public static Message pauseMessage()
 	{
 		return new Message(Type.DO, Action.idle);
 	}
-	
-	public static Message pauseMessage(Job j)
-	{
-		return new Message(Type.DO, Action.idle, j);
-	}
-	
+
+	/**
+	 * Create a message instructing a worker to map a split.
+	 * 
+	 * @param s The split to map
+	 * @param j The job for which this task is for
+	 * @return The message
+	 */
 	public static Message mapThisMessage(Split s, Job j)
 	{
 		Message ret = new Message(Type.DO, Action.mapTask, j);
@@ -294,6 +332,13 @@ public class Message
 		return ret;
 	}
 	
+	/**
+	 * Create a message instructing a worker to reduce a partition.
+	 * 
+	 * @param p The partition to reduce
+	 * @param j The job for which this task is for
+	 * @return The message
+	 */
 	public static Message reduceThatMessage(Partition p, Job j)
 	{
 		Message ret = new Message(Type.DO, Action.reduceTask, j);
@@ -301,6 +346,16 @@ public class Message
 		return ret;
 	}
 	
+	/**
+	 * Create a message instructing a worker where to find certain splits at.
+	 * 
+	 * @param p The partition the worker is currently reducing
+	 * @param s For which split the message contains worker socket URLs for
+	 * @param j The job for which this task is for
+	 * @param unreachableWorkers A list of workers who are unreachable to the target of this message. The message
+	 *                           will not contain URLs for these workers.
+	 * @return The message
+	 */
 	public static Message findSplitAtMessage(Partition p, Split s, Job j, Set<Worker> unreachableWorkers)
 	{
 		Message ret = new Message(Type.DO, Action.reduceSplit, j);
@@ -328,6 +383,12 @@ public class Message
 		return socketUrl;
 	}
 
+	/**
+	 * Return which partition the worker is reducing. This is used when the worker has sent a reduceSplit
+	 * message.
+	 * 
+	 * @return The partition the worker is currently reducing.
+	 */
 	public Partition getIncompleteReducePartition() 
 	{
 		return reduceStatus.partition;

@@ -12,6 +12,12 @@ import java.util.logging.Logger;
 import org.eclipse.jetty.util.ajax.JSON;
 
 
+/**
+ * The container for messages sent between workers and the master.
+ * 
+ * @author stsavola
+ *
+ */
 public class Message 
 {
 	private static final Logger logger = Util.getLoggerForClass(Message.class);
@@ -311,7 +317,7 @@ public class Message
 	/**
 	 * Create a job-agnostic idle message
 	 * 
-	 * @return
+	 * @return A message instructing a worker to idle
 	 */
 	public static Message pauseMessage()
 	{

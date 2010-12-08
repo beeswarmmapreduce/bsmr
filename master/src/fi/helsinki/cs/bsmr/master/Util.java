@@ -2,6 +2,12 @@ package fi.helsinki.cs.bsmr.master;
 
 import java.util.logging.Logger;
 
+/**
+ * Miscellaneous utility functions. 
+ * 
+ * @author stsavola
+ *
+ */
 public class Util
 {
 	/**

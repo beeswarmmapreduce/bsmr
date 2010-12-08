@@ -8,8 +8,12 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
-import fi.helsinki.cs.bsmr.master.console.ConsoleInformation;
-
+/**
+ * Keeps the state of partitions for a single job.
+ * 
+ * @author stsavola
+ *
+ */
 public class PartitionStore implements Serializable
 {
 	private static final long serialVersionUID = 1L;

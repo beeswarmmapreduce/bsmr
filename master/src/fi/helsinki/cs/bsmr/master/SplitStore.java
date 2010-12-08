@@ -7,6 +7,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * Keeps the state of splits for a single job.
+ * 
+ * @author stsavola
+ *
+ */
 public class SplitStore implements Serializable
 {
 	private static final long serialVersionUID = 1L;

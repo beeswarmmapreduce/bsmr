@@ -13,6 +13,12 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+/**
+ * A naive servlet which servers parts of a static file on the local filesystem.
+ * 
+ * @author stsavola
+ *
+ */
 public class SplitServlet extends HttpServlet 
 {
 	private static final long serialVersionUID = 1L;

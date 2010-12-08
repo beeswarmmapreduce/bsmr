@@ -10,6 +10,12 @@ import org.eclipse.jetty.websocket.WebSocket;
 import fi.helsinki.cs.bsmr.master.Message.Type;
 import fi.helsinki.cs.bsmr.master.console.AsyncSender;
 
+/**
+ * Worker communication logic.
+ * 
+ * @author stsavola
+ *
+ */
 public class Worker implements WebSocket 
 {
 	private static Logger logger = Util.getLoggerForClass(Worker.class);

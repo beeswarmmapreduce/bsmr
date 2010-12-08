@@ -2,6 +2,12 @@ package fi.helsinki.cs.bsmr.master;
 
 import java.io.Serializable;
 
+/**
+ * A partition for reducing. 
+ * 
+ * @author stsavola
+ *
+ */
 public class Partition implements Serializable
 {
 	private static final long serialVersionUID = 1L;

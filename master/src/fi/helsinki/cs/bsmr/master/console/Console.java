@@ -14,6 +14,12 @@ import fi.helsinki.cs.bsmr.master.Message;
 import fi.helsinki.cs.bsmr.master.TimeContext;
 import fi.helsinki.cs.bsmr.master.Util;
 
+/**
+ * Console communication logic.
+ * 
+ * @author stsavola
+ *
+ */
 public class Console implements WebSocket 
 {
 	private static Logger logger = Util.getLoggerForClass(Console.class);
@@ -160,7 +166,7 @@ public class Console implements WebSocket
 	/**
 	 * Create a new ConsoleInformation message and send it to the console.
 	 * 
-	 * @see Console#sendMessage(ConsoleInformation)
+	 * @see Console#sendMessage(String)
 	 */
 	public void sendStatus()
 	{

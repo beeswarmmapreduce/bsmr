@@ -6,6 +6,12 @@ import java.util.Set;
 
 import fi.helsinki.cs.bsmr.master.console.Console;
 
+/**
+ * Defines methods needed to implement a BSMR master
+ * 
+ * @author stsavola
+ *
+ */
 public interface MasterContext
 {
 	// Actual functionality

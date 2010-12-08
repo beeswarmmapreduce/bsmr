@@ -1,6 +1,5 @@
 package fi.helsinki.cs.bsmr.master;
 
-import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -13,6 +12,12 @@ import java.util.logging.Logger;
 
 import fi.helsinki.cs.bsmr.master.console.Console;
 
+/**
+ * Implementation of object storage parts of the MasterContext interface.
+ *  
+ * @author stsavola
+ *
+ */
 public abstract class MasterStoreImpl implements MasterContext 
 {
 	private static Logger logger = Util.getLoggerForClass(MasterStoreImpl.class);

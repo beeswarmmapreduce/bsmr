@@ -12,6 +12,12 @@ import org.eclipse.jetty.websocket.WebSocketServlet;
 
 import fi.helsinki.cs.bsmr.master.console.Console;
 
+/**
+ * The WebSocketServlet which creates Worker and Console end points.
+ * 
+ * @author stsavola
+ *
+ */
 public class MasterWebSocketServlet extends WebSocketServlet 
 {
 	private static final long serialVersionUID = 1L;

@@ -1,6 +1,11 @@
 package fi.helsinki.cs.bsmr.master;
 
 
+/**
+ * Describes one job for the BSMR cluster.
+ * 
+ * @author stsavola
+ */
 public class Job 
 {
 	/** Object fields **/

@@ -20,6 +20,12 @@ import fi.helsinki.cs.bsmr.master.TimeContext;
 import fi.helsinki.cs.bsmr.master.Worker;
 
 
+/**
+ * Converts MasterContext information into a status message for consoles.
+ * 
+ * @author stsavola
+ *
+ */
 public class ConsoleInformation
 {
 	private String asString;

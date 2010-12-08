@@ -1,0 +1,38 @@
+<project name="bsmr" default="master">
+
+	<path id="compile.classpath">
+		<fileset dir="master/jetty-distribution-8.0.0.M2/lib">
+			<include name="*.jar"/>
+		</fileset>
+	</path>
+	
+	<property name="dest" location="master/bin"/>
+	<property name="src"  location="master/src"/>
+	<property name="doc"  location="master/doc"/>
+	
+	<target name="master" depends="master-compile,master-javadoc"/>
+
+	<target name="master-compile">
+		<javac srcdir="${src}"
+			destdir="${dest}"
+			classpathref="compile.classpath"
+			debug="on"
+			source="1.6"
+			target="1.6"/>
+		
+		<copy file="${src}/data.txt.gz" todir="${dest}"/>
+	</target>
+	
+	<target name="master-javadoc">
+		<mkdir dir="${doc}"/>
+		<javadoc 
+			sourcepath="${src}"
+			destdir="${doc}"
+			windowtitle="BSMR - University of Helsinki"
+			author="Sampo Savolainen"
+			classpathref="compile.classpath"
+		/>
+		
+	</target>
+	
+</project>

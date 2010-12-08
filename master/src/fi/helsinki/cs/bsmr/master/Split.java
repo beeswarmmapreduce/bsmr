@@ -2,6 +2,12 @@ package fi.helsinki.cs.bsmr.master;
 
 import java.io.Serializable;
 
+/**
+ * A split for mapping.
+ * 
+ * @author stsavola
+ *
+ */
 public class Split implements Serializable
 {
 	private static final long serialVersionUID = 1L;

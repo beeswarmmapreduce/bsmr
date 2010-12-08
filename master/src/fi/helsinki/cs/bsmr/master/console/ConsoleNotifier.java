@@ -6,6 +6,12 @@ import fi.helsinki.cs.bsmr.master.MasterContext;
 import fi.helsinki.cs.bsmr.master.TimeContext;
 import fi.helsinki.cs.bsmr.master.Util;
 
+/**
+ * A thread which sends out periodical notifications to all consoles.
+ * 
+ * @author stsavola
+ *
+ */
 public class ConsoleNotifier implements Runnable
 {
 	private static Logger logger = Util.getLoggerForClass(ConsoleNotifier.class);

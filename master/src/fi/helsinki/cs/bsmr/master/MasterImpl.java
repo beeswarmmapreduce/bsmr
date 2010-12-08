@@ -5,6 +5,11 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 
+/**
+ * Implementation of the BSMR master logic.
+ * 
+ * @author stsavola
+ */
 public class MasterImpl extends MasterStoreImpl
 {
 	private static Logger logger = Util.getLoggerForClass(MasterImpl.class);
@@ -36,7 +41,7 @@ public class MasterImpl extends MasterStoreImpl
 	 * Acknowledges work from the worker. If the message acknowledges the last part of the current job, it will start the next job.
 	 * If no new jobs are queued, this will send idle messages to all workers and return false. 
 	 * 
-	 * @note This function can switch the active job!
+	 * Note: This function can switch the active job!
 	 * 
 	 * @param worker The worker who is acknowledging work
 	 * @param msg The message

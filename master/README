@@ -1,8 +1,8 @@
 == Dependencies ==
 
-You need Jetty (developed with version 8.0.0.M1). To retrieve & untar, you can
+You need Jetty (developed with version 8.0.0.M2). To retrieve & untar, you can
 try getdeps.sh. Otherwise download it manually and make sure the jetty is 
-available as master/jetty-distribution-8.0.0.M1
+available as master/jetty-distribution-8.0.0.M2
 
 Note! The Eclipse project file refers to this directory and the libraries 
 contain the version number of Eclipse. So if you use a different version of 
@@ -13,6 +13,13 @@ Build Path->Configure Build Path, libraries tab).
 
 In Eclipse, it's automatic. Otherwise, compile the classes using all libraries
 in jetty-../lib in the class path.
+
+You can also use the compile-server.sh in the project root, or the ant script.
+
+== Javadoc ==
+
+To get spiffy documentation of the BSMR master classes, run "ant" at the project
+root. That will create HTML javadoc in the master/doc directory.
 
 == Running ==
 

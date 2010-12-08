@@ -75,8 +75,9 @@ public class ConsoleInformation
 			// Job information
 			Map<Object, Object> jobMap = Message.getJSONMapForJob(currentJob);
 			jobMap.put("startTime", timeToJson(currentJob.getStartTime()));
-			jobMap.put("finished", currentJob.isFinished());
-			if (currentJob.isFinished()) {
+			boolean isFinished = currentJob.getState() == Job.State.FINISHED;
+			jobMap.put("finished", isFinished);
+			if (isFinished) {
 				jobMap.put("finishTime", timeToJson(currentJob.getFinishTime()));
 			}
 			payload.put(Message.FIELD_JOB_MAP, jobMap);

@@ -76,12 +76,13 @@ public class MasterImpl extends MasterStoreImpl
 		
 		// If the job is not yet marked as finished
 		// !activeJob.isFinished() is documentation. we don't execute this function if the job is finished
-		if (allPartitionsDone && !activeJob.isFinished()) { 
+		if (allPartitionsDone && activeJob.getState() != Job.State.FINISHED) { 
 			finishCurrentJobAndStartNext();
 			return false;
 		}
 		
-		return true;
+		// This is important as there are cases when this point is entered even when the job was actually finished
+		return !allPartitionsDone;
 	}
 
 	private void pauseAllWorkers() 

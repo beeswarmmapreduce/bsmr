@@ -10,8 +10,13 @@ public class Job
 	private SplitStore splitStore;
 	private PartitionStore partitionStore;
 	
-	private boolean isStarted;
-	private boolean isFinished;
+	public enum State {
+		NEW,
+		RUNNING,
+		FINISHED
+	};
+	
+	private State state;
 	
 	private final int splits;
 	private final int partitions;
@@ -38,8 +43,7 @@ public class Job
 	Job(int jobId, int splits, int partitions, int heartbeatTimeout, int acknowledgeTimeout, String code)
 	{
 		this.jobId = jobId;
-		this.isStarted = false;
-		this.isFinished = false;
+		this.state = State.NEW;
 		
 		this.splits = splits; 
 		this.partitions = partitions;
@@ -57,20 +61,18 @@ public class Job
 	{
 		splitStore     = new SplitStore(this);
 		partitionStore = new PartitionStore(this);
-		isStarted      = true;
+		state          = State.RUNNING;
 		startTime      = TimeContext.now();
 	}
 
-	public boolean isFinished() { return isFinished; }
-	public boolean isStarted()  { return isStarted; }
+	public State getState() { return state; }
 
 	/**
 	 * Mark this job as finished.
 	 */
 	public void finishJob()
 	{
-		isFinished = true;
-		isStarted  = false;
+		state = State.FINISHED;
 		finishTime = TimeContext.now();
 	}
 	

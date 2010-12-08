@@ -140,9 +140,9 @@ public abstract class MasterStoreImpl implements MasterContext
 	@Override
 	public synchronized boolean startNextJob() throws JobAlreadyRunningException
 	{
-		if (activeJob != null && !activeJob.isFinished()) {
-			logger.severe("Tried to start next job, but we have a non-finished active job!");
-			throw new JobAlreadyRunningException("Tried to start next job, but we have a non-finished active job!");
+		if (activeJob != null && activeJob.getState() == Job.State.RUNNING) {
+			logger.severe("Tried to start next job, but we have a running active job!");
+			throw new JobAlreadyRunningException("Tried to start next job, but we have a running active job!");
 		}
 		
 		if (jobQueue.isEmpty()) {
@@ -195,7 +195,7 @@ public abstract class MasterStoreImpl implements MasterContext
 		if (activeJob != null &&
 			activeJob.equals(toBeRemoved)) {
 			logger.fine("Removing current active job");
-			if (!activeJob.isFinished()) {
+			if (activeJob.getState() != Job.State.FINISHED) {
 				logger.fine(" .. mark the job as finished");
 				activeJob.finishJob();
 			}
@@ -219,9 +219,9 @@ public abstract class MasterStoreImpl implements MasterContext
 	@Override
 	public synchronized void queueJob(Job j) throws JobAlreadyRunningException
 	{
-		if (j.isStarted() || j.isFinished()) {
-			logger.severe("Tried to add job "+j+" to job queue, but it's in an illegal state (started or finished)");
-			throw new JobAlreadyRunningException("Tried to add job "+j+" to job queue, but it's in an illegal state (started or finished)");
+		if (j.getState() != Job.State.NEW) {
+			logger.severe("Tried to add job "+j+" to job queue, but it's in an illegal state (state != NEW)");
+			throw new JobAlreadyRunningException("Tried to add job "+j+" to job queue, but it's in an illegal state (state != NEW)");
 		}
 		
 		jobQueue.add(j);
@@ -246,9 +246,9 @@ public abstract class MasterStoreImpl implements MasterContext
 	}
 	
 	@Override
-	public boolean isJobActive()
+	public boolean isJobRunning()
 	{
-		return activeJob != null && !activeJob.isFinished() && activeJob.isStarted();
+		return activeJob != null && activeJob.getState() == Job.State.RUNNING;
 	}
 
 	@Override

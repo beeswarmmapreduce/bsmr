@@ -159,7 +159,7 @@ public interface MasterContext
 	/**
 	 * @return Whether there is a current active job
 	 */
-	public boolean isJobActive();
+	public boolean isJobRunning();
 	
 	// Console
 	/**

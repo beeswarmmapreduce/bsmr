@@ -116,6 +116,8 @@ public class Worker implements WebSocket
 		}	
 		
 		Message msg;
+		String reply;
+		
 		
 		try {
 			// WARN: this might not be thread safe
@@ -134,13 +136,18 @@ public class Worker implements WebSocket
 			return;
 		}
 		
-		String reply;
+		
 
 		if (msg.getAction() == Message.Action.socket) {
 			master.setWorkerURL(this, msg.getSocketURL());
 		}
 	
-		if (!master.isJobActive()) {
+		if (msg.getJob() != null && msg.getJob() != master.getActiveJob()) {
+			logger.warning("Worker used a non-active job");
+		}
+		
+		
+		if (!master.isJobRunning()) {
 			
 			if (msg.getType() == Type.ACK && msg.getAction() != Message.Action.socket) {
 				logger.warning("A worker sent a non-heartbeat, non-socket while no active job");

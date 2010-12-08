@@ -22,13 +22,19 @@ import fi.helsinki.cs.bsmr.master.Worker;
 
 public class ConsoleInformation
 {
-	private MasterContext master;
 	private String asString;
 	
+	/**
+	 * Create a console information message based on the given master. The master object
+	 * needs to be synchronized when the message is created. However, the message
+	 * is encoded into String format in the constructor. So there is no need to hold the
+	 * master synchronization after the constructor. 
+	 * 
+	 * @param master The master 
+	 */
 	public ConsoleInformation(MasterContext master)
 	{
-		this.master = master;
-		this.asString = createJSONString();
+		this.asString = createJSONString(master);
 	}
 	
 	public String toJSONString()
@@ -36,7 +42,7 @@ public class ConsoleInformation
 		return asString;
 	}
 	
-	private String createJSONString()
+	private String createJSONString(MasterContext master)
 	{
 		Job currentJob = master.getActiveJob();
 		

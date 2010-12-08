@@ -75,16 +75,18 @@ public class ConsoleNotifier implements Runnable
 			if (wasInterrupted || master == null) continue;
 			
 			TimeContext.markTime();
-			ConsoleInformation ci;
+			
+			String msg;
 			
 			synchronized (master) {
-				ci = new ConsoleInformation(master);	
+				ConsoleInformation ci = new ConsoleInformation(master);
+				msg = ci.toJSONString();
 			}
 			
 			synchronized (Console.class) { // See Console.onDisconnect()
 				logger.fine("Informing all "+master.getConsoles().size()+" consoles");
 				for (Console c : master.getConsoles()) {
-					c.sendStatus(ci);
+					c.sendMessage(msg);
 				}
 			}
 

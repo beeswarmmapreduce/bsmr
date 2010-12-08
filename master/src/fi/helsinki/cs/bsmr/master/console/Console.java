@@ -94,6 +94,11 @@ public class Console implements WebSocket
 		}
 	}
 
+	/**
+	 * Handle a REMOVEJOB message from the console.
+	 * 
+	 * @param payload The payload part of the JSON message
+	 */
 	private void removeJob(Map<Object, Object> payload)
 	{
 		int jobId = Util.getIntFromJSONObject(payload.get("id"));
@@ -107,6 +112,11 @@ public class Console implements WebSocket
 		master.removeJob(toBeRemoved);
 	}
 
+	/**
+	 * Handle an ADDJOB message from the console.
+	 * 
+	 * @param payload The payload part of the JSON message
+	 */
 	private void addJob(Map<Object, Object> payload)
 	{
 		int splits             = Util.getIntFromJSONObject(payload.get(Message.FIELD_NUM_SPLITS));
@@ -121,7 +131,7 @@ public class Console implements WebSocket
 		try {
 			master.queueJob(newJob);
 		} catch(JobAlreadyRunningException jare) {
-			logger.log(Level.SEVERE, "This should never happen! A newly created job was already running on the master?!?", jare);
+			logger.log(Level.SEVERE, "This should never happen! A newly created job was already running/had already been ran on the master?!?", jare);
 			return;
 		}
 		
@@ -147,15 +157,26 @@ public class Console implements WebSocket
 		throw new RuntimeException("onFragment() byte format unsupported!");
 	}
 	
+	/**
+	 * Create a new ConsoleInformation message and send it to the console.
+	 * 
+	 * @see Console#sendMessage(ConsoleInformation)
+	 */
 	public void sendStatus()
 	{
 		ConsoleInformation ci = new ConsoleInformation(master);
-		sendStatus(ci);
+		String msg = ci.toJSONString();
+		sendMessage(msg);
 	}
 	
-	public void sendStatus(ConsoleInformation ci)
+	/**
+	 * Send a message to the console. Sending the message is asynchronous: the actual
+	 * transmission is done by a AsyncSender (and thread) dedicated for this console.
+	 * 
+	 * @param msg The message to send
+	 */
+	public void sendMessage(String msg)
 	{
-		String msg = ci.toJSONString();
 		AsyncSender sender = AsyncSender.getSender(this);
 		sender.sendAsyncMessage(msg, out);
 	}

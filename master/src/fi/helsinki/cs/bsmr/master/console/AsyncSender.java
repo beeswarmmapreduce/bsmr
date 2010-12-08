@@ -14,7 +14,16 @@ import org.eclipse.jetty.websocket.WebSocket.Outbound;
 
 import fi.helsinki.cs.bsmr.master.Util;
 
-
+/**
+ * Sends asynchronous messages to outbound WebSocket sockets. There is a thread created for every
+ * AsyncSender created. Each thread has a queue of Tasks (a pair of a message String and an outbound
+ * socket) they work on. AsyncSenders are addressed via Objects. In other words, each AsyncSender
+ * has a "name" (=Object) which is used to identify that sender. For example, each time an AsyncSender
+ * is asked for an instance of MasterImpl, the same AsyncSender will be given. The first time an
+ * AsyncSender is asked for the MasterImpl object, the AsyncSender will be created along with the thread.
+ * 
+ * TODO: Should there be a maximum queue length to help detect issues with certain outbound sockets?
+ */
 public class AsyncSender implements Runnable 
 {
 	private static Logger logger = Util.getLoggerForClass(AsyncSender.class);
@@ -33,11 +42,29 @@ public class AsyncSender implements Runnable
 		this.owner = owner;
 	}
 	
+	/**
+	 * Get or create an AsyncSender for an object. If no AsyncSender has been created for this object,
+	 * one will be created using a default name which includes a string representation of the object.
+	 * 
+	 * @param o The object for which an AsyncSender is required.
+	 * @return The newly created AsyncSender or the one created on the first call for this object
+	 * @see AsyncSender#getSender(Object, String)
+	 */
 	public static AsyncSender getSender(Object o)
 	{
 		return getSender(o, "AsyncSender for "+o);
 	}
 	
+	/**
+	 * Get or create an AsyncSender for an object. If no AsyncSender has been created for this object,
+	 * one will be created using the specified title. The title will be used as the title of the thread
+	 * created for the new AsyncSender. If an AsyncSender already exists for the object, the title will
+	 * have no effect on the thread.
+	 *
+	 * @param o The object for which an AsyncSender is required.
+	 * @param title If this call creates the AsyncSender, this string is used as a title for the AsyncSender thread
+	 * @return The newly created AsyncSender or the one created on the first call for this object
+	 */
 	public static AsyncSender getSender(Object o, String title)
 	{
 		AsyncSender ret;
@@ -57,7 +84,13 @@ public class AsyncSender implements Runnable
 		return ret;
 	}
 	
-	public static void stopSenderIfPresent(Object o)
+	/**
+	 * Stop the AsyncSender for the given object if a sender has been created.
+	 * 
+	 * @param o The object for which the AsyncSender has been created for
+	 * @return True if there was an AsyncSender for the object to stop
+	 */
+	public static boolean stopSenderIfPresent(Object o)
 	{
 		AsyncSender ret;
 		
@@ -67,10 +100,15 @@ public class AsyncSender implements Runnable
 		
 		if (ret != null) {
 			ret.stop();
+			return true;
 		}
 		
+		return false;
 	}
 	
+	/**
+	 * Stop all AsyncSenders that have been created in this JVM.
+	 */
 	public static void stopAll()
 	{
 		synchronized (senderForObject) {
@@ -81,18 +119,32 @@ public class AsyncSender implements Runnable
 		}
 	}
 
+	/**
+	 * Queue a message for sending. Once the thread starts working on this message, it will
+	 * delay for the amount of milliseconds given. This means the delay is cumulative over all the 
+	 * queued messages.
+	 * 
+	 * @param msg The message to send
+	 * @param out The socket to send the message to
+	 * @param cumulativeDelay Amount of milliseconds to wait after starting to process this message but before sending it 
+	 */
 	public void sendAsyncMessage(String msg, Outbound out, long cumulativeDelay)
 	{
-		// TODO: Add queue max length where too many queued messages would kill this sender!
 		synchronized (messageQueue) {			
 			messageQueue.addLast( new Task(msg, out, cumulativeDelay));
 			messageQueue.notify();
 		}
 	}
 	
+	/**
+	 * Queue a message for sending. The message will be sent immediately once the AsyncSender processes this
+	 * task.
+	 * 
+	 * @param msg The message to send
+	 * @param out The socket to send the message to
+	 */
 	public void sendAsyncMessage(String msg, Outbound out)
 	{
-		// TODO: Add queue max length where too many queued messages would kill this sender!
 		synchronized (messageQueue) {			
 			messageQueue.addLast( new Task(msg, out));
 			messageQueue.notify();
@@ -100,6 +152,12 @@ public class AsyncSender implements Runnable
 	}
 	
 	
+	/**
+	 * Stop this AsyncSender. This method clears the current queue, wakes up the Thread
+	 * and interrupts it. Note that this method does not however wait for the Thread to
+	 * join as the stop() call is needed in cases where this call needs to happen relatively 
+	 * fast.
+	 */
 	public void stop()
 	{
 		running = false;
@@ -109,7 +167,6 @@ public class AsyncSender implements Runnable
 		}
 		
 		thread.interrupt();
-		// NOTE: no thread.join() because this might be called in situations where this needs to exit relatively fast
 	}
 	
 	@Override

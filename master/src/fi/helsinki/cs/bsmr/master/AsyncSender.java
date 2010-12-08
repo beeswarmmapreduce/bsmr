@@ -1,4 +1,4 @@
-package fi.helsinki.cs.bsmr.master.console;
+package fi.helsinki.cs.bsmr.master;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -14,7 +14,6 @@ import java.util.logging.Logger;
 
 import org.eclipse.jetty.websocket.WebSocket.Outbound;
 
-import fi.helsinki.cs.bsmr.master.Util;
 
 /**
  * Sends asynchronous messages to outbound WebSocket sockets. There is a thread created for every

@@ -8,7 +8,6 @@ import java.util.logging.Logger;
 import org.eclipse.jetty.websocket.WebSocket;
 
 import fi.helsinki.cs.bsmr.master.Message.Type;
-import fi.helsinki.cs.bsmr.master.console.AsyncSender;
 
 /**
  * Worker communication logic.

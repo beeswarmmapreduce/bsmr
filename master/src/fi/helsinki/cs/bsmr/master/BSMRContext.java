@@ -7,7 +7,6 @@ import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 
-import fi.helsinki.cs.bsmr.master.console.AsyncSender;
 import fi.helsinki.cs.bsmr.master.console.Console;
 import fi.helsinki.cs.bsmr.master.console.ConsoleNotifier;
 

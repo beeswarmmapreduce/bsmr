@@ -118,7 +118,6 @@ public class Worker implements WebSocket
 		Message msg;
 		String reply;
 		
-		
 		try {
 			// WARN: this might not be thread safe
 			msg = Message.parseMessage(jsonMsg, master, workerRemoteAddr);
@@ -275,9 +274,15 @@ public class Worker implements WebSocket
 	 */
 	public void sendSyncMessage(String msg) throws IOException
 	{
+		
 		synchronized (out) { // See synchronization at AsyncSender$Task.run()
 			
-			// TODO: We could remove any message to this "out" from the AsyncSender
+			// Remove all async messages bound for this connection as this latest message
+			// needs to override any previous ones.
+			
+			AsyncSender sender = AsyncSender.getSender(master);
+			sender.removeTasksFor(out);
+				
 			out.sendMessage(msg);
 		}
 	}

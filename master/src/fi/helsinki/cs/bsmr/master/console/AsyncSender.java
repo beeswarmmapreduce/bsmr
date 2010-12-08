@@ -4,9 +4,11 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Deque;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -287,6 +289,31 @@ public class AsyncSender implements Runnable
 		{
 			super(cause);
 			this.out = null;
+		}
+	}
+
+	/**
+	 * Remove all queued tasks that are bound for this socket
+	 *  
+	 * @param out The socket for which all tasks need to be removed 
+	 */
+	public void removeTasksFor(Outbound out) 
+	{
+		Set<Task> removeThese = null;
+		synchronized (messageQueue) {
+			
+			for (Task t : messageQueue) {
+				if (t.out == out) {
+					if (removeThese == null) {
+						removeThese = new HashSet<Task>();
+					}
+					removeThese.add(t);
+				}
+			}
+			
+			if (removeThese != null) {
+				messageQueue.removeAll(removeThese);
+			}
 		}
 	}
 }

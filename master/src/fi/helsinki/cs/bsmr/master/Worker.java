@@ -142,8 +142,8 @@ public class Worker implements WebSocket
 	
 		if (!master.isJobActive()) {
 			
-			if (msg.getType() == Type.HB) {
-				logger.warning("A worker sent a non-heartbeat while no active job");
+			if (msg.getType() == Type.ACK && msg.getAction() != Message.Action.socket) {
+				logger.warning("A worker sent a non-heartbeat, non-socket while no active job");
 			}
 			
 			lastHearbeat = TimeContext.now();

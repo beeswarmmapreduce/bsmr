@@ -50,7 +50,6 @@ var konk = (function() {
     }
     MapTask.prototype.done = function(result) {
         konk.log('MapTask done() :' + this.splitId);
-        konk.log(_gP(result));
         this.result = result;
         konk.map.notifyTaskDone(this)
     }
@@ -99,14 +98,25 @@ var konk = (function() {
     },
     ReduceTask.prototype.doSplit = function() {
         if (this.isDone()) {
-            this.done();
+            konk.fs.writeOutputFile(this.job.jobId, this.partitionId);
             return;
         }
         konk.reduce.nextSplit(this, this.getNextSplitId());
     }
+    ReduceTask.prototype.onSave = function(res) {
+        konk.log("reduceTask onSave() :" + res);
+        this.done();
+    }
     ReduceTask.prototype.done = function() {
         konk.log('ReduceTask done() :' + this.partitionId);
         konk.reduce.notifyTaskDone(this)
+    }
+    ReduceTask.prototype.getDataJSON = function() {
+        var outputFile = [];
+        for (var i=0; i<this.splits.length; i++) {
+            outputFile.splice(-1, 0, this.splits[i]);
+        }
+        return JSON.stringify(outputFile);
     }
 
     ReduceTaskFactory = function() {}
@@ -139,7 +149,6 @@ var konk = (function() {
     }
     ReduceSplit.prototype.onData = function(data) {
         konk.log('reduceSplit onData() :' + this.partitionId + ',' + this.splitId);
-        konk.log(data);
         var m = konk.createMessage(konk.TYPE_ENG, {
             action: 'reduce',
             jobId: this.job.jobId,
@@ -156,7 +165,6 @@ var konk = (function() {
     }
     ReduceSplit.prototype.done = function(result) {
         konk.log('ReduceSplit done() :' + this.partitionId + ',' + this.splitId);
-        konk.log(_gP(result));
         this.result = result;
         this._done = true;
         konk.reduce.notifySplitDone(this);
@@ -324,7 +332,6 @@ var konk = (function() {
             },
             onmessage: function(msg) {
                 if (msg.data.type == konk.TYPE_ENG) {
-                    konk.log(msg.data, 'e');
                     switch (msg.data.payload.action) {
                         case 'map':
                             konk.map.tasks[msg.data.payload.splitId].done(msg.data.payload.data); 
@@ -335,14 +342,15 @@ var konk = (function() {
                         default:    
                             // swallow for now
                     }
+                    konk.log(msg.data, 'e');
                 }
                 else if (msg.data.type == konk.TYPE_LOG) {
                     konk.log(msg.data.payload.message, 'log');
                 }
             },
             sendMessage: function(msg) {
-                konk.log(msg, 'we');
                 konk.engine.thread.postMessage(msg);
+                konk.log(msg, 'we');
             }
         },
 
@@ -389,7 +397,6 @@ var konk = (function() {
                 forward it to the engine thread */
             onmessage: function(e) {
                 var msg = konk.readMessage(e.data);
-                konk.log(msg, 'm');
                 if (msg.type == konk.TYPE_DO) {
                     switch(msg.payload.action) {
                         case 'mapTask':
@@ -418,6 +425,7 @@ var konk = (function() {
                 else if (msg.type == konk.TYPE_FS) {
                     konk.fs.exec(msg.payload);
                 }
+                konk.log(msg, 'm');
             },
             onopen: function(e) { 
                 if (!konk._autostart) {
@@ -481,7 +489,7 @@ var konk = (function() {
         /*
             map tasks */
         map: {
-            tasks: {},
+            tasks: [],
 
             startTask: function(spec) {
                 /*[FIXME: check for job/split safety]*/
@@ -576,8 +584,8 @@ var konk = (function() {
                     this.send(JSON.stringify(m));
                 }
                 ws.onmessage = function(e) {
-                    konk.log(e.data);
                     msg = konk.readMessage(e.data);
+                    konk.log(e.data);
                 }
                 ws.onclose = function() {
                     if (msg) {
@@ -599,6 +607,25 @@ var konk = (function() {
         fs: {
             FS_BASE_URI: 'http://localhost:8080/fs/',
 
+            writeOutputFile: function(jobId, partitionId) {
+                // connect to fs and upload partition
+                var req = new XMLHttpRequest();  
+                req.open('POST', konk.fs.getPartitionUrl(jobId, partitionId), true);  
+                req.onreadystatechange = function(aEvt) {  
+                    if (req.readyState == 4) {  
+                        if (req.status == 200) {
+                            if (typeof(konk.reduce.tasks[partitionId].onSave) == 'function') {
+                                konk.reduce.tasks[partitionId].onSave();
+                            }
+                        }
+                        else {
+                            konk.log('FAILED: ' + req.status);
+                        }
+                    }  
+                };
+                req.send(konk.reduce.tasks[partitionId].getDataJSON());
+            },
+
             fetchMapData: function(jobId, splitId) {
                 // connect to fs and retrieve split
                 var req = new XMLHttpRequest();  
@@ -616,6 +643,10 @@ var konk = (function() {
                     }  
                 };
                 req.send(null);  
+            },
+            getPartitionUrl: function(jobId, partitionId) {
+                konk.log(konk.fs.FS_BASE_URI + 'partitions/' + jobId + '/' + partitionId + '/');
+                return konk.fs.FS_BASE_URI + 'partitions/' + jobId + '/' + partitionId + '/';
             },
             getSplitUrl: function(jobId, splitId) {
                 konk.log(konk.fs.FS_BASE_URI + 'splits/' + jobId + '/' + splitId + '/');
@@ -643,7 +674,6 @@ var konk = (function() {
             handler: function(req) {
                 this.onmessage = function(e) {
                     /*[TODO]*/
-                    konk.log('bs:handler:onmessage: ' + e.data);
                     var msg = konk.readMessage(e.data);
                     if (msg.type == konk.TYPE_P2P) {
                         switch (msg.payload.action) {
@@ -663,6 +693,7 @@ var konk = (function() {
                                 // swallow for now
                         }
                     }
+                    konk.log('bs:handler:onmessage: ' + e.data);
                 }
                 this.onopen = function(e) { 
                     /*[TODO]*/
@@ -730,74 +761,4 @@ function _gP(o) {
     }
     return (s + ']');
 }
-
-//// scrap
-        /*
-        control: {
-            mode: MODE_NOR,
-
-            setMode: function(spec) {
-                switch(spec.mode) {
-                    case konk.MODE_NOR:
-                        konk.log('Mode set to MODE_NOR');
-                        konk.control.mode = konk.MODE_NOR;
-                        break;
-                    case konk.MODE_IVE:
-                        konk.log('Mode set to MODE_IVE');
-                        konk.control.mode = konk.MODE_IVE;
-                        break;
-                    default:
-                        // swallow for now
-                }
-            },
-            step: function() {
-                if (konk.active.task) {
-                    if (konk.active.task instanceof konk.ReduceTask) {
-                        konk.active.task.doSplit();
-                    }
-                    else {
-                        konk.active.task.done();
-                    }
-                }
-                else {
-                    konk.log('Nothing to do: Idle');
-                }
-            },
-            stop: function() {
-                //[TODO?]
-                clearTimeout(konk.active.tid);
-                clearTimeout(konk.heartbeat.tid);
-            },
-            idle: function() {
-                konk.active.status = 'idle';
-                konk.active.jobId = null;
-                konk.active.task = null;
-                konk.active.tid = null;
-
-                konk.log('In idle state');
-            },
-            exec: function(spec) {
-                switch(spec.action) {
-                    case 'mode':
-                        konk.control.setMode(spec);
-                        break;
-                    case 'hb':
-                        konk.heartbeat.start();
-                        break;
-                    case 'step':
-                        konk.control.step();
-                        break;
-                    case 'stop':
-                        konk.control.stop();
-                        break;
-                    default:
-                        // swallow for now
-                }
-            }
-        },
-        */
-
-
-
-
 

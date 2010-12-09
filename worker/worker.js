@@ -1,127 +1,64 @@
 /**
  worker.js
- BSMR client-side worker node implementation
- This runs in a Web Worker context.
+
+ BrowserSocket MapReduce
+ worker node bootstrap and controller.
+ Spawns a Web Worker thread which performs the actual work.
  
  Konrad Markus <konker@gmail.com>
-
- TODO:
-    - heartbeat
-        - reset timer when other message sent
-        - block clash of message/heartbeat?
-
-
-    - node-node comms (bs)
-
-    - storage of map intermediate results in bsmr
-    - storage of reduce results in bsmr
-        - bsmr should save results to fs
-
-    - code/data!
-        - how should these look?
-            - MAP/REDUCE:
-                given:
-                ---
-                function map(data) {
-                    //var v2 = do_something(v1);
-                    for (var w in data.split()) {
-                        emit(w, 1);
-                    }
-                }
-                function reduce(k, vs) {
-                    var tot = 0;
-                    for (var v in vs) {
-                        tot += vs[v];
-                    }
-                    emit(tot);
-                }
-                --
-
-                var partitions = new Array(R);
-                for (var i=0; i<R; i++) {
-                    partitions[i] = {};
-                }
-                function __exec_map(splitId) {
-                    data = fs_fetch_split(splitId);
-                    (function() {
-                        var emit = _map_emit;
-                        map(data);
-                    })();
-                }
-
-                _exec_reduce(partitionId) {
-                    var ks = _get_all_keys_in_partition(partitionId);
-
-                    for (var k in ks) {
-                        (function() {
-                            var emit = function(v2) { _reduce_emit(ks[k], v2); };
-                            reduce(ks[k], _get_all_values_for(partitionId, ks[k]));
-                        })();
-                    }
-                }
-
-                _get_all_keys_in_partition(partitionId) {
-                    var ret = [];
-                    for (var k in partitions[partitionId]) {
-                        ret.push(k);
-                    }
-                    return ret;
-                }
-
-                _get_all_values_for(partitionId, key) {
-                    return partitions[partitionId][key];
-                }
-
-                function hash(k) {
-                    return (some_kind_of_hash(k) % R);
-                }
-                function _map_emit(k, v) {
-                    if (typeof(partitions[hash(k)][k]) == 'undefined') {
-                        partitions[hash(k)][k] = [];
-                    }
-                    partitions[hash(k)][k].push(v);
-                }
-                function _reduce_emit(k, v2) {
-                    results[k] = v2;
-                }
-
-        
  */
 
-var worker = (function() {
-    var DEFAULT_TASK_LEN_MS = 1000;
+var konk = (function() {
+    /* the websocket url of the master to which this worker should use */
+    var MASTER_WS_URL = 'ws://127.0.0.1:8080/bsmr/';
+
+    /* debug mode on/off */
+    var DEBUG = true;
+
+    /* status codes */
+    var STATUS_ERROR    = -2;
+    var STATUS_STOPPED  = -1;
+    var STATUS_INIT     = 1;
+    var STATUS_IDLE     = 2;
+    var STATUS_MAPPING  = 3;
+    var STATUS_REDUCING = 4;
 
     /* modes (FIXME: duplication...) */
     var MODE_NOR = 1; // normal mode
-    var MODE_TMO = 2; // dummy setTimeout mode
     var MODE_IVE = 3; // user-interactive mode
 
     /* MapTask class */
-    function MapTask(job, splitId, datasrc) {
-        this._id = (new Date()).getTime() + ':' + (Math.ceil(Math.random() * 10000));
-
+    function MapTask(job, splitId) {
         this.job = job;
         this.splitId = splitId;
-        this.datasrc = datasrc;
-        this.code = job && eval(job.code);
-        this.results = {};
+        this.result = null;
     }
     MapTask.prototype.start = function() {
-        worker.log('Map task started');
-        /* do real map */
-        // while (k,v) in datasrc:
-        //      this.results[k] = this.code(k,v)
-        // this.done()
+        konk.log('MapTask start() :' + this.splitId);
+        konk.fs.fetchMapData(this.job.jobId, this.splitId);
     }
-    MapTask.prototype.done = function() {
-        worker.log('Map task done');
-        worker.map.notifyTaskDone(this)
+    MapTask.prototype.onData = function(data) {
+        konk.log('MapTask onData() :' + this.splitId);
+        var m = konk.createMessage(konk.TYPE_DO, {
+            action: "map",
+            job: this.job,
+            splitId: this.splitId,
+            code: "function map(k, data, emit) { var ws = data.split(/\\b/); for (var w in ws) { emit(ws[w], 1); } }",
+            data: data,
+        });
+        konk.engine.sendMessage(m);
+    }
+    MapTask.prototype.done = function(result) {
+        konk.log('MapTask done() :' + this.splitId);
+        konk.log(_gP(result));
+        this.result = result;
+        konk.map.notifyTaskDone(this)
     }
 
     MapTaskFactory = function() {}
     /* NOTE: this is a kind of 'static' function */
-    MapTaskFactory.createInstance = function(job, splitId, datasrc) {
-        return new worker.MapTask(job, splitId, datasrc);
+    MapTaskFactory.createInstance = function(job, splitId) {
+        return new konk.MapTask(job, splitId);
     }
     
 
@@ -132,7 +69,6 @@ var worker = (function() {
 
         this.job = job;
         this.partitionId = partitionId;
-        this.code = job && eval(job.code);
 
         if (job) {
             for (var i=0; i<this.job.M; i++) {
@@ -141,11 +77,11 @@ var worker = (function() {
         }
     }
     ReduceTask.prototype.start = function() {
-        worker.log('Reduce task started');
+        konk.log('ReduceTask start() :' + this.partitionId);
         this.doSplit();
     }
     ReduceTask.prototype.getNextSplitId = function() {
-        //[TODO: make this non-linear and random]
+        //[TODO: make this non-linear / random]
         if (this._i < this.job.M) {
             this._i += 1;
             return this._i;
@@ -166,66 +102,92 @@ var worker = (function() {
             this.done();
             return;
         }
-        worker.reduce.nextSplit(this, this.getNextSplitId());
+        konk.reduce.nextSplit(this, this.getNextSplitId());
     }
     ReduceTask.prototype.done = function() {
-        worker.log('Reduce task done');
-        worker.reduce.notifyTaskDone(this)
+        konk.log('ReduceTask done() :' + this.partitionId);
+        konk.reduce.notifyTaskDone(this)
     }
 
     ReduceTaskFactory = function() {}
     /* NOTE: this is a kind of 'static' function */
     ReduceTaskFactory.createInstance = function(job, partitionId) {
-        return new worker.ReduceTask(job, partitionId);
+        return new konk.ReduceTask(job, partitionId);
     }
 
     /* ReduceSplit class */
-    function ReduceSplit(job, partitionId, splitId, location) {
+    function ReduceSplit(job, partitionId, splitId, locations) {
         this.job = job;
         this.partitionId = partitionId;
         this.splitId = splitId;
-        this.location = location;
+        this.locations = locations;
         this._done = false;
+        this.locationPtr = -1;
 
-        this.results = {};
+        this.result = null;
     }
     ReduceSplit.prototype.start = function() {
-        worker.log('ReduceSplit started');
-        // for l in location:
-        //      worker.fetchMapData(this, l);
-        // ...?
-        // this.done()
+        konk.log('ReduceSplit start() :' + this.partitionId + ',' + this.splitId);
+        this.fetch();
+    }
+    ReduceSplit.prototype.fetch = function() {
+        konk.log('ReduceSplit fetch() :' + this.partitionId + ',' + this.splitId + ',' + this.locationPtr);
+        this.locationPtr++;
+        if (this.locationPtr < this.locations.length) {
+            konk.p2p.fetchIntermediateData(this.job.jobId, this.partitionId, this.splitId, this.locations[this.locationPtr]);
+        }
+    }
+    ReduceSplit.prototype.onData = function(data) {
+        konk.log('reduceSplit onData() :' + this.partitionId + ',' + this.splitId);
+        konk.log(data);
+        var m = konk.createMessage(konk.TYPE_ENG, {
+            action: 'reduce',
+            jobId: this.job.jobId,
+            partitionId: this.partitionId,
+            splitId: this.splitId,
+            data: data,
+            code: "function reduce(k, vs, emit) { var tot = 0; for (var v in vs) { tot += vs[v]; } emit(tot); }"
+        });
+        konk.engine.sendMessage(m);
+    }
+    ReduceSplit.prototype.onDataError = function() {
+        konk.log('ReduceSplit onDataError() :' + this.partitionId + ',' + this.splitId);
+        this.fetch();
+    }
+    ReduceSplit.prototype.done = function(result) {
+        konk.log('ReduceSplit done() :' + this.partitionId + ',' + this.splitId);
+        konk.log(_gP(result));
+        this.result = result;
+        this._done = true;
+        konk.reduce.notifySplitDone(this);
     }
     ReduceSplit.prototype.isDone = function() {
         return this._done;
     }
-    ReduceSplit.prototype.done = function() {
-        worker.log('ReduceSplit done');
-        this._done = true;
-        worker.reduce.notifySplitDone(this);
-    }
 
     ReduceSplitFactory = function() {}
     /* NOTE: this is a kind of 'static' function */
-    ReduceSplitFactory.createInstance = function(job, partitionId, splitId, location) {
-        return new worker.ReduceSplit(job, partitionId, splitId, location);
+    ReduceSplitFactory.createInstance = function(job, partitionId, splitId, locations) {
+        return new konk.ReduceSplit(job, partitionId, splitId, locations);
     }
 
     return {
-        _DEBUG_: true,
+        DEBUG: DEBUG,
+        MASTER_WS_URL: MASTER_WS_URL,
 
         /* modes (FIXME: duplication...) */
         MODE_NOR: MODE_NOR,
-        MODE_TMO: MODE_TMO,
         MODE_IVE: MODE_IVE,
 
         /* message types (FIXME: duplication...) */
         TYPE_HB: 'HB',
         TYPE_DO: 'DO',
         TYPE_ACK: 'ACK',
-        TYPE_UPL: 'UPL',
+        TYPE_FS:  'FS',
+        TYPE_P2P: 'P2P',
         TYPE_LOG: 'LOG',
         TYPE_CTL: 'CTL',
+        TYPE_ENG: 'ENG',
 
         /* classes */
         MapTask: MapTask,
@@ -237,6 +199,12 @@ var worker = (function() {
         ReduceSplit: ReduceSplit,
         ReduceSplitFactory: ReduceSplitFactory,
 
+        /* whether to inmmediately start work */
+        _autostart: true,
+
+        /* overall status of the worker node */
+        status: null,
+
         /* track current worker activity */
         active: {
             status: 'idle',
@@ -245,105 +213,287 @@ var worker = (function() {
             tid: null
         },
 
-        mapTasks: {},
-        reduceTasks: {},
+        init: function() {
+            if (!konk._autostart) {
+                konk.log('No autoload. aborting init.');
+                konk._autostart = true;
+                return;
+            }
 
-        control: {
-            mode: MODE_IVE,
-            taskLenMs: DEFAULT_TASK_LEN_MS,
+            konk.status = STATUS_INIT;
 
-            setMode: function(spec) {
-                switch(spec.mode) {
-                    case MODE_NOR:
-                        worker.log('Mode set to MODE_NOR');
-                        worker.control.mode = MODE_NOR;
-                        break;
-                    case MODE_TMO:
-                        worker.log('Mode set to MODE_TMO');
-                        worker.taskLenMs = spec.taskLenMs;
-                        worker.control.mode = MODE_TMO;
-                        break;
-                    case MODE_IVE:
-                        worker.log('Mode set to MODE_IVE');
-                        worker.control.mode = MODE_IVE;
-                        break;
-                    default:
-                        // swallow for now
-                }
-            },
-            step: function() {
-                if (worker.active.task) {
-                    if (worker.active.task instanceof worker.ReduceTask) {
-                        worker.active.task.doSplit();
-                    }
-                    else {
-                        worker.active.task.done();
-                    }
-                }
-                else {
-                    worker.log('Nothing to do: Idle');
-                }
+            if (("Worker" in window) == false) {
+                konk.setStatus(
+                    STATUS_ERROR,
+                    'Your browser does not seem to support webworkers. Aborting.'
+                );
+                return;
+            }
+            if (("WebSocket" in window) == false) {
+                konk.setStatus(
+                    STATUS_ERROR,
+                    'Your browser does not seem to support websockets. Aborting.'
+                );
+                return;
+            }
+            if (("BrowserSocket" in window) == false) {
+                konk.setStatus(
+                    STATUS_ERROR,
+                    'Your browser does not seem to support browsersockets. Aborting.'
+                );
+                return;
+            }
+
+            // create a engine thread
+            try {
+                konk.engine.init();
+            }
+            catch (ex) {
+                konk.setStatus(
+                    STATUS_ERROR,
+                    'Could not create engine thread: ' + + ex
+                );
+                return;
+            }
+
+            // make a ws connection to the master
+            try {
+                konk.master.init();
+            }
+            catch (ex) {
+                konk.setStatus(
+                    STATUS_ERROR,
+                    'Could not connect to master: ' + MASTER_WS_URL + ': ' + ex
+                );
+                return;
+            }
+
+            // open a bs listener
+            try {
+                konk.server.init();
+            }
+            catch (ex) {
+                konk.setStatus(
+                    STATUS_ERROR,
+                    'Could not open browsersocket: ' + ex
+                );
+            }
+
+        },
+        start: function() {
+            // use this if _autostart is false
+            konk.heartbeat.start();
+            konk.master.greeting();
+        },
+        step: function() {
+            var m = konk.createMessage(konk.TYPE_CTL, {
+                action: 'step'
+            });
+            konk.engine.sendMessage(m);
+        },
+        idle: function(msg) {
+            konk.active.status = 'idle';
+            konk.active.jobId = null;
+            konk.active.task = null;
+            konk.active.tid = null;
+
+            konk.log('In idle state');
+        },
+        stop: function() {
+            konk.master.stop();
+            konk.engine.stop();
+            konk.server.stop();
+            konk.heartbeat.stop();
+            konk.setStatus(
+                STATUS_STOPPED,
+                'stopped'
+            );
+        },
+
+        /*
+            web worker thread that does the actual work */
+        engine: {
+            thread: null,
+
+            init: function() {
+                konk.engine.thread = new Worker('worker-engine.js');
+                konk.engine.thread.onmessage = konk.engine.onmessage;
             },
             stop: function() {
-                //[TODO?]
-                clearTimeout(worker.active.tid);
-                clearTimeout(worker.heartbeat.tid);
+                konk.engine.thread.terminate();
             },
-            idle: function() {
-                worker.active.status = 'idle';
-                worker.active.jobId = null;
-                worker.active.task = null;
-                worker.active.tid = null;
+            onmessage: function(msg) {
+                if (msg.data.type == konk.TYPE_ENG) {
+                    konk.log(msg.data, 'e');
+                    switch (msg.data.payload.action) {
+                        case 'map':
+                            konk.map.tasks[msg.data.payload.splitId].done(msg.data.payload.data); 
+                            break;
+                        case 'reduce':
+                            konk.reduce.tasks[msg.data.payload.partitionId].splits[msg.data.payload.splitId].done(msg.data.payload.data); 
+                            break;
+                        default:    
+                            // swallow for now
+                    }
+                }
+                else if (msg.data.type == konk.TYPE_LOG) {
+                    konk.log(msg.data.payload.message, 'log');
+                }
+            },
+            sendMessage: function(msg) {
+                konk.log(msg, 'we');
+                konk.engine.thread.postMessage(msg);
+            }
+        },
 
-                worker.log('In idle state');
+        /*
+            websockets connection to the master server */
+        master: {
+            /* the main ws channel to the master */
+            ws: null,
+
+            init: function() {
+                /*[TODO: should we have a protocol here?] */
+                konk.master.ws = new WebSocket(MASTER_WS_URL, "worker");
+                konk.master.ws.onopen = konk.master.onopen;
+                konk.master.ws.onclose = konk.master.onclose;
+                konk.master.ws.onerror = konk.master.onerror;
             },
-            exec: function(spec) {
-                switch(spec.action) {
-                    case 'mode':
-                        worker.control.setMode(spec);
-                        break;
-                    case 'hb':
-                        worker.heartbeat.heartbeat();
-                        break;
-                    case 'step':
-                        worker.control.step();
-                        break;
-                    case 'stop':
-                        worker.control.stop();
-                        break;
-                    default:
-                        // swallow for now
+            stop: function() {
+                konk.master.ws.close();
+            },
+            greeting: function() {
+                try {
+                    // send the 'socket' message to master
+                    var m = konk.createMessage(konk.TYPE_ACK, {
+                        action: 'socket',
+                        protocol: 'ws',
+                        port: konk.server.bs.port,
+                        resource: konk.server.bs.resourcePrefix
+                    });
+                    konk.master.sendMessage(m);
+                }
+                catch (ex) {
+                    konk.setStatus(
+                        STATUS_ERROR,
+                        'Could not send greeting to master: ' + ex
+                    );
+                }
+
+                // start accepting server messages from the master
+                konk.master.ws.onmessage = konk.master.onmessage;
+            },
+
+            /* 
+                if we receive a message from the master,
+                forward it to the engine thread */
+            onmessage: function(e) {
+                var msg = konk.readMessage(e.data);
+                konk.log(msg, 'm');
+                if (msg.type == konk.TYPE_DO) {
+                    switch(msg.payload.action) {
+                        case 'mapTask':
+                            konk.map.startTask(msg.payload);
+                            break;
+                        case 'reduceTask':
+                            konk.reduce.startTask(msg.payload);
+                            break;
+                        case 'reduceSplit':
+                            konk.reduce.startSplit(msg.payload);
+                            break;
+                        case 'idle':
+                            konk.idle(msg.payload);
+                            break;
+                        default:    
+                            // swallow for now
+                    }
+                }
+                else if (msg.type == konk.TYPE_P2P) {
+                    //worker.reduce.startUploaded(msg.payload);
+                    konk.p2p.exec(msg.payload);
+                }
+                else if (msg.type == konk.TYPE_CTL) {
+                    konk.control.exec(msg.payload);
+                }
+                else if (msg.type == konk.TYPE_FS) {
+                    konk.fs.exec(msg.payload);
+                }
+            },
+            onopen: function(e) { 
+                if (!konk._autostart) {
+                    konk.master.greeting();
+                }
+
+                // successful init
+                konk.setStatus(STATUS_IDLE, 'init complete');
+            },
+            onclose: function(e) {
+                /* FIXME: why does this cause an error? */
+                konk.log('ws:close');
+                konk.stop();   
+            },
+            onerror: function(e) {
+                /*[TODO]*/
+                konk.log('ws:error');
+            },
+            sendMessage: function(msg) {
+                konk.master.sendMessageExec(msg, false);
+            },
+            sendMessageExec: function(msg, _no_reset_hb) {
+                konk.master.ws.send(JSON.stringify(msg));
+                konk.log(msg, 'w');
+                if (!_no_reset_hb) {
+                    konk.heartbeat.reset();
                 }
             }
         },
 
         heartbeat: {
+            /*TODO:
+                - restart hb timeout with every ack?
+                - delay the hb
+            */
             HB_INTERVAL_MS: 10000,
             tid: null,
 
+            start: function() {
+                clearInterval(konk.heartbeat.tid);
+                konk.heartbeat.tid = setInterval(konk.heartbeat.heartbeat, konk.heartbeat.HB_INTERVAL_MS);
+                konk.log('Heartbeat started');
+            },
             heartbeat: function() {
-                var m = worker.createMessage(worker.TYPE_HB, {
-                    action: worker.active.status,
-                    jobId: worker.active.jobId
+                var m = konk.createMessage(konk.TYPE_HB, {
+                    action: konk.active.status,
+                    jobId: konk.active.jobId
                 });
-                worker.sendMessage(m);
-                worker.heartbeat.tid = setTimeout(worker.heartbeat.heartbeat, worker.heartbeat.HB_INTERVAL_MS);
+                konk.master.sendMessageExec(m, true);
+            },
+            reset: function() {
+                konk.heartbeat.stop();
+                konk.heartbeat.start();
+            },
+            stop: function() {
+                clearInterval(konk.heartbeat.tid);
+                konk.log('Heartbeat stopped');
             }
         },
 
+        /*
+            map tasks */
         map: {
             tasks: {},
 
             startTask: function(spec) {
-                var t = worker.MapTaskFactory.createInstance(spec.job, spec.mapStatus.splitId, 'FIXME_DATASRC');
-                worker.map.tasks[t._id] = t;
-                worker.map.tasks[t._id].start();
-                worker.active.jobId = t.job.jobId;
-                worker.active.task = t;
-                worker.active.status = 'mapTask';
+                /*[FIXME: check for job/split safety]*/
+                var t = konk.MapTaskFactory.createInstance(spec.job, spec.mapStatus.splitId, 'FIXME_DATASRC');
+                konk.map.tasks[t.splitId] = t;
+                konk.map.tasks[t.splitId].start();
+                konk.active.jobId = t.job.jobId;
+                konk.active.task = t;
+                konk.active.status = 'mapTask';
             },
             notifyTaskDone: function(t) {
-                var m = worker.createMessage(worker.TYPE_ACK, {
+                var m = konk.createMessage(konk.TYPE_ACK, {
                     action: 'mapTask',
                     mapStatus: {
                         splitId: t.splitId
@@ -351,7 +501,7 @@ var worker = (function() {
                     reduceStatus: null, //TODO
                     jobId: t.job.jobId
                 });
-                worker.sendMessage(m);
+                konk.master.sendMessage(m);
             }
         },
 
@@ -360,25 +510,23 @@ var worker = (function() {
             tasks: [],
 
             startTask: function(spec) {
-                //var t = new ReduceTask(spec.job, spec.reduceStatus.partitionId);
-                var t = worker.ReduceTaskFactory.createInstance(spec.job, spec.reduceStatus.partitionId);
-                worker.reduce.tasks[t.partitionId] = t;
-                worker.reduce.tasks[t.partitionId].start();
-                worker.active.jobId = t.job.jobId;
-                worker.active.task = t;
-                worker.active.status = 'reduceTask';
+                var t = konk.ReduceTaskFactory.createInstance(spec.job, spec.reduceStatus.partitionId);
+                konk.reduce.tasks[t.partitionId] = t;
+                konk.reduce.tasks[t.partitionId].start();
+                konk.active.jobId = t.job.jobId;
+                konk.active.task = t;
+                konk.active.status = 'reduceTask';
             },
             startSplit: function(spec) {
-                //var t = new ReduceSplit(spec.job, spec.reduceStatus.partitionId, spec.reduceStatus.splitId, spec.location);
-                var t = worker.ReduceSplitFactory.createInstance(spec.job, spec.reduceStatus.partitionId, spec.reduceStatus.splitId, spec.location);
-                worker.reduce.tasks[t.partitionId].splits[t.splitId] = t;
-                worker.reduce.tasks[t.partitionId].splits[t.splitId].start();
-                worker.active.jobId = t.job.jobId;
-                worker.active.task = t;
-                worker.active.status = 'reduceTask';
+                var t = konk.ReduceSplitFactory.createInstance(spec.job, spec.reduceStatus.partitionId, spec.reduceStatus.splitId, spec.reduceStatus.locations);
+                konk.reduce.tasks[t.partitionId].splits[t.splitId] = t;
+                konk.reduce.tasks[t.partitionId].splits[t.splitId].start();
+                konk.active.jobId = t.job.jobId;
+                konk.active.task = t;
+                konk.active.status = 'reduceTask';
             },
             nextSplit: function(t, splitId) {
-                var m = worker.createMessage(worker.TYPE_ACK, {
+                var m = konk.createMessage(konk.TYPE_ACK, {
                     action: 'reduceSplit',
                     reduceStatus: {
                         partitionId: t.partitionId,
@@ -387,16 +535,16 @@ var worker = (function() {
                     unreachable: [
                     ],
                     jobId:t.job.jobId});
-                worker.sendMessage(m);
+                konk.master.sendMessage(m);
             },
             startUploaded: function(spec) {
                 //[TODO: also pos. rename]
             },
             notifySplitDone: function(t) {
-                worker.reduce.tasks[t.partitionId].doSplit();
+                konk.reduce.tasks[t.partitionId].doSplit();
             },
             notifyTaskDone: function(t) {
-                var m = worker.createMessage(worker.TYPE_ACK, {
+                var m = konk.createMessage(konk.TYPE_ACK, {
                     action: 'reduceTask',
                     reduceStatus: {
                         partitionId: t.partitionId
@@ -405,11 +553,140 @@ var worker = (function() {
                     ],
                     jobId: t.job.jobId
                 });
-                worker.sendMessage(m);
+                konk.master.sendMessage(m);
             }
         },
 
-        /* TODO: duplicated.. */
+        /*
+            interaction with other worker nodes via browsersockets */
+        p2p: {
+            fetchIntermediateData: function(jobId, partitionId, splitId, location) {
+                konk.log('p2p.fetchIntermediateData() :' + partitionId + ',' + splitId + ',' + location);
+
+                var msg = null;
+                var ws = new WebSocket(location);
+                ws.onopen = function() {
+                    var m = konk.createMessage(konk.TYPE_P2P, {
+                        action: 'download',
+                        jobId: jobId,
+                        partitionId: partitionId,
+                        splitId: splitId,
+                        location: location
+                    });
+                    this.send(JSON.stringify(m));
+                }
+                ws.onmessage = function(e) {
+                    konk.log(e.data);
+                    msg = konk.readMessage(e.data);
+                }
+                ws.onclose = function() {
+                    if (msg) {
+                        if (msg.payload.action == 'upload') {
+                            if (typeof(konk.reduce.tasks[msg.payload.partitionId].splits[msg.payload.splitId].onData) == 'function') {
+                                konk.reduce.tasks[msg.payload.partitionId].splits[msg.payload.splitId].onData(msg.payload.data);
+                            }
+                        }
+                    }
+                }
+                ws.onerror = function() {
+                    konk.reduce.tasks[msg.payload.partitionId].splits[msg.payload.splitId].onDataError();
+                }
+            }
+        },
+
+        /*
+            interaction with the file system */
+        fs: {
+            FS_BASE_URI: 'http://localhost:8080/fs/',
+
+            fetchMapData: function(jobId, splitId) {
+                // connect to fs and retrieve split
+                var req = new XMLHttpRequest();  
+                req.open('GET', konk.fs.getSplitUrl(jobId, splitId), true);  
+                req.onreadystatechange = function(aEvt) {  
+                    if (req.readyState == 4) {  
+                        if (req.status == 200) {
+                            if (typeof(konk.map.tasks[splitId].onData) == 'function') {
+                                konk.map.tasks[splitId].onData(req.responseText);
+                            }
+                        }
+                        else {
+                            konk.log('FAILED: ' + req.status);
+                        }
+                    }  
+                };
+                req.send(null);  
+            },
+            getSplitUrl: function(jobId, splitId) {
+                konk.log(konk.fs.FS_BASE_URI + 'splits/' + jobId + '/' + splitId + '/');
+                return konk.fs.FS_BASE_URI + 'splits/' + jobId + '/' + splitId + '/';
+            }
+        },
+
+        /*
+            browsersocket connection to other konk nodes */
+        server: {
+            /* the browsersocket for communicating with other worker nodes */
+            bs: null,
+
+            init: function() {
+                konk.server.bs = new BrowserSocket(konk.server.handlerFactory);
+                konk.server.bs.onerror = konk.server.onerror;
+            },
+            stop: function() {
+                konk.server.bs.stop();
+            },
+
+            handlerFactory: function(req) {
+                return new konk.server.handler(req);
+            },
+            handler: function(req) {
+                this.onmessage = function(e) {
+                    /*[TODO]*/
+                    konk.log('bs:handler:onmessage: ' + e.data);
+                    var msg = konk.readMessage(e.data);
+                    if (msg.type == konk.TYPE_P2P) {
+                        switch (msg.payload.action) {
+                            case 'download':
+                                // send back the partition/split result
+                                var m = konk.createMessage(konk.TYPE_P2P, {
+                                    action: 'upload',
+                                    jobId: msg.payload.jobId,
+                                    partitionId: msg.payload.partitionId,
+                                    splitId: msg.payload.splitId,
+                                    data: konk.map.tasks[msg.payload.splitId].result[msg.payload.partitionId]
+                                });
+                                this.send(JSON.stringify(m));
+                                this.close();
+                                break;
+                            default:
+                                // swallow for now
+                        }
+                    }
+                }
+                this.onopen = function(e) { 
+                    /*[TODO]*/
+                    konk.log('bs:handler:open');
+                }
+                this.onclose = function(e) {
+                    /*[TODO]*/
+                    konk.log('bs:handler:close');
+                }
+                this.onerror = function(e) {
+                    /*[TODO]*/
+                    konk.log('bs:handler:error');
+                }
+            },
+            onerror: function(e) {
+                /*[TODO]*/
+                konk.log('bs:error');
+            }
+        },
+
+        /* utils and helpers */
+        readMessage: function(s) {
+            return JSON.parse(s);
+        },
         createMessage: function(type, spec) {
             var ret = {
                 payload: {}
@@ -422,48 +699,105 @@ var worker = (function() {
             }
             return ret;
         },
-        sendMessage: function(m) {
-            postMessage(m);
+        setStatus: function(status, msg) {
+            if (msg) {
+                konk.log(msg);
+            }
+            konk.status = status;
         },
-        log: function(s) {
-            var m = worker.createMessage(worker.TYPE_LOG, {
-                message: s
-            });
-            worker.sendMessage(m);
+        util: {
+            esc: function(s) {
+                return s.replace(/&/g, '&amp;')
+                        .replace(/</g, '&lt;')
+                        .replace(/>/g, '&gt;');
+            }
+        },
+        log: function(s, level) {
+            if (konk.DEBUG) {
+                if (typeof(console) != 'undefined' && typeof(console.log) == 'function') {
+                    console.log(s);
+                }
+            }
         }
     }
 })();
+window.addEventListener('load', konk.init, false);
 
-/* receive incoming message from parent */
-function onmessage(msg) {
-    if (msg.data.type == worker.TYPE_DO) {
-        switch(msg.data.payload.action) {
-            case 'mapTask':
-                worker.map.startTask(msg.data.payload);
-                break;
-            case 'reduceTask':
-                worker.reduce.startTask(msg.data.payload);
-                break;
-            case 'reduceSplit':
-                worker.reduce.startSplit(msg.data.payload);
-                break;
-            case 'idle':
-                worker.control.idle(msg.data.payload);
-                break;
-            default:    
-                // swallow for now
-        }
+function _gP(o) {
+    var s = '[';
+    for (var p in o) {
+        s += p + '->' + o[p] + ', ';
     }
-    else if (msg.data.type == worker.TYPE_UPL) {
-        worker.reduce.startUploaded(msg.data.payload);
-    }
-    else if (msg.data.type == worker.TYPE_CTL) {
-        worker.control.exec(msg.data.payload);
-    }
+    return (s + ']');
 }
 
-if (worker._DEBUG_) {
-    // FIXME: can we inject this (rather than pull it)?
-    importScripts('opt/worker-debug.js');
-}
+//// scrap
+        /*
+        control: {
+            mode: MODE_NOR,
+
+            setMode: function(spec) {
+                switch(spec.mode) {
+                    case konk.MODE_NOR:
+                        konk.log('Mode set to MODE_NOR');
+                        konk.control.mode = konk.MODE_NOR;
+                        break;
+                    case konk.MODE_IVE:
+                        konk.log('Mode set to MODE_IVE');
+                        konk.control.mode = konk.MODE_IVE;
+                        break;
+                    default:
+                        // swallow for now
+                }
+            },
+            step: function() {
+                if (konk.active.task) {
+                    if (konk.active.task instanceof konk.ReduceTask) {
+                        konk.active.task.doSplit();
+                    }
+                    else {
+                        konk.active.task.done();
+                    }
+                }
+                else {
+                    konk.log('Nothing to do: Idle');
+                }
+            },
+            stop: function() {
+                //[TODO?]
+                clearTimeout(konk.active.tid);
+                clearTimeout(konk.heartbeat.tid);
+            },
+            idle: function() {
+                konk.active.status = 'idle';
+                konk.active.jobId = null;
+                konk.active.task = null;
+                konk.active.tid = null;
+
+                konk.log('In idle state');
+            },
+            exec: function(spec) {
+                switch(spec.action) {
+                    case 'mode':
+                        konk.control.setMode(spec);
+                        break;
+                    case 'hb':
+                        konk.heartbeat.start();
+                        break;
+                    case 'step':
+                        konk.control.step();
+                        break;
+                    case 'stop':
+                        konk.control.stop();
+                        break;
+                    default:
+                        // swallow for now
+                }
+            }
+        },
+        */
+
+
+
+
 

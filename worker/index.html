@@ -3,11 +3,11 @@
     <head>
         <title>bsmr worker test</title>
         <script type="text/javascript" src="json2.js"></script>
-        <script type="text/javascript" src="bsmr.js"></script>
+        <script type="text/javascript" src="worker.js"></script>
         <script type="text/javascript" src="opt/jquery.js"></script>
-        <script type="text/javascript" src="opt/bsmr-ui.js"></script>
+        <script type="text/javascript" src="opt/worker-ui.js"></script>
         <style type="text/css">
-            @import url(opt/bsmr-ui.css);
+            @import url(opt/worker-ui.css);
         </style>
     </head>
     <body>
@@ -21,16 +21,15 @@
         <div id="control">
             <a href="#" class="init">init</a> |
             <a href="#" class="start">start</a> |
-            <a href="#" class="step">step</a> |
             <a href="#" class="stop">stop</a>
+            <!--
             <form id="modeForm" class="disabled">
                 <input type="radio" name="mode" id="mode_nor" value="NOR" disabled="disabled"/>
                 <label for="mode_nor">normal mode</label>
                 <input type="radio" name="mode" id="mode_ive" value="IVE" disabled="disabled"/>
                 <label for="mode_ive">IVE dummy mode</label>
-                <input type="radio" name="mode" id="mode_tmo" value="TMO" disabled="disabled"/>
-                <label for="mode_tmo">TMO dummy mode</label>
             </form>
+            -->
             <div id="legend">
                 <p class="log"><span class="level">log</span> general log message</p>
                 <p class="c"><span class="level">c</span> worker control message</p>

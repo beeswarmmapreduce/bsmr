@@ -46,7 +46,7 @@ public class Message
 	
 	public static final String FIELD_SPLITID        = "splitId";
 	public static final String FIELD_PARTITIONID    = "partitionId";
-	public static final String FIELD_REDUCE_LOCATION = "location";
+	public static final String FIELD_REDUCE_LOCATION = "locations";
 	
 	public static final String FIELD_SOCKET_PROTOCOL = "protocol";
 	public static final String FIELD_SOCKET_PORT     = "port";

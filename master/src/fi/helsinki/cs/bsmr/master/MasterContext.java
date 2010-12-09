@@ -36,13 +36,6 @@ public interface MasterContext
 	// Worker functionality
 
 	/**
-	 * Create a new worker.
-	 * 
-	 * @param remoteAddr The remote address of the worker
-	 */
-	public Worker createWorker(String remoteAddr);
-	
-	/**
 	 * Add a new worker. This should be called only from the worker onConnect callback.
 	 * 
 	 * @param worker The worker to add

@@ -50,7 +50,7 @@ public class MasterWebSocketServlet extends WebSocketServlet
 		
 		if (service != null) {
 			if (service.equals("worker")) {
-				return master.createWorker(request.getRemoteAddr());
+				return new Worker(master, request.getRemoteAddr());
 			}
 			
 			if (service.equals("console")) {

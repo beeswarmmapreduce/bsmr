@@ -96,12 +96,6 @@ public abstract class MasterStoreImpl implements MasterContext
 	}
 	
 	@Override
-	public Worker createWorker(String remoteAddr)
-	{
-		return new Worker(this, remoteAddr);
-	}
-	
-	@Override
 	public void removeWorker(Worker worker) throws WorkerInIllegalStateException
 	{
 		boolean removed;

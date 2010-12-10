@@ -1,9 +1,11 @@
 package fi.helsinki.cs.bsmr.fs;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.HttpURLConnection;
 import java.util.logging.Level;
@@ -82,6 +84,39 @@ public class PartitionServlet extends HttpServlet
 	}
 	
 	@Override
+	protected void doGet(HttpServletRequest req, HttpServletResponse resp)
+			throws ServletException, IOException
+	{
+		String []path = req.getPathInfo().split("/");
+		
+		if (path.length != 3) {
+			error("Specify a path so that the url ends with /job/partition (both as integers)", req, resp);
+			return;
+		}
+		
+		// Do String -> integer conversion so that we don't allow nasty paths containing for example ..'s 
+		int thisPartition = parseNumber(path[2], "Partition", req, resp);
+		int thisJob       = parseNumber(path[1], "Job", req, resp);
+		
+		FileInputStream fis = new FileInputStream(savePath+"/"+thisJob+"/"+thisPartition+".data");
+		resp.setContentType("text/plain");
+		resp.addHeader("Content-Disposition", "inline;filename=bsmr_output_j"+thisJob+"_p"+thisPartition+".txt");
+		OutputStream os = resp.getOutputStream();
+		byte [] buf = new byte[32*1024];
+		
+		int i;
+		i = fis.read(buf);
+		
+		while(i > 0) {
+			os.write(buf, 0, i);
+			i = fis.read(buf);
+		}
+		os.close();
+		
+		
+	}
+	
+	@Override
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp)
 			throws ServletException, IOException 
 	{
@@ -97,31 +132,10 @@ public class PartitionServlet extends HttpServlet
 			return;
 		}
 		
-		String jobAsString       = path[1];
-		String partitionAsString = path[2];
 		
-		int thisPartition;
-		int thisJob;
+		int thisPartition = parseNumber(path[2], "Partition", req, resp);
+		int thisJob       = parseNumber(path[1], "Job", req, resp);
 		
-		try {
-			thisPartition = Integer.parseInt(partitionAsString);
-		} catch(NullPointerException npe) {
-			error("Specify path so that the url ends with /job/partition (both as integers)", req, resp);
-			return;
-		} catch(NumberFormatException nfe) {
-			error("Partition ("+partitionAsString+") is not a number: "+nfe, req, resp);
-			return;
-		}
-		
-		try {
-			thisJob = Integer.parseInt(jobAsString);
-		} catch(NullPointerException npe) {
-			error("Specify path so that the url ends with /job/partition (both as integers)", req, resp);
-			return;
-		} catch(NumberFormatException nfe) {
-			error("Job ("+jobAsString+") is not a number: "+nfe, req, resp);
-			return;
-		}
 		
 		savePartition(thisPartition, thisJob, req, resp);
 	}
@@ -176,12 +190,27 @@ public class PartitionServlet extends HttpServlet
 		}
 	}
 
-	private void error(String msg, HttpServletRequest req, HttpServletResponse resp) throws IOException
+	private static void error(String msg, HttpServletRequest req, HttpServletResponse resp) throws IOException
 	{
 		resp.setStatus(HttpURLConnection.HTTP_INTERNAL_ERROR);
 		resp.setContentType("text/plain");
 		PrintWriter pw = resp.getWriter();
 		pw.println("ERROR: "+msg);
 		pw.close();
+	}
+	
+	private static int parseNumber(String s, String nameOfNumber, HttpServletRequest req, HttpServletResponse resp) throws IOException
+	{
+		int ret;
+		try {
+			ret = Integer.parseInt(s);
+		} catch(NullPointerException npe) {
+			error("Specify path so that the url ends with /job/partition (both as integers)", req, resp);
+			return -1;
+		} catch(NumberFormatException nfe) {
+			error(nameOfNumber+" ("+s+") is not a number: "+nfe, req, resp);
+			return -1;
+		}
+		return ret;
 	}
 }

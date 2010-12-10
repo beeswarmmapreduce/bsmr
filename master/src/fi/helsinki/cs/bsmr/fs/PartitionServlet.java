@@ -111,9 +111,8 @@ public class PartitionServlet extends HttpServlet
 			os.write(buf, 0, i);
 			i = fis.read(buf);
 		}
+		os.flush();
 		os.close();
-		
-		
 	}
 	
 	@Override

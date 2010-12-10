@@ -32,7 +32,7 @@ public class Job
 	private long startTime;
 	private long finishTime;
 	
-	private String code;
+	private Object code;
 	
 	
 	/**
@@ -45,7 +45,7 @@ public class Job
 	 * @param acknowledgeTimeout The acknowledgment timeout.
 	 * @param code The code the workers are sent.
 	 */
-	Job(int jobId, int splits, int partitions, int heartbeatTimeout, int acknowledgeTimeout, String code)
+	Job(int jobId, int splits, int partitions, int heartbeatTimeout, int acknowledgeTimeout, Object code)
 	{
 		this.jobId = jobId;
 		this.state = State.NEW;
@@ -131,7 +131,7 @@ public class Job
 		return jobId;
 	}
 
-	public String getCode() {
+	public Object getCode() {
 		return code;
 	}
 	

@@ -251,7 +251,7 @@ public abstract class MasterStoreImpl implements MasterContext
 	}
 
 	@Override
-	public Job createJob(int splits, int partitions, int heartbeatTimeout, int acknowledgeTimeout, String code)
+	public Job createJob(int splits, int partitions, int heartbeatTimeout, int acknowledgeTimeout, Object code)
 	{
 		Job ret;
 		

@@ -23,6 +23,8 @@ public class SplitServlet extends HttpServlet
 {
 	private static final long serialVersionUID = 1L;
 
+	public static final int SPLIT_SIZE = 32*1024;
+
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp)
 			throws ServletException, IOException 
@@ -73,7 +75,7 @@ public class SplitServlet extends HttpServlet
 		}
 		
 		BufferedReader br = new BufferedReader(new InputStreamReader(new GZIPInputStream(is))); 
-		br.skip(split * 32*1024);
+		br.skip(split * SPLIT_SIZE);
 		
 		String s = br.readLine();
 		
@@ -87,7 +89,7 @@ public class SplitServlet extends HttpServlet
 		
 		int n = 0;
 		
-		while (n < 32*1024 && s != null) {
+		while (n < SPLIT_SIZE && s != null) {
 			writer.println(s);
 			n+= s.length();
 			s = br.readLine();

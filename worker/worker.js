@@ -114,7 +114,7 @@ var konk = (function() {
     ReduceTask.prototype.getDataJSON = function() {
         var outputFile = [];
         for (var i=0; i<this.splits.length; i++) {
-            outputFile.splice(-1, 0, this.splits[i]);
+            outputFile.push(this.splits[i].result);
         }
         return JSON.stringify(outputFile);
     }
@@ -566,6 +566,59 @@ var konk = (function() {
         },
 
         /*
+            interaction with the file system */
+        fs: {
+            FS_BASE_URI: 'http://localhost:8080/fs/',
+
+            writeOutputFile: function(jobId, partitionId) {
+                // connect to fs and upload partition
+                var req = new XMLHttpRequest();  
+                req.open('POST', konk.fs.getPartitionUrl(jobId, partitionId), true);  
+                req.onreadystatechange = function(aEvt) {  
+                    if (req.readyState == 4) {  
+                        if (req.status == 200) {
+                            if (typeof(konk.reduce.tasks[partitionId].onSave) == 'function') {
+                                konk.reduce.tasks[partitionId].onSave(req.responseText);
+                            }
+                        }
+                        else {
+                            konk.log('FAILED: ' + req.status);
+                        }
+                    }  
+                };
+                req.overrideMimeType('text/plain');
+                req.send(konk.reduce.tasks[partitionId].getDataJSON());
+            },
+
+            fetchMapData: function(jobId, splitId) {
+                // connect to fs and retrieve split
+                var req = new XMLHttpRequest();  
+                req.open('GET', konk.fs.getSplitUrl(jobId, splitId), true);  
+                req.onreadystatechange = function(aEvt) {  
+                    if (req.readyState == 4) {  
+                        if (req.status == 200) {
+                            if (typeof(konk.map.tasks[splitId].onData) == 'function') {
+                                konk.map.tasks[splitId].onData(req.responseText);
+                            }
+                        }
+                        else {
+                            konk.log('FAILED: ' + req.status);
+                        }
+                    }  
+                };
+                req.send(null);  
+            },
+            getPartitionUrl: function(jobId, partitionId) {
+                konk.log(konk.fs.FS_BASE_URI + 'partitions/' + jobId + '/' + partitionId + '/');
+                return konk.fs.FS_BASE_URI + 'partitions/' + jobId + '/' + partitionId + '/';
+            },
+            getSplitUrl: function(jobId, splitId) {
+                konk.log(konk.fs.FS_BASE_URI + 'splits/' + jobId + '/' + splitId + '/');
+                return konk.fs.FS_BASE_URI + 'splits/' + jobId + '/' + splitId + '/';
+            }
+        },
+
+        /*
             interaction with other worker nodes via browsersockets */
         p2p: {
             fetchIntermediateData: function(jobId, partitionId, splitId, location) {
@@ -603,58 +656,6 @@ var konk = (function() {
         },
 
         /*
-            interaction with the file system */
-        fs: {
-            FS_BASE_URI: 'http://localhost:8080/fs/',
-
-            writeOutputFile: function(jobId, partitionId) {
-                // connect to fs and upload partition
-                var req = new XMLHttpRequest();  
-                req.open('POST', konk.fs.getPartitionUrl(jobId, partitionId), true);  
-                req.onreadystatechange = function(aEvt) {  
-                    if (req.readyState == 4) {  
-                        if (req.status == 200) {
-                            if (typeof(konk.reduce.tasks[partitionId].onSave) == 'function') {
-                                konk.reduce.tasks[partitionId].onSave();
-                            }
-                        }
-                        else {
-                            konk.log('FAILED: ' + req.status);
-                        }
-                    }  
-                };
-                req.send(konk.reduce.tasks[partitionId].getDataJSON());
-            },
-
-            fetchMapData: function(jobId, splitId) {
-                // connect to fs and retrieve split
-                var req = new XMLHttpRequest();  
-                req.open('GET', konk.fs.getSplitUrl(jobId, splitId), true);  
-                req.onreadystatechange = function(aEvt) {  
-                    if (req.readyState == 4) {  
-                        if (req.status == 200) {
-                            if (typeof(konk.map.tasks[splitId].onData) == 'function') {
-                                konk.map.tasks[splitId].onData(req.responseText);
-                            }
-                        }
-                        else {
-                            konk.log('FAILED: ' + req.status);
-                        }
-                    }  
-                };
-                req.send(null);  
-            },
-            getPartitionUrl: function(jobId, partitionId) {
-                konk.log(konk.fs.FS_BASE_URI + 'partitions/' + jobId + '/' + partitionId + '/');
-                return konk.fs.FS_BASE_URI + 'partitions/' + jobId + '/' + partitionId + '/';
-            },
-            getSplitUrl: function(jobId, splitId) {
-                konk.log(konk.fs.FS_BASE_URI + 'splits/' + jobId + '/' + splitId + '/');
-                return konk.fs.FS_BASE_URI + 'splits/' + jobId + '/' + splitId + '/';
-            }
-        },
-
-        /*
             browsersocket connection to other konk nodes */
         server: {
             /* the browsersocket for communicating with other worker nodes */
@@ -687,13 +688,13 @@ var konk = (function() {
                                     data: konk.map.tasks[msg.payload.splitId].result[msg.payload.partitionId]
                                 });
                                 this.send(JSON.stringify(m));
-                                this.close();
                                 break;
                             default:
                                 // swallow for now
                         }
                     }
                     konk.log('bs:handler:onmessage: ' + e.data);
+                    this.close();
                 }
                 this.onopen = function(e) { 
                     /*[TODO]*/

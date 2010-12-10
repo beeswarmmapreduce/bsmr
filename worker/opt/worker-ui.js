@@ -13,15 +13,18 @@
 if (typeof(konk) != 'undefined') {
     // override _autostart
     konk._autostart = false;
+    konk.__log_cnt = 0;
 
     // add a visual log
     var oldlog = konk.log;
     konk.log = function(s, level) {
+        ++konk.__log_cnt;
+
         if (!level) {
             level = 'log';
         }
         if (level == 'log') {
-             $('#console').prepend('<p class="' + konk.util.esc(level) + '"><span class="level">' + konk.util.esc(level) + '</span> <span class="msg">' + konk.util.esc(s + '') + '</span></p>');
+             $('#console').prepend('<p id="l' + konk.__log_cnt + '" class="' + konk.util.esc(level) + '"><a href="#l' + (konk.__log_cnt+1) + '">U</a> | <a href="#l' + (konk.__log_cnt-1) + '">D</a> <span class="level">' + konk.util.esc(level) + '</span> <span class="msg">' + konk.util.esc(s + '') + '</span></p>');
         }
         else {
             if (typeof(s) == 'object') {
@@ -38,7 +41,7 @@ if (typeof(konk) != 'undefined') {
                 }
                 s = JSON.stringify(s, null, '  ');
             }
-            $('#console').prepend('<p class="' + konk.util.esc(level) + '"><span class="level">' + konk.util.esc(level) + '</span></p><pre class="msg">' + konk.util.esc(s) + '</pre>');
+            $('#console').prepend('<p id="l' + konk.__log_cnt + '" class="' + konk.util.esc(level) + '"><a href="#l' + (konk.__log_cnt+1) + '">U</a> | <a href="#l' + (konk.__log_cnt-1) + '">D</a> <span class="level">' + konk.util.esc(level) + '</span></p><pre class="msg">' + konk.util.esc(s) + '</pre>');
         }
         oldlog(s, level);
     }

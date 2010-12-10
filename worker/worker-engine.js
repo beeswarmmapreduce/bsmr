@@ -15,7 +15,7 @@ var engine = (function() {
 
             reset: function(job) {
                 engine.map.job = job;
-                engine.map.result = {};
+                engine.map.result = [];
             },
 
             hash: function(k) {

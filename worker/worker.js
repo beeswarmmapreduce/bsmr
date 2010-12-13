@@ -625,32 +625,39 @@ var konk = (function() {
                 konk.log('p2p.fetchIntermediateData() :' + partitionId + ',' + splitId + ',' + location);
 
                 var msg = null;
-                var ws = new WebSocket(location);
-                ws.onopen = function() {
-                    var m = konk.createMessage(konk.TYPE_P2P, {
-                        action: 'download',
-                        jobId: jobId,
-                        partitionId: partitionId,
-                        splitId: splitId,
-                        location: location
-                    });
-                    this.send(JSON.stringify(m));
+                if (konk.server.isLocal(location)) {
+                    var data = konk.map.tasks[splitId].result[partitionId];
+                    konk.reduce.tasks[partitionId].splits[splitId].onData(data);
                 }
-                ws.onmessage = function(e) {
-                    msg = konk.readMessage(e.data);
-                    konk.log(e.data);
-                }
-                ws.onclose = function() {
-                    if (msg) {
-                        if (msg.payload.action == 'upload') {
-                            if (typeof(konk.reduce.tasks[msg.payload.partitionId].splits[msg.payload.splitId].onData) == 'function') {
-                                konk.reduce.tasks[msg.payload.partitionId].splits[msg.payload.splitId].onData(msg.payload.data);
+                else {
+                    // go over network to get the data
+                    var ws = new WebSocket(location);
+                    ws.onopen = function() {
+                        var m = konk.createMessage(konk.TYPE_P2P, {
+                            action: 'download',
+                            jobId: jobId,
+                            partitionId: partitionId,
+                            splitId: splitId,
+                            location: location
+                        });
+                        this.send(JSON.stringify(m));
+                    }
+                    ws.onmessage = function(e) {
+                        msg = konk.readMessage(e.data);
+                        konk.log(e.data);
+                    }
+                    ws.onclose = function() {
+                        if (msg) {
+                            if (msg.payload.action == 'upload') {
+                                if (typeof(konk.reduce.tasks[msg.payload.partitionId].splits[msg.payload.splitId].onData) == 'function') {
+                                    konk.reduce.tasks[msg.payload.partitionId].splits[msg.payload.splitId].onData(msg.payload.data);
+                                }
                             }
                         }
                     }
-                }
-                ws.onerror = function() {
-                    konk.reduce.tasks[msg.payload.partitionId].splits[msg.payload.splitId].onDataError();
+                    ws.onerror = function() {
+                        konk.reduce.tasks[msg.payload.partitionId].splits[msg.payload.splitId].onDataError();
+                    }
                 }
             }
         },
@@ -712,6 +719,9 @@ var konk = (function() {
             onerror: function(e) {
                 /*[TODO]*/
                 konk.log('bs:error');
+            },
+            isLocal: function(addr) {
+                return (addr.search(konk.server.bs.resourcePrefix) != -1);
             }
         },
 

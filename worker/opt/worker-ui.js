@@ -17,33 +17,35 @@ if (typeof(konk) != 'undefined') {
 
     // add a visual log
     var oldlog = konk.log;
-    konk.log = function(s, level) {
-        ++konk.__log_cnt;
+    konk.log = function(s, type, level) {
+        if (level <= konk._loglevel) {
+            ++konk.__log_cnt;
 
-        if (!level) {
-            level = 'log';
-        }
-        if (level == 'log') {
-             $('#console').prepend('<p id="l' + konk.__log_cnt + '" class="' + konk.util.esc(level) + '"><a href="#l' + (konk.__log_cnt+1) + '">U</a> | <a href="#l' + (konk.__log_cnt-1) + '">D</a> <span class="level">' + konk.util.esc(level) + '</span> <span class="msg">' + konk.util.esc(s + '') + '</span></p>');
-        }
-        else {
-            if (typeof(s) == 'object') {
-                if (level == 'w' && s.type == 'HB') {
-                    level = 'h';
-                }
-                if (level == 'm' && s.type == 'CTL') {
-                    level = 'c';
-                }
-                if (typeof(s.payload) != 'undefined') {
-                    if (typeof(s.payload.data) != 'undefined') {
-                        //s.payload.data = '[data]';
-                    }
-                }
-                s = JSON.stringify(s, null, '  ');
+            if (!type) {
+                type = 'log';
             }
-            $('#console').prepend('<p id="l' + konk.__log_cnt + '" class="' + konk.util.esc(level) + '"><a href="#l' + (konk.__log_cnt+1) + '">U</a> | <a href="#l' + (konk.__log_cnt-1) + '">D</a> <span class="level">' + konk.util.esc(level) + '</span></p><pre class="msg">' + konk.util.esc(s) + '</pre>');
+            if (type == 'log') {
+                 $('#console').prepend('<p id="l' + konk.__log_cnt + '" class="' + konk.util.esc(type) + '"><a href="#l' + (konk.__log_cnt+1) + '">U</a> | <a href="#l' + (konk.__log_cnt-1) + '">D</a> <span class="type">' + konk.util.esc(type) + '</span> <span class="msg">' + konk.util.esc(s + '') + '</span></p>');
+            }
+            else {
+                if (typeof(s) == 'object') {
+                    if (type == 'w' && s.type == 'HB') {
+                        type = 'h';
+                    }
+                    if (type == 'm' && s.type == 'CTL') {
+                        type = 'c';
+                    }
+                    if (typeof(s.payload) != 'undefined') {
+                        if (typeof(s.payload.data) != 'undefined') {
+                            //s.payload.data = '[data]';
+                        }
+                    }
+                    s = JSON.stringify(s, null, '  ');
+                }
+                $('#console').prepend('<p id="l' + konk.__log_cnt + '" class="' + konk.util.esc(type) + '"><a href="#l' + (konk.__log_cnt+1) + '">U</a> | <a href="#l' + (konk.__log_cnt-1) + '">D</a> <span class="type">' + konk.util.esc(type) + '</span></p><pre class="msg">' + konk.util.esc(s) + '</pre>');
+            }
+            oldlog(s, type, level);
         }
-        oldlog(s, level);
     }
     konk.info = function() {
         $('#info').html('<p>MASTER: ' + konk.MASTER_WS_URL + '</p>');
@@ -99,6 +101,10 @@ konkui = (function() {
                     mode: parseInt(m)
                 });
                 konk.worker.sendMessage(m);
+            },
+
+            setLogLevel: function(l) {
+                konk._loglevel = l;
             }
         }
     }

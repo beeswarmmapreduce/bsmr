@@ -37,7 +37,7 @@ h1 {
     #legend p {
         margin: 0.5em;
         }
-    #legend .level {
+    #legend .type {
         float: none !important;
         }
 #modeForm {
@@ -68,40 +68,40 @@ h1 {
         padding-left: 3.5em;
         background: #eee;
         }
-        .level {
+        .type {
             font-family: verdana, sans-serif;
             padding: 0 8px;
             }
         .we,
-        .w .level {
+        .w .type {
             float: left;
             background: #00a;
             color: #fff;
             }
-        .h .level {
+        .h .type {
             float: left;
             background: #a00;
             color: #fff;
             }
-        .l .level {
+        .l .type {
             background: #ff9;
             }
-        .m .level {
+        .m .type {
             float: right;
             background: #090;
             color: #fff;
             }
-        .e .level {
+        .e .type {
             float: right;
             background: #666;
             color: #fff;
             }
-        .c .level {
+        .c .type {
             float: right;
             background: #666;
             color: #fff;
             }
-        .log .level {
+        .log .type {
             background: #ff9;
             }
 

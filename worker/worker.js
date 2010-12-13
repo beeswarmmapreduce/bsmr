@@ -23,6 +23,11 @@ var konk = (function() {
     var STATUS_MAPPING  = 3;
     var STATUS_REDUCING = 4;
 
+    /* log levels */
+    var LOG_INFO  = 1;
+    var LOG_ERROR  = 2;
+    var LOG_DEBUG = 3;
+
     /* modes (FIXME: duplication...) */
     var MODE_NOR = 1; // normal mode
     var MODE_IVE = 3; // user-interactive mode
@@ -34,11 +39,11 @@ var konk = (function() {
         this.result = null;
     }
     MapTask.prototype.start = function() {
-        konk.log('MapTask start() :' + this.splitId);
+        konk.log('MapTask start() :' + this.splitId, 'log', LOG_INFO);
         konk.fs.fetchMapData(this.job.jobId, this.splitId);
     }
     MapTask.prototype.onData = function(data) {
-        konk.log('MapTask onData() :' + this.splitId);
+        konk.log('MapTask onData() :' + this.splitId, 'log', LOG_DEBUG);
         var m = konk.createMessage(konk.TYPE_DO, {
             action: "map",
             job: this.job,
@@ -49,7 +54,7 @@ var konk = (function() {
         konk.engine.sendMessage(m);
     }
     MapTask.prototype.done = function(result) {
-        konk.log('MapTask done() :' + this.splitId);
+        konk.log('MapTask done() :' + this.splitId, 'log', LOG_INFO);
         this.result = result;
         konk.map.notifyTaskDone(this)
     }
@@ -76,7 +81,7 @@ var konk = (function() {
         }
     }
     ReduceTask.prototype.start = function() {
-        konk.log('ReduceTask start() :' + this.partitionId);
+        konk.log('ReduceTask start() :' + this.partitionId, 'log', LOG_INFO);
         this.doSplit();
     }
     ReduceTask.prototype.getNextSplitId = function() {
@@ -104,11 +109,11 @@ var konk = (function() {
         konk.reduce.nextSplit(this, this.getNextSplitId());
     }
     ReduceTask.prototype.onSave = function(res) {
-        konk.log("reduceTask onSave() :" + res);
+        konk.log("reduceTask onSave() :" + res, 'log', LOG_DEBUG);
         this.done();
     }
     ReduceTask.prototype.done = function() {
-        konk.log('ReduceTask done() :' + this.partitionId);
+        konk.log('ReduceTask done() :' + this.partitionId, 'log', LOG_INFO);
         konk.reduce.notifyTaskDone(this)
     }
     ReduceTask.prototype.getDataJSON = function() {
@@ -137,18 +142,18 @@ var konk = (function() {
         this.result = null;
     }
     ReduceSplit.prototype.start = function() {
-        konk.log('ReduceSplit start() :' + this.partitionId + ',' + this.splitId);
+        konk.log('ReduceSplit start() :' + this.partitionId + ',' + this.splitId, 'log', LOG_INFO);
         this.fetch();
     }
     ReduceSplit.prototype.fetch = function() {
-        konk.log('ReduceSplit fetch() :' + this.partitionId + ',' + this.splitId + ',' + this.locationPtr);
+        konk.log('ReduceSplit fetch() :' + this.partitionId + ',' + this.splitId + ',' + this.locationPtr, 'log', LOG_DEBUG);
         this.locationPtr++;
         if (this.locationPtr < this.locations.length) {
             konk.p2p.fetchIntermediateData(this.job.jobId, this.partitionId, this.splitId, this.locations[this.locationPtr]);
         }
     }
     ReduceSplit.prototype.onData = function(data) {
-        konk.log('reduceSplit onData() :' + this.partitionId + ',' + this.splitId);
+        konk.log('reduceSplit onData() :' + this.partitionId + ',' + this.splitId, 'log', LOG_DEBUG);
         var m = konk.createMessage(konk.TYPE_ENG, {
             action: 'reduce',
             jobId: this.job.jobId,
@@ -160,12 +165,12 @@ var konk = (function() {
         konk.engine.sendMessage(m);
     }
     ReduceSplit.prototype.onDataError = function(location) {
-        konk.log('ReduceSplit onDataError() :' + this.partitionId + ',' + this.splitId);
+        konk.log('ReduceSplit onDataError() :' + this.partitionId + ',' + this.splitId, 'log', LOG_ERROR);
         konk.p2p.unreachable.push(location);
         this.fetch();
     }
     ReduceSplit.prototype.done = function(result) {
-        konk.log('ReduceSplit done() :' + this.partitionId + ',' + this.splitId);
+        konk.log('ReduceSplit done() :' + this.partitionId + ',' + this.splitId, 'log', LOG_INFO);
         this.result = result;
         this._done = true;
         konk.reduce.notifySplitDone(this);
@@ -183,6 +188,11 @@ var konk = (function() {
     return {
         DEBUG: DEBUG,
         MASTER_WS_URL: MASTER_WS_URL,
+
+        /* log levels (FIXME: duplication...) */
+        LOG_INFO:  LOG_INFO,
+        LOG_ERROR: LOG_ERROR,
+        LOG_DEBUG: LOG_DEBUG,
 
         /* modes (FIXME: duplication...) */
         MODE_NOR: MODE_NOR,
@@ -208,6 +218,9 @@ var konk = (function() {
         ReduceSplit: ReduceSplit,
         ReduceSplitFactory: ReduceSplitFactory,
 
+        /* current log level */
+        _loglevel: LOG_ERROR,
+
         /* whether to inmmediately start work */
         _autostart: true,
 
@@ -224,7 +237,7 @@ var konk = (function() {
 
         init: function() {
             if (!konk._autostart) {
-                konk.log('No autoload. aborting init.');
+                konk.log('No autoload. aborting init.', 'log', LOG_INFO);
                 konk._autostart = true;
                 return;
             }
@@ -306,7 +319,7 @@ var konk = (function() {
             konk.active.task = null;
             konk.active.tid = null;
 
-            konk.log('In idle state');
+            konk.log('In idle state', 'log', LOG_INFO);
         },
         stop: function() {
             konk.master.stop();
@@ -343,15 +356,15 @@ var konk = (function() {
                         default:    
                             // swallow for now
                     }
-                    konk.log(msg.data, 'e');
+                    konk.log(msg.data, 'e', LOG_DEBUG);
                 }
                 else if (msg.data.type == konk.TYPE_LOG) {
-                    konk.log(msg.data.payload.message, 'log');
+                    konk.log(msg.data.payload.message, 'log', LOG_DEBUG);
                 }
             },
             sendMessage: function(msg) {
                 konk.engine.thread.postMessage(msg);
-                konk.log(msg, 'we');
+                konk.log(msg, 'we', LOG_DEBUG);
             }
         },
 
@@ -426,7 +439,7 @@ var konk = (function() {
                 else if (msg.type == konk.TYPE_FS) {
                     konk.fs.exec(msg.payload);
                 }
-                konk.log(msg, 'm');
+                konk.log(msg, 'm', LOG_DEBUG);
             },
             onopen: function(e) { 
                 if (!konk._autostart) {
@@ -438,19 +451,19 @@ var konk = (function() {
             },
             onclose: function(e) {
                 /* FIXME: why does this cause an error? */
-                konk.log('ws:close');
+                konk.log('ws:close', 'log', LOG_DEBUG);
                 konk.stop();   
             },
             onerror: function(e) {
                 /*[TODO]*/
-                konk.log('ws:error');
+                konk.log('ws:error', 'log', LOG_ERROR);
             },
             sendMessage: function(msg) {
                 konk.master.sendMessageExec(msg, false);
             },
             sendMessageExec: function(msg, _no_reset_hb) {
                 konk.master.ws.send(JSON.stringify(msg));
-                konk.log(msg, 'w');
+                konk.log(msg, 'w', 'log', LOG_DEBUG);
                 if (!_no_reset_hb) {
                     konk.heartbeat.reset();
                 }
@@ -468,7 +481,7 @@ var konk = (function() {
             start: function() {
                 clearInterval(konk.heartbeat.tid);
                 konk.heartbeat.tid = setInterval(konk.heartbeat.heartbeat, konk.heartbeat.HB_INTERVAL_MS);
-                konk.log('Heartbeat started');
+                konk.log('Heartbeat started', 'log', LOG_INFO);
             },
             heartbeat: function() {
                 var m = konk.createMessage(konk.TYPE_HB, {
@@ -483,7 +496,7 @@ var konk = (function() {
             },
             stop: function() {
                 clearInterval(konk.heartbeat.tid);
-                konk.log('Heartbeat stopped');
+                konk.log('Heartbeat stopped', 'log', LOG_INFO);
             }
         },
 
@@ -581,7 +594,8 @@ var konk = (function() {
                             }
                         }
                         else {
-                            konk.log('FAILED: ' + req.status);
+                            /*[FIXME: beter error handling?]*/
+                            konk.log('fs writeOutputFile() failed: ' + req.status, 'log', LOG_ERROR);
                         }
                     }  
                 };
@@ -601,18 +615,19 @@ var konk = (function() {
                             }
                         }
                         else {
-                            konk.log('FAILED: ' + req.status);
+                            /*[FIXME: beter error handling?]*/
+                            konk.log('fs fetchMapData() failed: ' + req.status, 'log', LOG_ERROR);
                         }
                     }  
                 };
                 req.send(null);  
             },
             getPartitionUrl: function(jobId, partitionId) {
-                konk.log(konk.fs.FS_BASE_URI + 'partitions/' + jobId + '/' + partitionId + '/');
+                konk.log(konk.fs.FS_BASE_URI + 'partitions/' + jobId + '/' + partitionId + '/', 'log', LOG_DEBUG);
                 return konk.fs.FS_BASE_URI + 'partitions/' + jobId + '/' + partitionId + '/';
             },
             getSplitUrl: function(jobId, splitId) {
-                konk.log(konk.fs.FS_BASE_URI + 'splits/' + jobId + '/' + splitId + '/');
+                konk.log(konk.fs.FS_BASE_URI + 'splits/' + jobId + '/' + splitId + '/', 'log', LOG_DEBUG);
                 return konk.fs.FS_BASE_URI + 'splits/' + jobId + '/' + splitId + '/';
             }
         },
@@ -623,7 +638,7 @@ var konk = (function() {
             unreachable: [],
 
             fetchIntermediateData: function(jobId, partitionId, splitId, location) {
-                konk.log('p2p.fetchIntermediateData() :' + partitionId + ',' + splitId + ',' + location);
+                konk.log('p2p.fetchIntermediateData() :' + partitionId + ',' + splitId + ',' + location, 'log', LOG_DEBUG);
 
                 var msg = null;
                 if (konk.server.isLocal(location)) {
@@ -645,7 +660,7 @@ var konk = (function() {
                     }
                     ws.onmessage = function(e) {
                         msg = konk.readMessage(e.data);
-                        konk.log(e.data);
+                        konk.log(e.data, 'log', LOG_DEBUG);
                     }
                     ws.onclose = function() {
                         if (msg) {
@@ -701,25 +716,25 @@ var konk = (function() {
                                 // swallow for now
                         }
                     }
-                    konk.log('bs:handler:onmessage: ' + e.data);
+                    konk.log('bs:handler:onmessage: ' + e.data, 'log', LOG_DEBUG);
                     this.close();
                 }
                 this.onopen = function(e) { 
                     /*[TODO]*/
-                    konk.log('bs:handler:open');
+                    konk.log('bs:handler:open', 'log', LOG_DEBUG);
                 }
                 this.onclose = function(e) {
                     /*[TODO]*/
-                    konk.log('bs:handler:close');
+                    konk.log('bs:handler:close', 'log', LOG_DEBUG);
                 }
                 this.onerror = function(e) {
                     /*[TODO]*/
-                    konk.log('bs:handler:error');
+                    konk.log('bs:handler:error', 'log', LOG_ERROR);
                 }
             },
             onerror: function(e) {
                 /*[TODO]*/
-                konk.log('bs:error');
+                konk.log('bs:error', 'log', LOG_ERROR);
             },
             isLocal: function(addr) {
                 return (addr.search(konk.server.bs.resourcePrefix) != -1);
@@ -744,7 +759,7 @@ var konk = (function() {
         },
         setStatus: function(status, msg) {
             if (msg) {
-                konk.log(msg);
+                konk.log(msg, 'log', LOG_INFO);
             }
             konk.status = status;
         },
@@ -755,10 +770,12 @@ var konk = (function() {
                         .replace(/>/g, '&gt;');
             }
         },
-        log: function(s, level) {
+        log: function(s, type, level) {
             if (konk.DEBUG) {
-                if (typeof(console) != 'undefined' && typeof(console.log) == 'function') {
-                    console.log(s);
+                if (level <= konk._loglevel) {
+                    if (typeof(console) != 'undefined' && typeof(console.log) == 'function') {
+                        console.log(s);
+                    }
                 }
             }
         }
@@ -766,6 +783,8 @@ var konk = (function() {
 })();
 window.addEventListener('load', konk.init, false);
 
+/*[TODO: scrap] */
+/*
 function _gP(o) {
     var s = '[';
     for (var p in o) {
@@ -773,4 +792,4 @@ function _gP(o) {
     }
     return (s + ']');
 }
-
+*/

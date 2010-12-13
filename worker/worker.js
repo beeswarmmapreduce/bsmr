@@ -159,8 +159,9 @@ var konk = (function() {
         });
         konk.engine.sendMessage(m);
     }
-    ReduceSplit.prototype.onDataError = function() {
+    ReduceSplit.prototype.onDataError = function(location) {
         konk.log('ReduceSplit onDataError() :' + this.partitionId + ',' + this.splitId);
+        konk.p2p.unreachable.push(location);
         this.fetch();
     }
     ReduceSplit.prototype.done = function(result) {
@@ -540,8 +541,7 @@ var konk = (function() {
                         partitionId: t.partitionId,
                         splitId: splitId
                     },
-                    unreachable: [
-                    ],
+                    unreachable: konk.p2p.unreachable,
                     jobId:t.job.jobId});
                 konk.master.sendMessage(m);
             },
@@ -557,8 +557,7 @@ var konk = (function() {
                     reduceStatus: {
                         partitionId: t.partitionId
                     },
-                    unreachable: [
-                    ],
+                    unreachable: konk.p2p.unreachable,
                     jobId: t.job.jobId
                 });
                 konk.master.sendMessage(m);
@@ -621,6 +620,8 @@ var konk = (function() {
         /*
             interaction with other worker nodes via browsersockets */
         p2p: {
+            unreachable: [],
+
             fetchIntermediateData: function(jobId, partitionId, splitId, location) {
                 konk.log('p2p.fetchIntermediateData() :' + partitionId + ',' + splitId + ',' + location);
 
@@ -656,7 +657,7 @@ var konk = (function() {
                         }
                     }
                     ws.onerror = function() {
-                        konk.reduce.tasks[msg.payload.partitionId].splits[msg.payload.splitId].onDataError();
+                        konk.reduce.tasks[msg.payload.partitionId].splits[msg.payload.splitId].onDataError(location);
                     }
                 }
             }

@@ -105,6 +105,10 @@ konkui = (function() {
 
             setLogLevel: function(l) {
                 konk._loglevel = l;
+            },
+
+            setReduceMode: function(m) {
+                konk._reducemode = m;
             }
         }
     }

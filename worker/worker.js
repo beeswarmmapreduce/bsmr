@@ -28,7 +28,11 @@ var konk = (function() {
     var LOG_ERROR  = 2;
     var LOG_DEBUG = 3;
 
-    /* modes (FIXME: duplication...) */
+    /* reduce task split modes */
+    var REDUCE_MODE_LOCAL_PRIORITY = 1;
+    var REDUCE_MODE_REMOTE_PRIORITY = 2;
+
+    /* modes (FIXME: duplication...) FIXME: remove */
     var MODE_NOR = 1; // normal mode
     var MODE_IVE = 3; // user-interactive mode
 
@@ -69,7 +73,9 @@ var konk = (function() {
     /* ReduceTask class */
     function ReduceTask(job, partitionId) {
         this.splits = [];
-        this._i = -1;
+        this._mode = konk._reducemode;
+        this._looped = false;
+        this._ptr = -1;
 
         this.job = job;
         this.partitionId = partitionId;
@@ -85,10 +91,40 @@ var konk = (function() {
         this.doSplit();
     }
     ReduceTask.prototype.getNextSplitId = function() {
-        //[TODO: make this non-linear / random]
-        if (this._i < this.job.M) {
-            this._i += 1;
-            return this._i;
+        ++this._ptr;
+        for (var i=this._ptr; i<this.splits.length; i++) {
+            if (this.splits[i]) {
+                if (!this.splits[i].isDone()) {
+                    if (this._mode == REDUCE_MODE_LOCAL_PRIORITY) {
+                        if (konk.reduce.isLocalSplit(this.partitionId, i)) {
+                            return i;
+                        }
+                    }
+                    else {
+                        if (!konk.reduce.isLocalSplit(this.partitionId, i)) {
+                            return i;
+                        }
+                    }
+                }
+            }
+        }
+        if (this._ptr < this.splits.length) {
+            return this._ptr;
+        }
+        else {
+            // go around again with in the other mode
+            if (!this._looped) {
+                this._ptr = -1;
+                this._looped = true;
+
+                if (this._mode == REDUCE_MODE_LOCAL_PRIORITY) {
+                    this._mode = REDUCE_MODE_REMOTE_PRIORITY;
+                }
+                else {
+                    this._mode = REDUCE_MODE_LOCAL_PRIORITY;
+                }
+                return this.getNextSplitId();
+            }
         }
         return null;
     }
@@ -106,7 +142,16 @@ var konk = (function() {
             konk.fs.writeOutputFile(this.job.jobId, this.partitionId);
             return;
         }
-        konk.reduce.nextSplit(this, this.getNextSplitId());
+        var splitId = this.getNextSplitId();
+        konk.log('got next splitId: ' + splitId + '|', 'log', LOG_DEBUG);
+        if (splitId !== null) {
+            if (konk.reduce.isLocalSplit(this.partitionId, splitId)) {
+                konk.reduce.startLocalSplit(this, splitId);
+            }
+            else {
+                konk.reduce.nextSplit(this, splitId);
+            }
+        }
     }
     ReduceTask.prototype.onSave = function(res) {
         konk.log("reduceTask onSave() :" + res, 'log', LOG_DEBUG);
@@ -140,6 +185,10 @@ var konk = (function() {
         this.locationPtr = -1;
 
         this.result = null;
+    }
+    ReduceSplit.prototype.startLocal = function(data) {
+        konk.log('ReduceSplit startLocal() :' + this.partitionId + ',' + this.splitId, 'log', LOG_INFO);
+        this.onData(data);
     }
     ReduceSplit.prototype.start = function() {
         konk.log('ReduceSplit start() :' + this.partitionId + ',' + this.splitId, 'log', LOG_INFO);
@@ -194,6 +243,10 @@ var konk = (function() {
         LOG_ERROR: LOG_ERROR,
         LOG_DEBUG: LOG_DEBUG,
 
+        /* reduce task split modes */
+        REDUCE_MODE_LOCAL_PRIORITY: REDUCE_MODE_LOCAL_PRIORITY,
+        REDUCE_MODE_REMOTE_PRIORITY: REDUCE_MODE_REMOTE_PRIORITY,
+
         /* modes (FIXME: duplication...) */
         MODE_NOR: MODE_NOR,
         MODE_IVE: MODE_IVE,
@@ -217,6 +270,9 @@ var konk = (function() {
 
         ReduceSplit: ReduceSplit,
         ReduceSplitFactory: ReduceSplitFactory,
+
+        /* reduce task split mode */
+        _reducemode: REDUCE_MODE_LOCAL_PRIORITY,
 
         /* current log level */
         _loglevel: LOG_ERROR,
@@ -539,6 +595,14 @@ var konk = (function() {
                 konk.active.task = t;
                 konk.active.status = 'reduceTask';
             },
+            startLocalSplit: function(reduceTask, splitId) {
+                var t = konk.ReduceSplitFactory.createInstance(reduceTask.job, reduceTask.partitionId, splitId, null);
+                konk.reduce.tasks[t.partitionId].splits[t.splitId] = t;
+                konk.reduce.tasks[t.partitionId].splits[t.splitId].startLocal(konk.reduce.getLocalSplit(t.partitionId, t.splitId));
+                konk.active.jobId = t.job.jobId;
+                konk.active.task = t;
+                konk.active.status = 'reduceTask';
+            },
             startSplit: function(spec) {
                 var t = konk.ReduceSplitFactory.createInstance(spec.job, spec.reduceStatus.partitionId, spec.reduceStatus.splitId, spec.reduceStatus.locations);
                 konk.reduce.tasks[t.partitionId].splits[t.splitId] = t;
@@ -558,9 +622,6 @@ var konk = (function() {
                     jobId:t.job.jobId});
                 konk.master.sendMessage(m);
             },
-            startUploaded: function(spec) {
-                //[TODO: also pos. rename]
-            },
             notifySplitDone: function(t) {
                 konk.reduce.tasks[t.partitionId].doSplit();
             },
@@ -574,6 +635,23 @@ var konk = (function() {
                     jobId: t.job.jobId
                 });
                 konk.master.sendMessage(m);
+            },
+            isLocalSplit: function(partitionId, splitId) {
+                if (konk.map.tasks[splitId] &&
+                    konk.map.tasks[splitId].result &&
+                    konk.map.tasks[splitId].result[partitionId]) {
+
+                    // if local map task results for this split exists return true
+                    return true;
+                }
+                return false;
+            },
+            getLocalSplit: function(partitionId, splitId) {
+                if (konk.reduce.isLocalSplit(partitionId, splitId)) {
+                    // if local map task results for this split exists return it
+                    return konk.map.tasks[splitId].result[partitionId];
+                }
+                return null;
             }
         },
 

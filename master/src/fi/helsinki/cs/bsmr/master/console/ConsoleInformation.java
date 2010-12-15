@@ -71,7 +71,7 @@ public class ConsoleInformation
 			} else {
 				workerInfo.put("status", "idle");
 			}
-			workerInfo.put("connecTime", timeToJson(w.getConnectTime()));
+			workerInfo.put("connectTime", timeToJson(w.getConnectTime()));
 			workerInfo.put("url", w.getSocketURL());
 			
 			workers.put(w.hashCode(), workerInfo);

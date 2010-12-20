@@ -24,6 +24,7 @@ function p2pPlugin(params, onData, onError) {
             msg = worker.readMessage(e.data);
         }
         ws.onclose = function() {
+            worker.log('p2p:close: ' + partitionId + ', ' + splitId + ', ' + location, 'log', LOG_ERROR);
             if (msg) {
                 if (msg.payload.action == 'upload') {
                     onData(msg.payload.jobId, msg.payload.partitionId, msg.payload.splitId, msg.payload.data);
@@ -31,6 +32,7 @@ function p2pPlugin(params, onData, onError) {
             }
         }
         ws.onerror = function() {
+            worker.log('p2p:error: ' + partitionId + ', ' + splitId + ', ' + location, 'log', LOG_ERROR);
             onDataError(msg.payload.jobId, msg.payload.partitionId, msg.payload.splitId, location);
         }
     }

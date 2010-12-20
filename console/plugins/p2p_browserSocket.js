@@ -9,8 +9,8 @@ function p2pPlugin(params, onData, onError) {
 
         // go over network to get the data
         worker.log('p2p:open: ' + partitionId + ', ' + splitId + ', ' + location, 'log', LOG_ERROR);
-        var ws = new WebSocket(location);
-        ws.onopen = function() {
+        worker.p2p.ws = new WebSocket(location);
+        worker.p2p.ws.onopen = function() {
             var m = worker.createMessage(worker.TYPE_P2P, {
                 action: 'download',
                 jobId: jobId,
@@ -20,20 +20,23 @@ function p2pPlugin(params, onData, onError) {
             });
             this.send(JSON.stringify(m));
         }
-        ws.onmessage = function(e) {
+        worker.p2p.ws.onmessage = function(e) {
             msg = worker.readMessage(e.data);
-        }
-        ws.onclose = function() {
-            worker.log('p2p:close: ' + partitionId + ', ' + splitId + ', ' + location, 'log', LOG_ERROR);
             if (msg) {
                 if (msg.payload.action == 'upload') {
                     onData(msg.payload.jobId, msg.payload.partitionId, msg.payload.splitId, msg.payload.data);
                 }
             }
         }
-        ws.onerror = function() {
+        worker.p2p.ws.onclose = function() {
+            worker.log('p2p:close: ' + partitionId + ', ' + splitId + ', ' + location, 'log', LOG_ERROR);
+            if (!msg) {
+                onError(msg.payload.jobId, msg.payload.partitionId, msg.payload.splitId, location);
+            }
+        }
+        worker.p2p.ws.onerror = function() {
             worker.log('p2p:error: ' + partitionId + ', ' + splitId + ', ' + location, 'log', LOG_ERROR);
-            onDataError(msg.payload.jobId, msg.payload.partitionId, msg.payload.splitId, location);
+            onError(msg.payload.jobId, msg.payload.partitionId, msg.payload.splitId, location);
         }
     }
 }

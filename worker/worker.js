@@ -12,6 +12,8 @@ var worker = (function() {
     /* the websocket url of the master to which this worker should use */
     var MASTER_WS_URL = 'ws://127.0.0.1:8080/bsmr/';
 
+    var DEFAULT_REDUCESPLIT_RETRIES = 3;
+
     /* debug mode on/off */
     var DEBUG = true;
 
@@ -77,14 +79,6 @@ var worker = (function() {
     /* MapTask class */
     function MapTask(jobSpec, splitId) {
         this.job = new Job(jobSpec);
-        //[FIXME: temp hack]
-        //this.job.ioCode.input = new FsInputPlugin({ baseUrl: worker.fs.FS_BASE_URI });
-        /*
-        this.job.jobCode = "function map(k, data, emit) { var ws = data.split(/\\b/); for (var w in ws) { emit(ws[w], 1); } }; " +
-                           "function reduce(k, vs, emit) { var tot = 0; for (var v in vs) { tot += vs[v]; } emit(tot); }";
-        */
-        //[FIXME: temp hack]
-
         this.splitId = splitId;
         this.result = null;
         this.completed = false;
@@ -223,7 +217,7 @@ var worker = (function() {
     }
 
     /* ReduceSplit class */
-    function ReduceSplit(job, partitionId, splitId, locations) {
+    function ReduceSplit(job, partitionId, splitId, locations, retries) {
         if (job instanceof Job) {
             this.job = job;
         }
@@ -236,6 +230,7 @@ var worker = (function() {
         this.locations = locations;
         this._done = false;
         this.locationPtr = -1;
+        this.retries = retries;
 
         this.result = null;
     }
@@ -291,8 +286,8 @@ var worker = (function() {
 
     ReduceSplitFactory = function() {}
     /* NOTE: this is a kind of 'static' function */
-    ReduceSplitFactory.createInstance = function(job, partitionId, splitId, locations) {
-        return new worker.ReduceSplit(job, partitionId, splitId, locations);
+    ReduceSplitFactory.createInstance = function(job, partitionId, splitId, locations, retries) {
+        return new worker.ReduceSplit(job, partitionId, splitId, locations, retries);
     }
 
     /*
@@ -399,14 +394,12 @@ var worker = (function() {
                 );
                 return;
             }
-            /*
             if (("BrowserSocket" in window) == false) {
                 worker.setStatus(
-                    STATUS_INFO,
+                    STATUS_ERROR,
                     'Your browser does not seem to support browsersockets. Aborting server.'
                 );
             }
-            */
 
             // create a engine thread
             try {
@@ -438,7 +431,7 @@ var worker = (function() {
             }
             catch (ex) {
                 worker.setStatus(
-                    STATUS_INFO,
+                    STATUS_ERROR,
                     'Could not open browsersocket: ' + ex
                 );
             }
@@ -652,7 +645,7 @@ var worker = (function() {
             tasks: [],
 
             onData: function(jobId, splitId, data) {
-                worker.log('map.onData: ' + jobId + ', ' + splitId, 'log', LOG_DEBUG);
+                worker.log('map.onData: ' + jobId + ', ' + splitId, 'log', LOG_ERROR);
                 worker.log('map.onData: ' + data, 'log', LOG_DEBUG);
                 if (typeof(worker.map.tasks[splitId].onData) == 'function') {
                     worker.map.tasks[splitId].onData(data);
@@ -664,7 +657,7 @@ var worker = (function() {
             },
             startTask: function(spec) {
                 /*[FIXME: check for job/split safety]*/
-                var t = worker.MapTaskFactory.createInstance(spec.job, spec.mapStatus.splitId, 'FIXME_DATASRC');
+                var t = worker.MapTaskFactory.createInstance(spec.job, spec.mapStatus.splitId);
                 worker.map.tasks[t.splitId] = t;
                 worker.map.tasks[t.splitId].start();
                 worker.active.jobId = t.job.jobId;
@@ -698,7 +691,7 @@ var worker = (function() {
                 worker.active.status = 'reduceTask';
             },
             startLocalSplit: function(reduceTask, splitId) {
-                var t = worker.ReduceSplitFactory.createInstance(reduceTask.job, reduceTask.partitionId, splitId, null);
+                var t = worker.ReduceSplitFactory.createInstance(reduceTask.job, reduceTask.partitionId, splitId, null, 0);
                 worker.reduce.tasks[t.partitionId].splits[t.splitId] = t;
                 worker.reduce.tasks[t.partitionId].splits[t.splitId].startLocal(worker.reduce.getLocalSplit(t.partitionId, t.splitId));
                 worker.active.jobId = t.job.jobId;
@@ -706,7 +699,7 @@ var worker = (function() {
                 worker.active.status = 'reduceTask';
             },
             startSplit: function(spec) {
-                var t = worker.ReduceSplitFactory.createInstance(spec.job, spec.reduceStatus.partitionId, spec.reduceStatus.splitId, spec.reduceStatus.locations);
+                var t = worker.ReduceSplitFactory.createInstance(spec.job, spec.reduceStatus.partitionId, spec.reduceStatus.splitId, spec.reduceStatus.locations, DEFAULT_REDUCESPLIT_RETRIES);
                 worker.reduce.tasks[t.partitionId].splits[t.splitId] = t;
                 worker.reduce.tasks[t.partitionId].splits[t.splitId].start();
                 worker.active.jobId = t.job.jobId;

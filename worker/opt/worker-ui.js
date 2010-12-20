@@ -12,7 +12,7 @@
 
 if (typeof(worker) != 'undefined') {
     // override _autostart
-    worker._autostart = false;
+    worker._autostart = true;
     worker.__log_cnt = 0;
 
     // add a visual log

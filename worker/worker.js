@@ -376,7 +376,6 @@ var worker = (function() {
         init: function() {
             if (!worker._autostart) {
                 worker.log('No autoload. aborting init.', 'log', LOG_INFO);
-                worker._autostart = true;
                 return;
             }
 
@@ -584,7 +583,7 @@ var worker = (function() {
                 worker.log(msg, 'm', LOG_DEBUG);
             },
             onopen: function(e) { 
-                if (!worker._autostart) {
+                if (worker._autostart) {
                     worker.master.greeting();
                 }
 

@@ -136,6 +136,9 @@ table {
     .visual td.empty { background: #ddd; }
     .visual td.queued { background: #ff9; }
     .visual td.done { background: #0a0; }
+    .visual td.done-available { background: #0a0; }
+    .visual td.done-unavailable { background: #afa; }
+    .visual td.done-dead { background: #666; }
 
 .job-table .code {
     width: 70%;

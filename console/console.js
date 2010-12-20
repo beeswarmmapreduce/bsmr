@@ -252,30 +252,62 @@ var konk = (function() {
                     if (d.splits) {
                         $('#splits .queued .value').html(konk.util.sizeofObject(d.splits.queued));
                         $('#splits .done .value').html(konk.util.sizeofObject(d.splits.done));
-                        for (var i in d.splits.queued) {
-                            $('#split' + i).attr('class', 'queued');
+                        if (d.splits.queued) {
+                            for (var i in d.splits.queued) {
+                                $('#split' + i).attr('class', 'queued');
+                            }
                         }
-                        for (var i in d.splits.done) {
-                            $('#split' + i).attr('class', 'done');
+                        if (d.splits.done) {
+                            for (var i in d.splits.done) {
+                                var a = 0;
+                                var u = 0;
+                                var x = 0;
+                                for (var w in d.splits.done[i]) {   
+                                    switch(d.workers[d.splits.done[i][w]].status) {
+                                        case 'available':
+                                            a++;
+                                            break;
+                                        case 'unavailable':
+                                            u++;
+                                            break;
+                                        case 'dead':
+                                            x++;
+                                            break;
+                                    }
+                                }
+                                if (a > 0) {
+                                    $('#split' + i).attr('class', 'done-available');
+                                }
+                                else if (u > 0) {
+                                    $('#split' + i).attr('class', 'done-unavailable');
+                                }
+                                else {
+                                    $('#split' + i).attr('class', 'done-dead');
+                                }
+                            }
                         }
                     }
 
                     $('#partitionsVisual td').attr('class', 'empty');
                     if (d.partitions) {
                         $('#partitions .queued .value').html(konk.util.sizeofObject(d.partitions.queued));
-                        var doneTotal = 1;
-                        for (var i in d.partitions.done) {
-                            doneTotal += (d.partitions.done[i][1] - d.partitions.done[i][0]);
+                        if (d.partitions.queued) {
+                            for (var i in d.partitions.queued) {
+                                $('#partition' + i).attr('class', 'queued');
+                            }
                         }
-                        $('#partitions .done .value').html(doneTotal);
+                        if (d.partitions.done) {
+                            var doneTotal = 1;
+                            for (var i in d.partitions.done) {
+                                doneTotal += (d.partitions.done[i][1] - d.partitions.done[i][0]);
+                            }
+                            $('#partitions .done .value').html(doneTotal);
 
-                        for (var i in d.partitions.queued) {
-                            $('#partition' + i).attr('class', 'queued');
-                        }
-                        for (var i in d.partitions.done) {
-                            var pair = d.partitions.done[i];
-                            for (var j=pair[0]; j<=pair[1]; j++) {
-                                $('#partition' + j).attr('class', 'done');
+                            for (var i in d.partitions.done) {
+                                var pair = d.partitions.done[i];
+                                for (var j=pair[0]; j<=pair[1]; j++) {
+                                    $('#partition' + j).attr('class', 'done');
+                                }
                             }
                         }
                     }
@@ -389,7 +421,7 @@ var konk = (function() {
                         });
                         $('#activeJob').append(row);
                     }
-                    if (d.finished) {
+                    if (d && d.finished) {
                         $('#activeJobCount').html(n + ' finished'); 
                     }
                     else {

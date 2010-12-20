@@ -251,7 +251,10 @@ var worker = (function() {
         this.locationPtr++;
         if (this.locationPtr < this.locations.length) {
             if (worker.server.isLocal(location)) {
-                var data = worker.map.tasks[splitId].result[partitionId];
+                var data = {};
+                if (worker.map.tasks[splitId].result[partitionId]) {
+                    data = worker.map.tasks[splitId].result[partitionId];
+                }
                 worker.reduce.tasks[partitionId].splits[splitId].onData(data);
             }
             else {
@@ -397,10 +400,9 @@ var worker = (function() {
             }
             if (("BrowserSocket" in window) == false) {
                 worker.setStatus(
-                    STATUS_ERROR,
-                    'Your browser does not seem to support browsersockets. Aborting.'
+                    STATUS_INFO,
+                    'Your browser does not seem to support browsersockets. Aborting server.'
                 );
-                return;
             }
 
             // create a engine thread
@@ -433,7 +435,7 @@ var worker = (function() {
             }
             catch (ex) {
                 worker.setStatus(
-                    STATUS_ERROR,
+                    STATUS_INFO,
                     'Could not open browsersocket: ' + ex
                 );
             }
@@ -906,13 +908,17 @@ var worker = (function() {
                     if (msg.type == worker.TYPE_P2P) {
                         switch (msg.payload.action) {
                             case 'download':
+                                var data = {};
+                                if (worker.map.tasks[msg.payload.splitId].result[msg.payload.partitionId]) {
+                                    data = worker.map.tasks[msg.payload.splitId].result[msg.payload.partitionId];
+                                }
                                 // send back the partition/split result
                                 var m = worker.createMessage(worker.TYPE_P2P, {
                                     action: 'upload',
                                     jobId: msg.payload.jobId,
                                     partitionId: msg.payload.partitionId,
                                     splitId: msg.payload.splitId,
-                                    data: worker.map.tasks[msg.payload.splitId].result[msg.payload.partitionId]
+                                    data: data
                                 });
                                 this.send(JSON.stringify(m));
                                 break;

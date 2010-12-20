@@ -933,20 +933,20 @@ var worker = (function() {
                                 // swallow for now
                         }
                     }
-                    worker.log('bs:handler:onmessage: ' + e.data, 'log', LOG_DEBUG);
+                    worker.log('bs:handler:onmessage: ' + msg.payload.partitionId + ', ' + msg.payload.splitId + ', ' + e.data, 'log', LOG_ERROR);
                     this.close();
                 }
                 this.onopen = function(e) { 
                     /*[TODO]*/
-                    worker.log('bs:handler:open', 'log', LOG_DEBUG);
+                    worker.log('bs:handler:open', 'log', LOG_ERROR);
                 }
                 this.onclose = function(e) {
                     /*[TODO]*/
-                    worker.log('bs:handler:close', 'log', LOG_DEBUG);
+                    worker.log('bs:handler:close', 'log', LOG_ERROR);
                 }
                 this.onerror = function(e) {
                     /*[TODO]*/
-                    worker.log('bs:handler:error', 'log', LOG_ERROR);
+                    worker.log('bs:handler:error: ' + e.data, 'log', LOG_ERROR);
                 }
             },
             onerror: function(e) {

@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>bsmr console</title>
+        <script type="text/javascript" src="json2.js"></script>
+        <script type="text/javascript" src="console.js"></script>
+        <script type="text/javascript" src="jquery.js"></script>
+        <style type="text/css">
+            @import url(console.css);
+        </style>
+    </head>
+    <body>
+        <h1>
+            BS/MR Console
+        </h1>
+        <div id="control">
+            <label for="master">master</label>
+            <input type="text" id="master" value="ws://localhost:8080/bsmr/" />
+            <input type="button" id="connect" value="connect"/>
+        </div>
+        <div id="dashboard">
+            <h2>Current work</h2>
+
+            <h3>map</h3>
+            <table id="splits">
+                <tr class="queued">
+                    <td class="label">queued</td>
+                    <td class="value">0</td>
+                </tr>
+                <tr class="done">
+                    <td class="label">done</td>
+                    <td class="value">0</td>
+                </tr>
+            </table>
+
+            <h3>reduce</h3>
+            <table id="partitions">
+                <tr class="queued">
+                    <td class="label">queued</td>
+                    <td class="value">0</td>
+                </tr>
+                <tr class="done">
+                    <td class="label">done</td>
+                    <td class="value">0</td>
+                </tr>
+            </table>
+
+            <h2>Workers (<span id="workerCount">0</span>)</h2>
+            <table id="workers">
+                <thead>
+                    <tr>
+                        <th>Status</th>
+                        <th>Url</th>
+                        <th>Connected</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="template">
+                        <td class="status"></td>
+                        <td class="url"></td>
+                        <td class="connectTime"></td>
+                    </tr>
+                </tbody>
+            </table>
+            <h2>Active job (<span id="activeJobCount">0</span>)</h2>
+            <table id="activeJob" class="job-table">
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th>id</th>
+                        <th>R</th>
+                        <th>M</th>
+                        <th>code</th>
+                        <th>start</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="template">
+                        <td class="tools"><a href="#" class="rm">rm</a></td>
+                        <td class="jobId"></td>
+                        <td class="R"></td>
+                        <td class="M"></td>
+                        <td class="code"><pre></pre></td>
+                        <td class="startTime"></td>
+                    </tr>
+                <tbody>
+            </table>
+            <h2>Job queue (<span id="jobQueueCount">0</span>)</h2>
+            <table id="jobQueue" class="job-table">
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th>id</th>
+                        <th>R</th>
+                        <th>M</th>
+                        <th>code</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="template">
+                        <td class="tools"><a href="#" class="rm">rm</a></td>
+                        <td class="jobId"></td>
+                        <td class="R"></td>
+                        <td class="M"></td>
+                        <td class="code"><pre></pre></td>
+                    </tr>
+                <tbody>
+            </table>
+            <h2>Job history (<span id="jobHistoryCount">0</span>)</h2>
+            <table id="jobHistory" class="job-table">
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th>id</th>
+                        <th>R</th>
+                        <th>M</th>
+                        <th>code</th>
+                        <th>start</th>
+                        <th>finish</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="template">
+                        <td class="tools"><a href="#" class="rm">rm</a></td>
+                        <td class="jobId"></td>
+                        <td class="R"></td>
+                        <td class="M"></td>
+                        <td class="code"><pre></pre></td>
+                        <td class="startTime"></td>
+                        <td class="finishTime"></td>
+                    </tr>
+                <tbody>
+            </table>
+        </div>
+
+        <div id="jobInput">
+            <h2>Add job</h2>
+            <form>
+                <p>
+                    <label for="M">Number splits (M)</label>
+                    <input type="text" id="M" name="M"/>
+                </p>
+                <p>
+                    <label for="R">Number partitions (R)</label>
+                    <input type="text" id="R" name="R"/>
+                </p>
+                <p>
+                    <label for="heartbeatTimeout">Heartbeat timeout</label>
+                    <input type="text" id="heartbeatTimeout" name="heartbeatTimeout"/>
+                </p>
+                <p>
+                    <label for="progressTimeout">Progress timeout</label>
+                    <input type="text" id="progressTimeout" name="progressTimeout"/>
+                </p>
+                <p>
+                    <label for="inputPlugin">Input plugin</label>
+                    <select id="inputPlugin">
+                        <option value="null">Please select</option>
+                    </select>
+                    <div id="inputPluginParams"></div>
+                </p>
+                <p>
+                    <label for="p2pPlugin">P2P plugin</label>
+                    <select id="p2pPlugin">
+                        <option value="null">Please select</option>
+                    </select>
+                    <div id="p2pPluginParams"></div>
+                </p>
+                <p>
+                    <label for="outputPlugin">Output plugin</label>
+                    <select id="outputPlugin">
+                        <option value="null">Please select</option>
+                    </select>
+                    <div id="outputPluginParams"></div>
+                </p>
+                <p>
+                    <label for="code" class="textarea">Job code</label>
+                    <textarea id="jobCode"></textarea>
+                </p>
+                <p>
+                    <input type="button" id="addJob" value="Add job"/>
+                </p>
+            </form>
+        </div>
+        <div id="log">
+        </div>
+    </body>
+</html>

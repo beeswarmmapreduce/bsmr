@@ -26,20 +26,27 @@ var engine = (function() {
                 return (n % engine.map.job.R);
             },
             emit: function(k, v) {
-                var h = engine.map.hash(k);
-                if (typeof(engine.map.result[h]) == 'undefined') {
-                    engine.map.result[h] = {};
+                try {
+                    var h = engine.map.hash(k);
+                    if (typeof(engine.map.result[h]) == 'undefined') {
+                        engine.map.result[h] = {};
+                    }
+                    if (typeof(engine.map.result[h][k]) == 'undefined') {
+                        engine.map.result[h][k] = [];
+                    }
+                    engine.map.result[h][k].push(v);
                 }
-                if (typeof(engine.map.result[h][k]) == 'undefined') {
-                    engine.map.result[h][k] = [];
+                catch(ex) {
+                    engine.log('MAP FAILED: ' + k + ', ' + h + ', ' + v);
+                    engine.log(ex + '');
                 }
-                engine.map.result[h][k].push(v);
             },
             exec: function(spec) {
                 engine.map.reset(spec.job);
 
                 // eval and execute the code against the data
-                eval(spec.code);
+                eval(spec.job.code);
+                engine.log('MAP FUNCTION: ' + map);
                 map('k1', spec.data, engine.map.emit);
 
                 // send back the result to the parent worker
@@ -68,7 +75,8 @@ var engine = (function() {
                 engine.reduce.reset(spec.job);
 
                 // eval and execute the code against the data
-                eval(spec.code);
+                eval(spec.job.code);
+                engine.log('REDUCE FUNCTION: ' + reduce);
                 for (var k in spec.data) {
                     var _emit = function(v) {
                         engine.reduce.emit(k, v);

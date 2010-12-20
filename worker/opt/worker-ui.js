@@ -1,5 +1,5 @@
 /**
- konk-ui.js
+ worker-ui.js
 
  BrowserSocket MapReduce
  Optional UI related elements and overrides
@@ -10,22 +10,22 @@
  */
 
 
-if (typeof(konk) != 'undefined') {
+if (typeof(worker) != 'undefined') {
     // override _autostart
-    konk._autostart = false;
-    konk.__log_cnt = 0;
+    worker._autostart = false;
+    worker.__log_cnt = 0;
 
     // add a visual log
-    var oldlog = konk.log;
-    konk.log = function(s, type, level) {
-        if (level <= konk._loglevel) {
-            ++konk.__log_cnt;
+    var oldlog = worker.log;
+    worker.log = function(s, type, level) {
+        if (level <= worker._loglevel) {
+            ++worker.__log_cnt;
 
             if (!type) {
                 type = 'log';
             }
             if (type == 'log') {
-                 $('#console').prepend('<p id="l' + konk.__log_cnt + '" class="' + konk.util.esc(type) + '"><a href="#l' + (konk.__log_cnt+1) + '">U</a> | <a href="#l' + (konk.__log_cnt-1) + '">D</a> <span class="type">' + konk.util.esc(type) + '</span> <span class="msg">' + konk.util.esc(s + '') + '</span></p>');
+                 $('#console').prepend('<p id="l' + worker.__log_cnt + '" class="' + worker.util.esc(type) + '"><a href="#l' + (worker.__log_cnt+1) + '">U</a> | <a href="#l' + (worker.__log_cnt-1) + '">D</a> <span class="type">' + worker.util.esc(type) + '</span> <span class="msg">' + worker.util.esc(s + '') + '</span></p>');
             }
             else {
                 if (typeof(s) == 'object') {
@@ -42,21 +42,21 @@ if (typeof(konk) != 'undefined') {
                     }
                     s = JSON.stringify(s, null, '  ');
                 }
-                $('#console').prepend('<p id="l' + konk.__log_cnt + '" class="' + konk.util.esc(type) + '"><a href="#l' + (konk.__log_cnt+1) + '">U</a> | <a href="#l' + (konk.__log_cnt-1) + '">D</a> <span class="type">' + konk.util.esc(type) + '</span></p><pre class="msg">' + konk.util.esc(s) + '</pre>');
+                $('#console').prepend('<p id="l' + worker.__log_cnt + '" class="' + worker.util.esc(type) + '"><a href="#l' + (worker.__log_cnt+1) + '">U</a> | <a href="#l' + (worker.__log_cnt-1) + '">D</a> <span class="type">' + worker.util.esc(type) + '</span></p><pre class="msg">' + worker.util.esc(s) + '</pre>');
             }
             oldlog(s, type, level);
         }
     }
-    konk.info = function() {
-        $('#info').html('<p>MASTER: ' + konk.MASTER_WS_URL + '</p>');
+    worker.info = function() {
+        $('#info').html('<p>MASTER: ' + worker.MASTER_WS_URL + '</p>');
     }
 }
 
-konkui = (function() {
+workerui = (function() {
     return {
         init: function() {
             $('#control .init').bind('click', function() {
-                konk.init();
+                worker.init();
 
                 // these should ideally be done on some kind of 'init' event?
                 $('#modeForm :radio').removeAttr('disabled');
@@ -64,24 +64,24 @@ konkui = (function() {
                 return false;
             });
             $('#control .start').bind('click', function() {
-                konk.start();
+                worker.start();
                 return false;
             });
             $('#control .step').bind('click', function() {
-                konk.step();
+                worker.step();
                 return false;
             });
             $('#control .stop').bind('click', function() {
-                konk.stop();
+                worker.stop();
                 return false;
             });
 
-            $('#mode_nor').val(konk.MODE_NOR).attr('checked', 'checked');
-            $('#mode_ive').val(konk.MODE_IVE);
-            $('#mode_tmo').val(konk.MODE_TMO);
+            $('#mode_nor').val(worker.MODE_NOR).attr('checked', 'checked');
+            $('#mode_ive').val(worker.MODE_IVE);
+            $('#mode_tmo').val(worker.MODE_TMO);
 
             $('#modeForm :radio').bind('change', function() {
-                konkui.control.setMode($('#modeForm :radio:checked').val());
+                workerui.control.setMode($('#modeForm :radio:checked').val());
             });
         },
         control: {
@@ -96,25 +96,25 @@ konkui = (function() {
 
             // send a mode ctrl message to the worker
             setMode: function(m) {
-                var m = konk.createMessage(konk.TYPE_CTL, {
+                var m = worker.createMessage(worker.TYPE_CTL, {
                     action: 'mode',
                     mode: parseInt(m)
                 });
-                konk.worker.sendMessage(m);
+                worker.worker.sendMessage(m);
             },
 
             setLogLevel: function(l) {
-                konk._loglevel = l;
+                worker._loglevel = l;
             },
 
             setReduceMode: function(m) {
-                konk._reducemode = m;
+                worker._reducemode = m;
             }
         }
     }
 })();
 
 $(function() {
-    konk.info();
-    konkui.init();
+    worker.info();
+    workerui.init();
 });

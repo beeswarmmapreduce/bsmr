@@ -900,6 +900,9 @@ var worker = (function() {
             init: function() {
                 worker.server.bs = new BrowserSocket(worker.server.handlerFactory);
                 worker.server.bs.onerror = worker.server.onerror;
+                if (worker.info) {
+                    worker.info();
+                }
             },
             stop: function() {
                 worker.server.bs.stop();
@@ -927,6 +930,7 @@ var worker = (function() {
                                     splitId: msg.payload.splitId,
                                     data: data
                                 });
+                                worker.log('bs:handler:send: ' + msg.payload.partitionId + ', ' + msg.payload.splitId + ', ' + data, 'log', LOG_ERROR);
                                 this.send(JSON.stringify(m));
                                 break;
                             default:

@@ -49,6 +49,9 @@ if (typeof(worker) != 'undefined') {
     }
     worker.info = function() {
         $('#info').html('<p>MASTER: ' + worker.MASTER_WS_URL + '</p>');
+        if (worker.server.bs) {
+            $('#info').append('<p>BS: ' + worker.server.bs.port + ', ' + worker.server.bs.resourcePrefix + '</p>');
+        }
     }
 }
 

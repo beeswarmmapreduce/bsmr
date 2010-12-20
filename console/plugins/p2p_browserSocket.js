@@ -8,6 +8,7 @@ function p2pPlugin(params, onData, onError) {
         var msg = null;
 
         // go over network to get the data
+        worker.log('p2p:open: ' + partitionId + ', ' + splitId + ', ' + location, 'log', LOG_ERROR);
         var ws = new WebSocket(location);
         ws.onopen = function() {
             var m = worker.createMessage(worker.TYPE_P2P, {

@@ -87,6 +87,7 @@ var worker = (function() {
 
         this.splitId = splitId;
         this.result = null;
+        this.completed = false;
     }
     MapTask.prototype.start = function() {
         worker.log('MapTask start() :' + this.splitId, 'log', LOG_INFO);
@@ -398,12 +399,14 @@ var worker = (function() {
                 );
                 return;
             }
+            /*
             if (("BrowserSocket" in window) == false) {
                 worker.setStatus(
                     STATUS_INFO,
                     'Your browser does not seem to support browsersockets. Aborting server.'
                 );
             }
+            */
 
             // create a engine thread
             try {
@@ -678,6 +681,7 @@ var worker = (function() {
                     jobId: t.job.jobId
                 });
                 worker.master.sendMessage(m);
+                t.completed = true;
             }
         },
 
@@ -737,7 +741,7 @@ var worker = (function() {
             isLocalSplit: function(partitionId, splitId) {
                 if (worker.map.tasks[splitId] &&
                     worker.map.tasks[splitId].result &&
-                    worker.map.tasks[splitId].result[partitionId]) {
+                    worker.map.tasks[splitId].completed) {
 
                     // if local map task results for this split exists return true
                     return true;
@@ -745,11 +749,14 @@ var worker = (function() {
                 return false;
             },
             getLocalSplit: function(partitionId, splitId) {
+                var data = {};
                 if (worker.reduce.isLocalSplit(partitionId, splitId)) {
                     // if local map task results for this split exists return it
-                    return worker.map.tasks[splitId].result[partitionId];
+                    if (worker.map.tasks[splitId].result[partitionId]) {
+                        data = worker.map.tasks[splitId].result[partitionId];
+                    }
                 }
-                return null;
+                return data;
             }
         },
 

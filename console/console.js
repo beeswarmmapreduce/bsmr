@@ -50,7 +50,7 @@ var konk = (function() {
         },
         onmessage: function(e) {
             var data = JSON.parse(e.data);
-            console.log(data.payload);
+            konk.log(data.payload);
             konk.work.render(data.payload);
             konk.workers.render(data.payload.workers);
             konk.jobs.active.render(data.payload.job);
@@ -113,8 +113,8 @@ var konk = (function() {
                 req.send(null);
             },
             processPlugin: function(pluginId, raw) {
-                console.log(konk.plugins.n);
-                console.log('processing ' + pluginId);
+                konk.log(konk.plugins.n);
+                konk.log('processing ' + pluginId);
                 try {
                     eval(raw);
                     var p = null;
@@ -140,7 +140,7 @@ var konk = (function() {
                 }
             },
             render: function() {
-                console.log(konk.plugins.plugins);
+                konk.log(konk.plugins.plugins);
                 // input plugins
                 for (var p in konk.plugins.plugins.in) {
                     $('#inputPlugin').append('<option value="' + p + '">' + konk.plugins.plugins.in[p][PARAMS].label +'</option>');
@@ -207,17 +207,77 @@ var konk = (function() {
             }
         },
         work: {
+            _inited: false,
+
+            init: function(d) {
+                if (d.splits) {
+                    var row = '<tr>';
+                    // draw the splits table
+                    for (var i=0; i<d.job.M; i++) {
+                        if (i > 0 && (i % 10 == 0)) {
+                            row += '</tr>';
+                            $('#splitsVisual').append(row);
+                            row = '<tr>';
+                        }
+                        row += '<td id="split' + i + '" class="empty"></td>';
+                    }
+                    row += '</tr>';
+                    $('#splitsVisual').append(row);
+                }
+                if (d.partitions) {
+                    var row = '<tr>';
+                    for (var i=0; i<d.job.M; i++) {
+                        if (i > 0 && (i % 10 == 0)) {
+                            row += '</tr>';
+                            $('#partitionsVisual').append(row);
+                            row = '<tr>';
+                        }
+                        row += '<td id="partition' + i + '" class="empty"></td>';
+                    }
+                    row += '</tr>';
+                    $('#partitionsVisual').append(row);
+
+                    konk.work._inited = true;
+                }
+            },
+
             render: function(d) {
+                if (!konk.work._inited) {
+                    konk.work.init(d);
+                }
+
                 var n = 0;
                 if (d) {
+                    $('#splitsVisual td').attr('class', 'empty');
                     if (d.splits) {
                         $('#splits .queued .value').html(konk.util.sizeofObject(d.splits.queued));
                         $('#splits .done .value').html(konk.util.sizeofObject(d.splits.done));
+                        for (var i in d.splits.queued) {
+                            $('#split' + i).attr('class', 'queued');
+                        }
+                        for (var i in d.splits.done) {
+                            $('#split' + i).attr('class', 'done');
+                        }
                     }
 
+                    $('#partitionsVisual td').attr('class', 'empty');
                     if (d.partitions) {
                         $('#partitions .queued .value').html(konk.util.sizeofObject(d.partitions.queued));
-                        $('#partitions .done .value').html(konk.util.sizeofObject(d.partitions.done));
+                        var doneTotal = 1;
+                        for (var i in d.partitions.done) {
+                            doneTotal += (d.partitions.done[i][1] - d.partitions.done[i][0]);
+                        }
+                        $('#partitions .done .value').html(doneTotal);
+
+                        for (var i in d.partitions.queued) {
+                            $('#partition' + i).attr('class', 'queued');
+                        }
+                        for (var i in d.partitions.done) {
+                            var pair = d.partitions.done[i];
+                            for (var j=pair[0]; j<=pair[1]; j++) {
+                                $('#partition' + j).attr('class', 'done');
+                            }
+                        }
                     }
                 }
             }
@@ -303,7 +363,7 @@ var konk = (function() {
                         var m = konk.createMessage(konk.TYPE_REMOVEJOB, {
                             id: id
                         });
-                        console.log(m);
+                        konk.log(m);
                         konk.sendMessage(m);
                     }
                 },
@@ -329,7 +389,12 @@ var konk = (function() {
                         });
                         $('#activeJob').append(row);
                     }
-                    $('#activeJobCount').html(n); 
+                    if (d.finished) {
+                        $('#activeJobCount').html(n + ' finished'); 
+                    }
+                    else {
+                        $('#activeJobCount').html(n + ' running'); 
+                    }
                 }
             },
             queue: {
@@ -366,7 +431,7 @@ var konk = (function() {
                         heartbeatTimeout: $('#heartbeatTimeout').val(),
                         progressTimeout: $('#progressTimeout').val()
                     });
-                    console.log(m);
+                    konk.log(m);
                     konk.sendMessage(m);
                 },
 
@@ -375,7 +440,7 @@ var konk = (function() {
                         var m = konk.createMessage(konk.TYPE_REMOVEJOB, {
                             id: id
                         });
-                        console.log(m);
+                        konk.log(m);
                         konk.sendMessage(m);
                     }
                 },
@@ -413,7 +478,7 @@ var konk = (function() {
                         var m = konk.createMessage(konk.TYPE_REMOVEJOB, {
                             id: id
                         });
-                        console.log(m);
+                        konk.log(m);
                         konk.sendMessage(m);
                     }
                 },
@@ -463,7 +528,10 @@ var konk = (function() {
             konk.ws.send(JSON.stringify(msg));
         },
         log: function(s) {
-            $('#log').prepend('<p>' + konk.util.esc(s) + '</p>');
+            //$('#log').prepend('<p>' + konk.util.esc(s) + '</p>');
+            if (typeof(console) != 'undefined') {
+                console.log(s);
+            }
         },
         util: {
             esc: function(s) {
@@ -482,7 +550,7 @@ var konk = (function() {
                 }
                 return n;
             }
-        },
+        }
     }
 })();
 window.addEventListener('load', konk.init, false);

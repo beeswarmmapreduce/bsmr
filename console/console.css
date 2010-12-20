@@ -129,6 +129,14 @@ table {
         }
 
 
+.visual td {
+    width: 20px;
+    height: 20px;
+    }
+    .visual td.empty { background: #ddd; }
+    .visual td.queued { background: #ff9; }
+    .visual td.done { background: #0a0; }
+
 .job-table .code {
     width: 70%;
     }

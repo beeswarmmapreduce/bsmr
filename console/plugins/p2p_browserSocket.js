@@ -5,9 +5,8 @@ params = {
 
 function p2pPlugin(params, onData, onError) {
     this.fetchIntermediateData = function(jobId, partitionId, splitId, location) {
-        //worker.log('p2p.fetchIntermediateData() :' + partitionId + ',' + splitId + ',' + location, 'log', LOG_DEBUG);
-
         var msg = null;
+
         // go over network to get the data
         var ws = new WebSocket(location);
         ws.onopen = function() {

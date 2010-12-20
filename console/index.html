@@ -140,19 +140,19 @@
             <form>
                 <p>
                     <label for="M">Number splits (M)</label>
-                    <input type="text" id="M" name="M"/>
+                    <input type="text" id="M" name="M"/value="10">
                 </p>
                 <p>
                     <label for="R">Number partitions (R)</label>
-                    <input type="text" id="R" name="R"/>
+                    <input type="text" id="R" name="R" value="10"/>
                 </p>
                 <p>
                     <label for="heartbeatTimeout">Heartbeat timeout</label>
-                    <input type="text" id="heartbeatTimeout" name="heartbeatTimeout"/>
+                    <input type="text" id="heartbeatTimeout" name="heartbeatTimeout" value="60000"/>
                 </p>
                 <p>
                     <label for="progressTimeout">Progress timeout</label>
-                    <input type="text" id="progressTimeout" name="progressTimeout"/>
+                    <input type="text" id="progressTimeout" name="progressTimeout" value="300000"/>
                 </p>
                 <p>
                     <label for="inputPlugin">Input plugin</label>
@@ -177,7 +177,10 @@
                 </p>
                 <p>
                     <label for="code" class="textarea">Job code</label>
-                    <textarea id="jobCode"></textarea>
+                    <textarea id="jobCode">
+                    function map(k, data, emit) { var ws = data.split(/\b/); for (var w in ws) { emit(ws[w], 1); } }
+                    function reduce(k, vs, emit) { var tot = 0; for (var v in vs) { tot += vs[v]; } emit(tot); }
+                    </textarea>
                 </p>
                 <p>
                     <input type="button" id="addJob" value="Add job"/>

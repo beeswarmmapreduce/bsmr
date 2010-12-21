@@ -24,10 +24,8 @@ public class StartJetty
 		
 		Server server = new Server(8080);
 
-		WebAppContext masterWebApp = createMasterWebApp();
-		
         ContextHandlerCollection multiContext = new ContextHandlerCollection();
-        multiContext.addHandler(masterWebApp);
+        multiContext.addHandler(createMasterWebApp());
         multiContext.addHandler(createWorkerWebApp());
         multiContext.addHandler(createConsoleWebApp());
         
@@ -35,30 +33,6 @@ public class StartJetty
 		
 		try {
 			server.start();
-			
-			ServletContext sctx = masterWebApp.getServletContext();
-			MasterContext master = BSMRContext.getMaster(sctx);
-			BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-			
-			String s;
-			while( (s= br.readLine()) != null) {
-				if ("stop".equals(s)) {
-					multiContext.removeHandler(masterWebApp);
-					break;
-				}
-				Job j = master.createJob(3, 3, 60000, 60000*60, "// Don't do anything");
-				
-				master.queueJob(j);
-				try {
-					master.startNextJob();
-				} catch(JobAlreadyRunningException jare) {
-					System.out.println("Still running the previous job");
-				}
-				
-				BSMRContext.getConsoleNotifier(sctx).sendUpdates();
-			}
-			
-			
 			server.join();
 		} catch (Exception e) {
 			e.printStackTrace();

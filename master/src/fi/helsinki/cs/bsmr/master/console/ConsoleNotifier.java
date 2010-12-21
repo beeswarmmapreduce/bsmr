@@ -67,7 +67,7 @@ public class ConsoleNotifier implements Runnable
 			synchronized (this) {
 				
 				try {
-					logger.fine("Waiting for notification");
+					logger.finest("Waiting for notification");
 					this.wait(ConsoleNotifier.TIME_BETWEEN_NOTIFYS);
 					
 					wasInterrupted = false;
@@ -90,7 +90,7 @@ public class ConsoleNotifier implements Runnable
 			}
 			
 			synchronized (Console.class) { // See Console.onDisconnect()
-				logger.fine("Informing all "+master.getConsoles().size()+" consoles");
+				logger.finest("Informing all "+master.getConsoles().size()+" consoles");
 				for (Console c : master.getConsoles()) {
 					c.sendMessage(msg);
 				}

@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.HttpURLConnection;
+import java.nio.charset.Charset;
 import java.util.zip.GZIPInputStream;
 
 import javax.servlet.ServletException;
@@ -64,38 +65,75 @@ public class SplitServlet extends HttpServlet
 		retrieveSplit(thisJob, thisSplit, req, resp);
 	}
 	
+
 	private void retrieveSplit(int job, int split, HttpServletRequest req, HttpServletResponse resp) 
 		throws IOException
 	{
 		// NOTE: the job parameter is not used
+		long size = 64*1024;
+		long skip = split * size;
+		
 		InputStream is = this.getClass().getClassLoader().getResourceAsStream("data.txt.gz");
 		if (is == null) {
 			error("could not open data.txt.gz", req, resp);
 			return;
 		}
 		
-		BufferedReader br = new BufferedReader(new InputStreamReader(new GZIPInputStream(is))); 
-		br.skip(split * SPLIT_SIZE);
+		is = new GZIPInputStream(is);
 		
-		String s = br.readLine();
+		Charset utf8 = Charset.forName("UTF-8");
+		ByteSeekableCharacterInputStream bscis = new ByteSeekableCharacterInputStream(is);
+		BufferedReader br = new BufferedReader(new InputStreamReader(bscis, utf8));
 		
-		if (s == null) {
-			error("not enough data in input file", req, resp);
-			return;
+		String s;
+		int i = 0; // How many BYTES have been read
+		
+		// Only skip if necessary
+		if (skip > 0) {
+			// Skip in the BYTE stream, not character stream
+			bscis.skip(skip);
+			
+			// FFWD any BYTES from a previous UTF-8 character (if skip offset was mid-character)
+			i += bscis.skipPartialUTF8Character();
+			
+			// Read the remaining part of the line our offset dropped us on
+			s = br.readLine(); // This line we skip, as it is part of the previous split
+			
+			if (s == null) {
+				// We've read past the end of file, or at least the previous split ended at EOF
+				error("not enough data in input file for split "+split, req, resp);
+				return;
+			}
+			
+			// That line is ignored
+			
+			// Except for the amount of bytes it contained
+			i += s.getBytes(utf8).length;
+			i ++; // newline!
 		}
+		
+		// Note! If the previously read last part of the line is longer than 'size', this
+		// split will be empty. This is the correct behavior! Otherwise there would be overlaps
+		// between skips
 		
 		resp.setContentType("text/plain");
-		PrintWriter writer = resp.getWriter();
+		resp.setCharacterEncoding("UTF-8");
+		PrintWriter out = resp.getWriter();
 		
-		int n = 0;
-		
-		while (n < SPLIT_SIZE && s != null) {
-			writer.println(s);
-			n+= s.length();
+		while (i< size) {
 			s = br.readLine();
+			
+			if (s == null) break; // EOF
+						
+			out.write(s);
+			out.write('\n');
+			
+			i += s.getBytes(utf8).length;
+			i ++; // newline!
 		}
+		out.flush();
+		out.close();
 		
-		writer.close();
 	}
 
 	private void error(String msg, HttpServletRequest req, HttpServletResponse resp) throws IOException

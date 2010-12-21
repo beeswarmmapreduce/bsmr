@@ -228,6 +228,10 @@ var worker = (function() {
         this.partitionId = partitionId;
         this.splitId = splitId;
         this.locations = locations;
+        if (!this.locations) {
+            worker.log('ReduceSplit() locations is null:' + this.partitionId + ',' + this.splitId, 'log', LOG_INFO);
+            this.locations = [];
+        }
         this._done = false;
         this.locationPtr = -1;
         this.retries = retries;

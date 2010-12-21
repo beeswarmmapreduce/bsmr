@@ -11,6 +11,7 @@ function p2pPlugin(params, onData, onError) {
         worker.log('p2p:open: ' + partitionId + ', ' + splitId + ', ' + location, 'log', LOG_ERROR);
         var ws = new WebSocket(location);
         ws.onopen = function() {
+            //TODO: pos add delay before send message
             var m = worker.createMessage(worker.TYPE_P2P, {
                 action: 'download',
                 jobId: jobId,
@@ -32,12 +33,12 @@ function p2pPlugin(params, onData, onError) {
         ws.onclose = function() {
             worker.log('p2p:close: ' + partitionId + ', ' + splitId + ', ' + location, 'log', LOG_ERROR);
             if (!msg) {
-                onError(msg.payload.jobId, msg.payload.partitionId, msg.payload.splitId, location);
+                onError(jobId, partitionId, splitId, location);
             }
         }
         ws.onerror = function() {
             worker.log('p2p:error: ' + partitionId + ', ' + splitId + ', ' + location, 'log', LOG_ERROR);
-            onError(msg.payload.jobId, msg.payload.partitionId, msg.payload.splitId, location);
+            onError(jobId, partitionId, splitId, location);
         }
     }
 }

@@ -22,6 +22,11 @@ var konk = (function() {
             konk.plugins.init();
             $('#connect').bind('click', konk.connect);
             $('#addJob').bind('click', konk.jobs.queue.add);
+            var l = document.location.toString();
+            var ms = l.match(/:\/\/([^\/]*)\//);
+            if (ms && ms[1]) {
+                $('#master').val('ws://' + ms[1] + '/bsmr');
+            }
         },
         connect: function() {
             if (konk.ws) {

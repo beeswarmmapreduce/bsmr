@@ -838,7 +838,7 @@ var worker = (function() {
             onError: function(jobId, partitionId, splitId, location) {
                 /*[FIXME: beter error handling?]*/
                 worker.log('p2p fetchIntermediateData() failed: ' + location, 'log', LOG_ERROR);
-                worker.reduce.tasks[msg.payload.partitionId].splits[msg.payload.splitId].onError(location);
+                worker.reduce.tasks[partitionId].splits[splitId].onError(location);
             },
 
             /*

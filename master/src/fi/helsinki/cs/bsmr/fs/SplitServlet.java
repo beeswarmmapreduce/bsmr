@@ -70,7 +70,7 @@ public class SplitServlet extends HttpServlet
 		throws IOException
 	{
 		// NOTE: the job parameter is not used
-		long size = 64*1024;
+		long size = SPLIT_SIZE; // TODO: this should be calculated based on file size and number of splits
 		long skip = split * size;
 		
 		InputStream is = this.getClass().getClassLoader().getResourceAsStream("data.txt.gz");

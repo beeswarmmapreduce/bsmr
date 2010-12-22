@@ -233,8 +233,9 @@ var worker = (function() {
             this.locations = [];
         }
         this._done = false;
-        this.locationPtr = -1;
-        this.retries = retries;
+        this.locationPtr = 0;
+        this.retries = retries || 0;
+        this._retried = 0;
 
         this.result = null;
     }
@@ -247,8 +248,12 @@ var worker = (function() {
         this.fetch();
     }
     ReduceSplit.prototype.fetch = function() {
-        worker.log('ReduceSplit fetch() :' + this.partitionId + ',' + this.splitId + ',' + this.locationPtr, 'log', LOG_DEBUG);
-        this.locationPtr++;
+        worker.log('ReduceSplit fetch() [try: ' + this._retried + ']:' + this.partitionId + ',' + this.splitId + ',' + this.locationPtr, 'log', LOG_ERROR);
+        this._retried++;
+        if (this._retried > this.retries) {
+            this._retried = 0;
+            this.locationPtr++;
+        }
         if (this.locationPtr < this.locations.length) {
             if (worker.server.isLocal(location)) {
                 var data = {};

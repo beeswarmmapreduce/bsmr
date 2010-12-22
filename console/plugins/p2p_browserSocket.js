@@ -19,11 +19,7 @@ function p2pPlugin(params, onData, onError) {
                 splitId: splitId,
                 location: location
             });
-            var that = this;
-            setTimeout(function() {
-                that.send(JSON.stringify(m));
-            }, 1000);
-
+            this.send(JSON.stringify(m));
         }
         ws.onmessage = function(e) {
             msg = worker.readMessage(e.data);

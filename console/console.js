@@ -213,36 +213,57 @@ var konk = (function() {
         },
         work: {
             _inited: false,
+            rowLength: 50,
 
             init: function(d) {
                 if (d.splits) {
+                    var cells = Math.ceil(d.job.M / konk.work.rowLength) * konk.work.rowLength;
+
                     var row = '<tr>';
                     // draw the splits table
-                    for (var i=0; i<d.job.M; i++) {
-                        if (i > 0 && (i % 10 == 0)) {
+                    for (var i=0; i<cells; i++) {
+                        if (i > 0 && (i % konk.work.rowLength == 0)) {
                             row += '</tr>';
                             $('#splitsVisual').append(row);
                             row = '<tr>';
                         }
-                        row += '<td id="split' + i + '" class="empty"></td>';
+                        if (i >= d.job.M) {
+                            row += '<td id="split' + i + '" class="null"></td>';
+                        }
+                        else {
+                            row += '<td id="split' + i + '" class="empty"></td>';
+                        }
                     }
                     row += '</tr>';
                     $('#splitsVisual').append(row);
                 }
+                else {
+                    $('#splitsVisual').empty();
+                }
                 if (d.partitions) {
+                    var cells = Math.ceil(d.job.R / konk.work.rowLength) * konk.work.rowLength;
+
                     var row = '<tr>';
-                    for (var i=0; i<d.job.M; i++) {
-                        if (i > 0 && (i % 10 == 0)) {
+                    for (var i=0; i<cells; i++) {
+                        if (i > 0 && (i % konk.work.rowLength == 0)) {
                             row += '</tr>';
                             $('#partitionsVisual').append(row);
                             row = '<tr>';
                         }
-                        row += '<td id="partition' + i + '" class="empty"></td>';
+                        if (i >= d.job.R) {
+                            row += '<td id="partition' + i + '" class="null"></td>';
+                        }
+                        else {
+                            row += '<td id="partition' + i + '" class="empty"></td>';
+                        }
                     }
                     row += '</tr>';
                     $('#partitionsVisual').append(row);
 
                     konk.work._inited = true;
+                }
+                else {
+                    $('#partitionsVisual').empty();
                 }
             },
 
@@ -253,7 +274,7 @@ var konk = (function() {
 
                 var n = 0;
                 if (d) {
-                    $('#splitsVisual td').attr('class', 'empty');
+                    $('#splitsVisual td[class!=null]').attr('class', 'empty');
                     if (d.splits) {
                         $('#splits .queued .value').html(konk.util.sizeofObject(d.splits.queued));
                         $('#splits .done .value').html(konk.util.sizeofObject(d.splits.done));
@@ -293,7 +314,7 @@ var konk = (function() {
                         }
                     }
 
-                    $('#partitionsVisual td').attr('class', 'empty');
+                    $('#partitionsVisual td[class!=null]').attr('class', 'empty');
                     if (d.partitions) {
                         $('#partitions .queued .value').html(konk.util.sizeofObject(d.partitions.queued));
                         if (d.partitions.queued) {

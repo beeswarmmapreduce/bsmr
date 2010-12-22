@@ -133,7 +133,8 @@ table {
     width: 20px;
     height: 20px;
     }
-    .visual td.empty { background: #ddd; }
+    .visual td.null { background: #000; }
+    .visual td.empty { background: #fff; }
     .visual td.queued { background: #ff9; }
     .visual td.done { background: #0a0; }
     .visual td.done-available { background: #0a0; }

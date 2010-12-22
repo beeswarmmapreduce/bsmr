@@ -365,7 +365,7 @@ var worker = (function() {
         _reducemode: REDUCE_MODE_LOCAL_PRIORITY,
 
         /* current log level */
-        _loglevel: LOG_ERROR,
+        _loglevel: LOG_INFO,
 
         /* whether to inmmediately start work */
         _autostart: true,
@@ -932,8 +932,9 @@ var worker = (function() {
                                     splitId: msg.payload.splitId,
                                     data: data
                                 });
-                                worker.log('bs:handler:send: ' + msg.payload.partitionId + ', ' + msg.payload.splitId + ', ' + data, 'log', LOG_ERROR);
-                                this.send(JSON.stringify(m));
+                                var j = JSON.stringify(m);
+                                worker.log('bs:handler:send: ' + msg.payload.partitionId + ', ' + msg.payload.splitId + ', ' + j.length, 'log', LOG_INFO);
+                                this.send(j);
                                 break;
                             default:
                                 // swallow for now

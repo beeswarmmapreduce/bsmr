@@ -8,7 +8,7 @@ function p2pPlugin(params, onData, onError) {
         var msg = null;
 
         // go over network to get the data
-        worker.log('p2p:open: ' + partitionId + ', ' + splitId + ', ' + location, 'log', LOG_ERROR);
+        worker.log('p2p:open: ' + partitionId + ', ' + splitId + ', ' + location, 'log', LOG_INFO);
         var ws = new WebSocket(location);
         ws.onopen = function() {
             //TODO: pos add delay before send message
@@ -37,7 +37,7 @@ function p2pPlugin(params, onData, onError) {
             }
         }
         ws.onerror = function() {
-            worker.log('p2p:error: ' + partitionId + ', ' + splitId + ', ' + location, 'log', LOG_ERROR);
+            worker.log('p2p:error: ' + partitionId + ', ' + splitId + ', ' + location, 'log', LOG_INFO);
             onError(jobId, partitionId, splitId, location);
         }
     }

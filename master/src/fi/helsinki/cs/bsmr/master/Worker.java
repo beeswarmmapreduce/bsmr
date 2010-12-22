@@ -170,7 +170,7 @@ public class Worker implements WebSocket
 			if (msg.getType() == Type.HB) {
 				// If just a pure heart beat, we do not reply
 				if (msg.getAction() != Message.Action.idle) {
-					logger.fine("heartbeat");
+					logger.finest("heartbeat");
 					return;
 				}
 				logger.fine("Worker idle but there's work to do. Let's give it some!");

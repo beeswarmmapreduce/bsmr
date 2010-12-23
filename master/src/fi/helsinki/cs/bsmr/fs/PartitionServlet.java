@@ -263,7 +263,20 @@ public class PartitionServlet extends HttpServlet
 		{			
 			try {
 				InputStreamReader isr = new InputStreamReader(is, charset);
-				Map<Object, Object> keys = (Map<Object, Object>)JSON.parse(isr);
+				Object jsonObj = JSON.parse(isr);
+				
+				
+				Map<Object, Object> keys;
+				if (jsonObj instanceof Map<?, ?>) {
+					keys = (Map<Object, Object>)jsonObj;
+				} else {
+					if (jsonObj == null) {
+						throw new IOException("JSON object is null?!?!");
+					} else {
+						throw new IOException("JSON Object not a map! "+jsonObj.getClass().getName()+": "+jsonObj);
+					}
+				}
+				
 			
 				int i = 0;
 				Map<Object, Object> tmp = new HashMap<Object, Object>();

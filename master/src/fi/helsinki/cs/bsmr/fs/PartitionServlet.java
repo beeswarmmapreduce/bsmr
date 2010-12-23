@@ -24,7 +24,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.eclipse.jetty.util.ajax.JSON;
+import fi.helsinki.cs.bsmr.master.JSON;
 
 /**
  * A servlet to save BSMR partitions from workers. The workers POST JSON dicts and the servlet appends

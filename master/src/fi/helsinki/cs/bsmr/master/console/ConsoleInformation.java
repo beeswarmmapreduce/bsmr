@@ -7,8 +7,7 @@ import java.util.Map;
 import java.util.List;
 import java.util.Set;
 
-import org.eclipse.jetty.util.ajax.JSON;
-
+import fi.helsinki.cs.bsmr.master.JSON;
 import fi.helsinki.cs.bsmr.master.Job;
 import fi.helsinki.cs.bsmr.master.MasterContext;
 import fi.helsinki.cs.bsmr.master.Message;

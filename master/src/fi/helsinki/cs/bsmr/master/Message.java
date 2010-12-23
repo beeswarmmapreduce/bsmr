@@ -9,8 +9,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
 
-import org.eclipse.jetty.util.ajax.JSON;
-
 
 /**
  * The container for messages sent between workers and the master.
@@ -117,10 +115,12 @@ public class Message
 		}
 		
 		if (payload.containsKey(FIELD_JOBID)) {
-			Long tmp = (Long)payload.get(FIELD_JOBID);
-			if (tmp != null) {
-				this.job = master.getJobById( tmp.intValue() );
+			Object o = payload.get(FIELD_JOBID);
+			if (o != null) {
+				int jobNum = Util.getIntFromJSONObject(o);
+				this.job = master.getJobById( jobNum );
 			}
+			
 		}
 		
 	

@@ -79,7 +79,7 @@ public class SplitServlet extends HttpServlet
 			}
 		}
 		
-		chainFSSource = new ChainSplitSourceImpl(loadPath);
+		chainFSSource    = new ChainSplitSourceImpl(loadPath);
 		hugeFileFSSource = new HugeUTF8SplitSourceImpl(loadPath);
 	}
 

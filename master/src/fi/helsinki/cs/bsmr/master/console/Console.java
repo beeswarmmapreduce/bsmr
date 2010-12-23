@@ -1,13 +1,14 @@
 package fi.helsinki.cs.bsmr.master.console;
 
+
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.eclipse.jetty.util.ajax.JSON;
 import org.eclipse.jetty.websocket.WebSocket;
 
 import fi.helsinki.cs.bsmr.master.AsyncSender;
+import fi.helsinki.cs.bsmr.master.JSON;
 import fi.helsinki.cs.bsmr.master.Job;
 import fi.helsinki.cs.bsmr.master.JobAlreadyRunningException;
 import fi.helsinki.cs.bsmr.master.MasterContext;

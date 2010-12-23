@@ -23,5 +23,7 @@
 	<classpathentry kind="lib" path="master/jetty-distribution-8.0.0.M2/lib/jetty-websocket-8.0.0.M2.jar"/>
 	<classpathentry kind="lib" path="master/jetty-distribution-8.0.0.M2/lib/jetty-xml-8.0.0.M2.jar"/>
 	<classpathentry kind="lib" path="master/jetty-distribution-8.0.0.M2/lib/servlet-api-3.0.jar"/>
+	<classpathentry kind="lib" path="lib/jackson-core-asl-1.6.4.jar"/>
+	<classpathentry kind="lib" path="lib/jackson-mapper-asl-1.6.4.jar"/>
 	<classpathentry kind="output" path="master/bin"/>
 </classpath>

@@ -19,8 +19,6 @@
 			debug="on"
 			source="1.6"
 			target="1.6"/>
-		
-		<copy file="${src}/data.txt.gz" todir="${dest}"/>
 	</target>
 	
 	<target name="master-javadoc">

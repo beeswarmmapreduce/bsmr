@@ -18,5 +18,3 @@ DEST=master/bin/
 
 javac -classpath $CP -d $DEST -sourcepath master/src/ $(find master/src/ -name "*.java")
 
-cp master/src/data.txt.gz $DEST
-

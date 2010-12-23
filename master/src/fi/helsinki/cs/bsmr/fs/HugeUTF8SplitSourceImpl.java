@@ -5,6 +5,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.nio.charset.Charset;
 import java.util.HashMap;
@@ -98,21 +99,23 @@ public class HugeUTF8SplitSourceImpl implements SplitSource
 		
 		resp.setContentType("text/plain");
 		resp.setCharacterEncoding("UTF-8");
-		PrintWriter out = resp.getWriter();
+		OutputStream os = resp.getOutputStream();
 		
 		while (i< splitSize) {
 			s = br.readLine();
 			
 			if (s == null) break; // EOF
-						
-			out.write(s);
-			out.write('\n');
 			
-			i += s.getBytes(utf8).length;
+			byte [] asBytes = s.getBytes(utf8);
+			
+			os.write(asBytes);
+			os.write('\n');
+			
+			i += asBytes.length;
 			i ++; // newline!
 		}
-		out.flush();
-		out.close();
+		os.flush();
+		os.close();
 	}
 
 	private static long calculateUncompressedFileSize(String fileName) throws IOException 

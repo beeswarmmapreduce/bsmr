@@ -20,6 +20,10 @@
   <servlet>
     <servlet-name>Splits</servlet-name>
     <servlet-class>fi.helsinki.cs.bsmr.fs.SplitServlet</servlet-class>
+    <init-param>
+    	<param-name>loadPath</param-name>
+    	<param-value>done</param-value>
+    </init-param>
   </servlet>
 
   <servlet>

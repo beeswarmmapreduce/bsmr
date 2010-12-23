@@ -1,13 +1,20 @@
 package fi.helsinki.cs.bsmr.fs;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.io.RandomAccessFile;
+import java.io.Writer;
 import java.net.HttpURLConnection;
+import java.nio.charset.Charset;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -17,10 +24,29 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.eclipse.jetty.util.ajax.JSON;
+
 /**
- * A naive servlet which saves partitions to the local filesystem.
+ * A servlet to save BSMR partitions from workers. The workers POST JSON dicts and the servlet appends
+ * all keys into a special JSON file on the disk. Workers should address the servlet 
+ * /[jobId]-[R]/[partition]. First part contains the job id of the partition
+ * 
+ * The file will be a list where the first entry is the
+ * number of keys there is in the list. All following entries are single-key dicts.
+ * 
+ * <pre>
+ * [ 4           
+ * ,{"scrooge":"1"}
+ * ,{"mickey":"4321"}
+ * ,{"pluto":"isadog"}
+ * ,{"donald":"12345"}
+ * ]
+ * </pre>
+ * 
+ * The file must be in this format so the SplitServlet can serve it efficiently.
  * 
  * @author stsavola
+ * @see SplitServlet
  *
  */
 public class PartitionServlet extends HttpServlet 
@@ -30,11 +56,16 @@ public class PartitionServlet extends HttpServlet
 	private static Logger logger = Logger.getLogger(PartitionServlet.class.getCanonicalName());
 	
 	private String savePath;
+	private Map<Integer, JobInfo> jobStore;
+	
+	private static final Charset charset = Charset.forName("UTF-8");
 	
 	@Override
 	public void init(ServletConfig config) throws ServletException 
 	{
 		super.init(config);
+		
+		jobStore = new HashMap<Integer, JobInfo>();
 		
 		savePath = config.getInitParameter("savePath");
 		
@@ -78,41 +109,7 @@ public class PartitionServlet extends HttpServlet
 				logger.log(Level.SEVERE, "Problem with savePath. Disabling saving for now!!", ie);
 				savePath = null;
 			}
-		}
-		
-		
-	}
-	
-	@Override
-	protected void doGet(HttpServletRequest req, HttpServletResponse resp)
-			throws ServletException, IOException
-	{
-		String []path = req.getPathInfo().split("/");
-		
-		if (path.length != 3) {
-			error("Specify a path so that the url ends with /job/partition (both as integers)", req, resp);
-			return;
-		}
-		
-		// Do String -> integer conversion so that we don't allow nasty paths containing for example ..'s 
-		int thisPartition = parseNumber(path[2], "Partition", req, resp);
-		int thisJob       = parseNumber(path[1], "Job", req, resp);
-		
-		FileInputStream fis = new FileInputStream(savePath+"/"+thisJob+"/"+thisPartition+".data");
-		resp.setContentType("text/plain");
-		resp.addHeader("Content-Disposition", "inline;filename=bsmr_output_j"+thisJob+"_p"+thisPartition+".txt");
-		OutputStream os = resp.getOutputStream();
-		byte [] buf = new byte[32*1024];
-		
-		int i;
-		i = fis.read(buf);
-		
-		while(i > 0) {
-			os.write(buf, 0, i);
-			i = fis.read(buf);
-		}
-		os.flush();
-		os.close();
+		}	
 	}
 	
 	@Override
@@ -120,96 +117,173 @@ public class PartitionServlet extends HttpServlet
 			throws ServletException, IOException 
 	{
 		if (savePath == null) {
-			error("Saving disabled!",req,resp);
+			Util.error("Saving disabled!",req,resp);
 			return;
 		}
 		
 		String []path = req.getPathInfo().split("/");
 		
-		if (path.length != 3) {
-			error("Specify path so that the url ends with /job/partition (both as integers)", req, resp);
+		String []jobParts = null;
+		if (path.length > 1) {
+			jobParts = path[1].split("-");
+		}
+		
+		if (path.length != 3 || jobParts.length != 2) {
+			Util.error("Specify path so that the url ends with /[jobId]-[R]/[partition]", req, resp);
 			return;
 		}
 		
+		int thisPartition = Util.parseNumber(path[2],     "/[jobId]-[R]/[partition]", "Partition", req, resp);
+		int thisJob       = Util.parseNumber(jobParts[0], "/[jobId]-[R]/[partition]", "Job", req, resp);
+		int thisR		  = Util.parseNumber(jobParts[1], "/[jobId]-[R]/[partition]", "Number of partitions", req, resp);
 		
-		int thisPartition = parseNumber(path[2], "Partition", req, resp);
-		int thisJob       = parseNumber(path[1], "Job", req, resp);
+		if (thisPartition == -1 || thisJob == -1 || thisR == -1) {
+			Util.error("Non-integer or illegal values in the path", req, resp);
+			return;
+		}
 		
+		JobInfo job = null;
 		
-		savePartition(thisPartition, thisJob, req, resp);
-	}
-	
-	private void savePartition(int partition, int job, HttpServletRequest req, HttpServletResponse resp) throws IOException 
-	{
-		
-		InputStream is = req.getInputStream();
-		FileOutputStream fos = null;
-		
-		try {
-			File dir = new File(savePath+"/"+job);
-			if (!dir.isDirectory()) {
-				if (!dir.mkdir()) {
-					logger.severe("Could not create directory for job "+job);
-					error("Could not save!", req, resp);
-					return;
-				}
+		synchronized (jobStore) {
+			job = jobStore.get(thisJob);
+			if (job == null) {
+				job = new JobInfo(thisJob, thisR);
+				jobStore.put(thisJob, job);
 			}
 			
-			File f = new File(savePath+"/"+job+"/"+partition+".data");
-			if (!f.createNewFile()) {
-				logger.warning("Overwriting J="+job+", P="+partition);
-			}
-			fos = new FileOutputStream(f);
-			
-			
-			byte []buf = new byte[32*1024];
-			int n = 0;
-			int i;
-			
-			do {
-				i = is.read(buf);
-				if (i < 1) break;
-				
-				fos.write(buf, 0, i);
-				n += i;
-			} while (true);
-			
-			logger.info("Read "+n+" bytes from the client");
+		}
+		
+		if (job.isDone()) {
+			logger.info("Someone tried to save a partition to a finished job.. ignoring");
+
 			resp.setStatus(HttpURLConnection.HTTP_OK);
 			PrintWriter w = resp.getWriter();
 		
-			w.println("OK");
+			w.println("OK (job already done)");
 			w.flush();
-		} catch(IOException ie) {
-			error("Could not save! "+ie, req, resp);
-			throw ie;
-		} finally {
-			if (fos != null) { fos.close(); }
-			if (is != null) { is.close(); }
+			return;
 		}
-	}
-
-	private static void error(String msg, HttpServletRequest req, HttpServletResponse resp) throws IOException
-	{
-		resp.setStatus(HttpURLConnection.HTTP_INTERNAL_ERROR);
-		resp.setContentType("text/plain");
-		PrintWriter pw = resp.getWriter();
-		pw.println("ERROR: "+msg);
-		pw.close();
+		
+		job.savePartition(thisPartition, req, resp);
+		
+		
 	}
 	
-	private static int parseNumber(String s, String nameOfNumber, HttpServletRequest req, HttpServletResponse resp) throws IOException
+
+
+	
+	private class JobInfo 
 	{
-		int ret;
-		try {
-			ret = Integer.parseInt(s);
-		} catch(NullPointerException npe) {
-			error("Specify path so that the url ends with /job/partition (both as integers)", req, resp);
-			return -1;
-		} catch(NumberFormatException nfe) {
-			error(nameOfNumber+" ("+s+") is not a number: "+nfe, req, resp);
-			return -1;
+		private int jobId;
+		private int partitions;
+		private int numKeys;
+		private Set<Integer> savedPartitions;
+		private boolean done;
+		
+		private String fileName;
+		private Writer jobOutput;
+		
+		private JobInfo(int jobId, int partitions) throws IOException
+		{
+			this.numKeys = 0;
+			this.done = false;
+			this.jobId = jobId;
+			this.partitions = partitions;
+			this.savedPartitions = new HashSet<Integer>();
+			
+			this.fileName = savePath+"/"+this.jobId+".json"; 
+			
+			File f = new File(fileName);
+			if (!f.createNewFile()) {
+				logger.warning("Overwriting output file for job "+this.jobId);
+			}
+			
+			this.jobOutput = new OutputStreamWriter(new FileOutputStream(f), charset);
+			// Make sure there is enough room for any and all integer values 
+			this.jobOutput.write("[             \n"); 
 		}
-		return ret;
+		
+		private void savePartition(int partition, HttpServletRequest req, HttpServletResponse resp) throws IOException 
+		{
+			if (partition < 0 || partition >= partitions) {
+				Util.error("Partition "+partition+" is out of bounds! (this job has "+partitions+" partitions)", req, resp);
+				return;
+			}
+			
+			synchronized (savedPartitions) {
+				
+				if (savedPartitions.contains(partition)) {
+
+					resp.setStatus(HttpURLConnection.HTTP_OK);
+					PrintWriter w = resp.getWriter();
+				
+					w.println("OK (partition was already saved)");
+					w.flush();
+					return;
+				}
+				
+				try {
+					storeKeys(req.getInputStream());
+				} catch(IOException ie) {
+					logger.log(Level.SEVERE, "Could not store keys for partition "+partition+" (job "+jobId+")", ie);
+					Util.error(ie.getMessage(), req,resp);
+					return;
+				}
+				
+				savedPartitions.add(partition);
+				
+				if (savedPartitions.size() >= partitions) {
+					jobOutput.write("]\n");
+					jobOutput.flush();
+					jobOutput.close();
+					
+					// Write the number of keys
+					RandomAccessFile f = new RandomAccessFile(fileName, "rwd"); // make sure all updates are immediate
+					f.seek(2);
+					f.write(new Integer(numKeys).toString().getBytes(charset));
+					f.close();
+					
+					done = true;
+				}
+				
+				resp.setStatus(HttpURLConnection.HTTP_OK);
+				PrintWriter w = resp.getWriter();
+			
+				w.println("OK");
+				w.flush();
+			}
+		}
+		
+		private boolean isDone()
+		{
+			return done;
+		}
+		
+		private void storeKeys(InputStream is) throws IOException
+		{			
+			try {
+				InputStreamReader isr = new InputStreamReader(is, charset);
+				Map<Object, Object> keys = (Map<Object, Object>)JSON.parse(isr);
+			
+				int i = 0;
+				Map<Object, Object> tmp = new HashMap<Object, Object>();
+				for (Object key : keys.keySet()) {
+					i++;
+					tmp.clear();
+					tmp.put(key, keys.get(key));
+					
+					jobOutput.write(",");
+					jobOutput.write(JSON.toString(tmp));
+					jobOutput.write("\n");
+				}
+				
+				
+				logger.fine("Read "+i+" keys from the client");
+				numKeys += i;
+			
+			} finally {
+				if (is != null) { is.close(); }
+			}
+		}
 	}
 }

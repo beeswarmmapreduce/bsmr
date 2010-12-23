@@ -1,7 +1,7 @@
 #!/bin/bash
 
 CP=""
-for FILE in $(find master/jetty-*/lib/*); do
+for FILE in $(find master/jetty-*/lib/*) lib/*; do
 	CP=$CP":"$FILE
 done
 

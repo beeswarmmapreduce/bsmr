@@ -260,10 +260,21 @@ public class PartitionServlet extends HttpServlet
 		}
 		
 		private void storeKeys(InputStream is) throws IOException
-		{			
+		{		
+			StringBuffer bufferedMessage = new StringBuffer();
+			int i;
+			
 			try {
+				
+				
 				InputStreamReader isr = new InputStreamReader(is, charset);
-				Object jsonObj = JSON.parse(isr);
+				char [] buf = new char[256];
+				
+				while ( (i = isr.read(buf)) > 0) {
+					bufferedMessage.append(buf, 0, i);
+				}
+				
+				Object jsonObj = JSON.parse(bufferedMessage.toString());
 				
 				
 				Map<Object, Object> keys;
@@ -278,7 +289,7 @@ public class PartitionServlet extends HttpServlet
 				}
 				
 			
-				int i = 0;
+				i = 0;
 				Map<Object, Object> tmp = new HashMap<Object, Object>();
 				for (Object key : keys.keySet()) {
 					i++;
@@ -294,6 +305,9 @@ public class PartitionServlet extends HttpServlet
 				logger.fine("Read "+i+" keys from the client");
 				numKeys += i;
 			
+			} catch(RuntimeException re) {
+				logger.log(Level.SEVERE, "Throwable when parsing partition. Partition message: '"+bufferedMessage.toString()+"'", re);
+				throw re;
 			} finally {
 				if (is != null) { is.close(); }
 			}

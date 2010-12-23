@@ -42,6 +42,7 @@ var worker = (function() {
     function Job(spec) {
         this.spec = spec;
         this.jobId = spec.jobId;
+        this.inputRef = spec.inputRef;
         this.R = spec.R;
         this.M = spec.M;
         this.code = spec.code,
@@ -85,8 +86,7 @@ var worker = (function() {
     }
     MapTask.prototype.start = function() {
         worker.log('MapTask start() :' + this.splitId, 'log', LOG_INFO);
-        //worker.fs.fetchMapData(this.job.jobId, this.splitId);
-        this.job.ioCode.input.code.fetchMapData(this.job.jobId, this.splitId);
+        this.job.ioCode.input.code.fetchMapData(this.job.jobId, this.job.M, this.job.inputRef, this.splitId);
     }
     MapTask.prototype.onData = function(data) {
         worker.log('MapTask onData() :' + this.splitId, 'log', LOG_DEBUG);
@@ -190,7 +190,6 @@ var worker = (function() {
                 data: this.partitionData
             });
             worker.engine.sendMessage(m);
-            //this.job.ioCode.output.code.writeOutputFile(this.job.jobId, this.partitionId, worker.reduce.tasks[this.partitionId].getDataJSON());
             return;
         }
         var splitId = this.getNextSplitId();
@@ -222,7 +221,7 @@ var worker = (function() {
         worker.log('ReduceTask done() :' + this.partitionId, 'log', LOG_INFO);
         this.result = result;
         this.partitionData = null;
-        this.job.ioCode.output.code.writeOutputFile(this.job.jobId, this.partitionId, this.getDataJSON());
+        this.job.ioCode.output.code.writeOutputFile(this.job.jobId, this.job.R, this.partitionId, this.getDataJSON());
     }
     ReduceTask.prototype.getDataJSON = function() {
         return JSON.stringify(this.result);
@@ -651,7 +650,7 @@ var worker = (function() {
             },
             onError: function(req) {
                 /*[FIXME: beter error handling?]*/
-                worker.log('fs fetchMapData() failed: ' + req.status, 'log', LOG_INFO);
+                worker.log('fs fetchMapData() failed: ' + req.status, 'log', LOG_ERROR);
             },
             startTask: function(spec) {
                 /*[FIXME: check for job/split safety]*/
@@ -761,7 +760,7 @@ var worker = (function() {
                 }
             },
             onError: function(req) {
-                worker.log('fs writeOutputFile() failed: ' + req.status, 'log', LOG_INFO);
+                worker.log('fs writeOutputFile() failed: ' + req.status + ': ' + req.responseText, 'log', LOG_ERROR);
             }
         },
 
@@ -778,7 +777,7 @@ var worker = (function() {
                 }
             },
             onError: function(jobId, partitionId, splitId, location) {
-                worker.log('p2p fetchIntermediateData() failed: ' + location, 'log', LOG_INFO);
+                worker.log('p2p fetchIntermediateData() failed: ' + location, 'log', LOG_ERROR);
                 /*[FIXME: temporarily disable error handling]*/
                 //worker.reduce.tasks[partitionId].splits[splitId].onError(location);
             }

@@ -7,8 +7,9 @@ params = {
 function inputPlugin(params, onData, onError) {
     this.baseUrl = params['baseUrl'];
 
-    this.fetchMapData = function(jobId, splitId) {
-        var url = this.baseUrl + 'splits/' + jobId + '/' + splitId + '/';
+    this.fetchMapData = function(jobId, M, inputRef, splitId) {
+        var url = this.baseUrl + 'splits/' + inputRef + '-' + M + '/' + splitId + '/';
+        worker.log('in:url: ' + url, 'log', LOG_INFO);
 
         // connect to fs and retrieve split
         var req = new XMLHttpRequest();  

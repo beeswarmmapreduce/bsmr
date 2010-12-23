@@ -7,8 +7,10 @@ params = {
 function outputPlugin(params, onData, onError) {
     this.baseUrl = params['baseUrl'];
 
-    this.writeOutputFile = function(jobId, partitionId, data) {
-        var url = this.baseUrl + 'partitions/' + jobId + '/' + partitionId + '/';
+    this.writeOutputFile = function(jobId, R, partitionId, data) {
+        var url = this.baseUrl + 'partitions/' + jobId + '-' + R + '/' + partitionId + '/';
+        worker.log('out:url: ' + url, 'log', LOG_INFO);
+        worker.log('out:data: ' + data, 'log', LOG_ERROR);
 
         // connect to fs and upload partition
         var req = new XMLHttpRequest();  

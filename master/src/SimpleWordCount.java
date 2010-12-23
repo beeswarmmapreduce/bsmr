@@ -61,19 +61,16 @@ public class SimpleWordCount
 		GZIPInputStream gzis = new GZIPInputStream(fis);
 		SimpleWordCount swc = new SimpleWordCount(gzis, "\\W+");
 		
-		System.out.println("Calculating..");
+		System.out.println("Solving incredibly difficult differential equations..");
 		swc.count();
 		
 		System.out.println("Done! Write the name of the key to check word count");
 		
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 		
-		String s;
+		String key;
 		System.out.print("> "); System.out.flush();
-		while ( (s = br.readLine()) != null) {
-			
-			
-			String key = s; // .trim();
+		while ( (key = br.readLine()) != null) {
 			
 			MutableInteger mi = swc.counts.get(key);
 			System.out.println("'"+key+"': "+(mi != null ? mi.n : "N/A"));

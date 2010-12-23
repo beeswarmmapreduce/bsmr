@@ -22,7 +22,7 @@
     <servlet-class>fi.helsinki.cs.bsmr.fs.SplitServlet</servlet-class>
     <init-param>
     	<param-name>loadPath</param-name>
-    	<param-value>done</param-value>
+    	<param-value>data/</param-value>
     </init-param>
   </servlet>
 
@@ -31,7 +31,7 @@
     <servlet-class>fi.helsinki.cs.bsmr.fs.PartitionServlet</servlet-class>
     <init-param>
     	<param-name>savePath</param-name>
-    	<param-value>done</param-value>
+    	<param-value>data/</param-value>
     </init-param>
     <load-on-startup>2</load-on-startup>
   </servlet>

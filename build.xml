@@ -4,6 +4,9 @@
 		<fileset dir="master/jetty-distribution-8.0.0.M2/lib">
 			<include name="*.jar"/>
 		</fileset>
+		<fileset dir="master/lib">
+			<include name="*.jar"/>
+		</fileset>
 	</path>
 	
 	<property name="dest" location="master/bin"/>

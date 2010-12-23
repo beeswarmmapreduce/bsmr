@@ -43,14 +43,24 @@ http://localhost:8080/fs/partitions/1-5/2
 Example (raw) HTTP message.
 This can be tested e.g. via 'telnet localhost 8080', then paste the POST example message:
 
-POST /fs/partitions/1/321 HTTP/1.1
+POST /fs/partitions/1-5/321 HTTP/1.1
 Host: localhost
 User-Agent: foo
 Content-Type: text/plain
-Content-Length: 5
+Content-Length: 52
 
-12345
+{"key1":"value","key2":value"}
 
-This will save a file under the bsmr root directory done/1/321 (it will create the directories 
-necessary).
+The first partition will start a file in data/1.json which will be of format
+[ X
+,{"key1":"value"}
+,{"key2","value"}
+,{"key3","value"}
+...
+]
+
+Each new partition will add dicts to the file. The last partition will close the file and fill in X with the number of keys. In the example it would be 2
+
+See PartitionServlet.java or the javadoc for more information.
+
 

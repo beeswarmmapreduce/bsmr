@@ -26,28 +26,28 @@ var engine = (function() {
                 return (n % engine.map.job.R);
             },
             emit: function(k, v) {
-                try {
-                    var h = engine.map.hash(k);
-                    if (typeof(engine.map.result[h]) == 'undefined') {
-                        engine.map.result[h] = {};
-                    }
-                    if (typeof(engine.map.result[h][k]) == 'undefined') {
-                        engine.map.result[h][k] = [];
-                    }
-                    engine.map.result[h][k].push(v);
+                var h = engine.map.hash(k);
+                if (typeof(engine.map.result[h]) == 'undefined') {
+                    engine.map.result[h] = {};
                 }
-                catch(ex) {
-                    engine.log('MAP FAILED: ' + k + ', ' + h + ', ' + v);
-                    engine.log(ex + '');
+                if (typeof(engine.map.result[h][k]) == 'undefined') {
+                    engine.map.result[h][k] = [];
                 }
+                engine.map.result[h][k].push(v);
             },
             exec: function(spec) {
                 engine.map.reset(spec.job);
 
-                // eval and execute the code against the data
-                eval(spec.job.code);
-                engine.log('MAP FUNCTION: ' + map);
-                map('k1', spec.data, engine.map.emit);
+                try {
+                    /*[FIXME: what about k1?]*/
+                    // eval and execute the code against the data
+                    eval(spec.job.code);
+                    map('k1', spec.data, engine.map.emit);
+                }
+                catch(ex) {
+                    engine.log('MAP FAILED: k1');
+                    engine.log(ex + '');
+                }
 
                 // send back the result to the parent worker
                 var m = engine.createMessage(engine.TYPE_ENG, {
@@ -74,14 +74,19 @@ var engine = (function() {
             exec: function(spec) {
                 engine.reduce.reset(spec.job);
 
-                // eval and execute the code against the data
-                eval(spec.job.code);
-                engine.log('REDUCE FUNCTION: ' + reduce);
-                for (var k in spec.data) {
-                    var _emit = function(v) {
-                        engine.reduce.emit(k, v);
+                try {
+                    // eval and execute the code against the data
+                    eval(spec.job.code);
+                    for (var k in spec.data) {
+                        var _emit = function(v) {
+                            engine.reduce.emit(k, v);
+                        }
+                        reduce(k, spec.data[k], _emit);
                     }
-                    reduce(k, spec.data[k], _emit);
+                }
+                catch(ex) {
+                    engine.log('REDUCE FAILED: ' + k);
+                    engine.log(ex + '');
                 }
 
                 // send back the result to the parent worker
@@ -131,7 +136,7 @@ function onmessage(msg) {
     }
 }
 
-
+/*
 function _gP(o) {
     var s = '[';
     for (var p in o) {
@@ -139,4 +144,4 @@ function _gP(o) {
     }
     return (s + ']');
 }
-
+*/

@@ -31,7 +31,7 @@ function p2pPlugin(params, onData, onError) {
             ws.close();
         }
         ws.onclose = function() {
-            worker.log('p2p:close: ' + partitionId + ', ' + splitId + ', ' + location, 'log', LOG_ERROR);
+            worker.log('p2p:close: ' + partitionId + ', ' + splitId + ', ' + location, 'log', LOG_INFO);
             if (!msg) {
                 onError(jobId, partitionId, splitId, location);
             }

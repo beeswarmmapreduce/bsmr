@@ -26,8 +26,8 @@ var worker = (function() {
     var STATUS_REDUCING = 4;
 
     /* log levels */
-    var LOG_INFO  = 1;
-    var LOG_ERROR  = 2;
+    var LOG_ERROR  = 1;
+    var LOG_INFO  = 2;
     var LOG_DEBUG = 3;
 
     /* reduce task split modes */
@@ -72,7 +72,7 @@ var worker = (function() {
             this.ioCode.output.code = new outputPlugin(outputParams, worker.out.onData, worker.out.onError);
         }
         catch(ex) {
-            worker.log(ex, 'log', LOG_ERROR);
+            worker.log(ex, 'log', LOG_INFO);
         }
     }
 
@@ -99,7 +99,7 @@ var worker = (function() {
         worker.engine.sendMessage(m);
     }
     MapTask.prototype.done = function(result) {
-        worker.log('MapTask done() :' + this.splitId, 'log', LOG_INFO);
+        worker.log('MapTask done() - j: ' + this.job.jobId + ' s: ' + this.splitId, 'log', LOG_ERROR);
         this.result = result;
         worker.map.notifyTaskDone(this)
     }
@@ -126,6 +126,8 @@ var worker = (function() {
                 this.splits[i] = null;
             }
         }
+        this.partitionData = {};
+        this.result = {};
     }
     ReduceTask.prototype.start = function() {
         worker.log('ReduceTask start() :' + this.partitionId, 'log', LOG_INFO);
@@ -180,7 +182,15 @@ var worker = (function() {
     },
     ReduceTask.prototype.doSplit = function() {
         if (this.isDone()) {
-            this.job.ioCode.output.code.writeOutputFile(this.job.jobId, this.partitionId, worker.reduce.tasks[this.partitionId].getDataJSON());
+            var m = worker.createMessage(worker.TYPE_DO, {
+                action: 'reduce',
+                job: this.job.spec,
+                partitionId: this.partitionId,
+                splitId: this.splitId,
+                data: this.partitionData
+            });
+            worker.engine.sendMessage(m);
+            //this.job.ioCode.output.code.writeOutputFile(this.job.jobId, this.partitionId, worker.reduce.tasks[this.partitionId].getDataJSON());
             return;
         }
         var splitId = this.getNextSplitId();
@@ -194,20 +204,28 @@ var worker = (function() {
             }
         }
     }
-    ReduceTask.prototype.onSave = function(res) {
-        worker.log("reduceTask onSave() :" + res, 'log', LOG_DEBUG);
-        this.done();
+    ReduceTask.prototype.mergeSplit = function(data) {
+        for (var k in data) {
+            if (typeof(this.partitionData[k]) == 'undefined') {
+                this.partitionData[k] = data[k];
+            }
+            else {
+                this.partitionData[k].concat(data[k]);
+            }
+        }
     }
-    ReduceTask.prototype.done = function() {
-        worker.log('ReduceTask done() :' + this.partitionId, 'log', LOG_INFO);
+    ReduceTask.prototype.onSave = function(res) {
+        worker.log('ReduceTask onSave() - j: ' + this.job.jobId + ' p: ' + this.partitionId + ': ' + res, 'log', LOG_ERROR);
         worker.reduce.notifyTaskDone(this)
     }
+    ReduceTask.prototype.done = function(result) {
+        worker.log('ReduceTask done() :' + this.partitionId, 'log', LOG_INFO);
+        this.result = result;
+        this.partitionData = null;
+        this.job.ioCode.output.code.writeOutputFile(this.job.jobId, this.partitionId, this.getDataJSON());
+    }
     ReduceTask.prototype.getDataJSON = function() {
-        var outputFile = [];
-        for (var i=0; i<this.splits.length; i++) {
-            outputFile.push(this.splits[i].result);
-        }
-        return JSON.stringify(outputFile);
+        return JSON.stringify(this.result);
     }
 
     ReduceTaskFactory = function() {}
@@ -228,16 +246,12 @@ var worker = (function() {
         this.partitionId = partitionId;
         this.splitId = splitId;
         this.locations = locations;
-        if (!this.locations) {
-            worker.log('ReduceSplit() locations is null:' + this.partitionId + ',' + this.splitId, 'log', LOG_INFO);
-            this.locations = [];
-        }
         this._done = false;
         this.locationPtr = 0;
         this.retries = retries || 0;
         this._retried = 0;
 
-        this.result = null;
+        //this.result = null;
     }
     ReduceSplit.prototype.startLocal = function(data) {
         worker.log('ReduceSplit startLocal() :' + this.partitionId + ',' + this.splitId, 'log', LOG_INFO);
@@ -248,7 +262,7 @@ var worker = (function() {
         this.fetch();
     }
     ReduceSplit.prototype.fetch = function() {
-        worker.log('ReduceSplit fetch() [try: ' + this._retried + ']:' + this.partitionId + ',' + this.splitId + ',' + this.locationPtr, 'log', LOG_ERROR);
+        worker.log('ReduceSplit fetch() [try: ' + this._retried + ']:' + this.partitionId + ',' + this.splitId + ',' + this.locationPtr, 'log', LOG_INFO);
         this._retried++;
         if (this._retried > this.retries) {
             this._retried = 0;
@@ -269,6 +283,9 @@ var worker = (function() {
     }
     ReduceSplit.prototype.onData = function(data) {
         worker.log('reduceSplit onData() :' + this.partitionId + ',' + this.splitId, 'log', LOG_DEBUG);
+        worker.reduce.tasks[this.partitionId].mergeSplit(data);
+        this.done();
+        /*
         var m = worker.createMessage(worker.TYPE_DO, {
             action: 'reduce',
             job: this.job.spec,
@@ -277,15 +294,15 @@ var worker = (function() {
             data: data
         });
         worker.engine.sendMessage(m);
+        */
     }
     ReduceSplit.prototype.onError = function(location) {
-        worker.log('ReduceSplit onError() :' + this.partitionId + ',' + this.splitId, 'log', LOG_ERROR);
+        worker.log('ReduceSplit onError() :' + this.partitionId + ',' + this.splitId, 'log', LOG_INFO);
         worker.p2p.unreachable.push(location);
         this.fetch();
     }
-    ReduceSplit.prototype.done = function(result) {
+    ReduceSplit.prototype.done = function() {
         worker.log('ReduceSplit done() :' + this.partitionId + ',' + this.splitId, 'log', LOG_INFO);
-        this.result = result;
         this._done = true;
         worker.reduce.notifySplitDone(this);
     }
@@ -299,38 +316,13 @@ var worker = (function() {
         return new worker.ReduceSplit(job, partitionId, splitId, locations, retries);
     }
 
-    /*
-    function FsInputPlugin(spec) {
-        this.baseUrl = spec['baseUrl'];
-
-        this.fetchMapData = function(jobId, splitId) {
-            var url = this.baseUrl + 'splits/' + jobId + '/' + splitId + '/';
-
-            // connect to fs and retrieve split
-            var req = new XMLHttpRequest();  
-            req.open('GET', url, true);  
-            req.onreadystatechange = function(aEvt) {  
-                if (req.readyState == 4) {  
-                    if (req.status == 200) {
-                        worker.map.onData(jobId, splitId, req.responseText);
-                    }
-                    else {
-                        worker.map.onDataError(req);
-                    }
-                }  
-            };
-            req.send(null);  
-        }
-    }
-    */
-
     return {
         DEBUG: DEBUG,
         MASTER_WS_URL: MASTER_WS_URL,
 
         /* log levels (FIXME: duplication...) */
-        LOG_INFO:  LOG_INFO,
-        LOG_ERROR: LOG_ERROR,
+        LOG_ERROR:  LOG_ERROR,
+        LOG_INFO: LOG_INFO,
         LOG_DEBUG: LOG_DEBUG,
 
         /* reduce task split modes */
@@ -365,7 +357,7 @@ var worker = (function() {
         _reducemode: REDUCE_MODE_LOCAL_PRIORITY,
 
         /* current log level */
-        _loglevel: LOG_INFO,
+        _loglevel: LOG_ERROR,
 
         /* whether to inmmediately start work */
         _autostart: true,
@@ -383,7 +375,7 @@ var worker = (function() {
 
         init: function() {
             if (!worker._autostart) {
-                worker.log('No autoload. aborting init.', 'log', LOG_INFO);
+                worker.log('No autoload. aborting init.', 'log', LOG_ERROR);
                 return;
             }
 
@@ -463,7 +455,7 @@ var worker = (function() {
             worker.active.task = null;
             worker.active.tid = null;
 
-            worker.log('In idle state', 'log', LOG_INFO);
+            worker.log('In idle state', 'log', LOG_ERROR);
         },
         stop: function() {
             worker.master.stop();
@@ -495,7 +487,8 @@ var worker = (function() {
                             worker.map.tasks[msg.data.payload.splitId].done(msg.data.payload.data); 
                             break;
                         case 'reduce':
-                            worker.reduce.tasks[msg.data.payload.partitionId].splits[msg.data.payload.splitId].done(msg.data.payload.data); 
+                            //worker.reduce.tasks[msg.data.payload.partitionId].splits[msg.data.payload.splitId].done(msg.data.payload.data); 
+                            worker.reduce.tasks[msg.data.payload.partitionId].done(msg.data.payload.data); 
                             break;
                         default:    
                             // swallow for now
@@ -582,7 +575,7 @@ var worker = (function() {
                 else if (msg.type == worker.TYPE_CTL) {
                     worker.control.exec(msg.payload);
                 }
-                /*
+                /*//[FIXME: remove?]
                 else if (msg.type == worker.TYPE_FS) {
                     worker.fs.exec(msg.payload);
                 }
@@ -604,7 +597,7 @@ var worker = (function() {
             },
             onerror: function(e) {
                 /*[TODO]*/
-                worker.log('ws:error', 'log', LOG_ERROR);
+                worker.log('ws:error', 'log', LOG_INFO);
             },
             sendMessage: function(msg) {
                 worker.master.sendMessageExec(msg, false);
@@ -619,10 +612,6 @@ var worker = (function() {
         },
 
         heartbeat: {
-            /*TODO:
-                - restart hb timeout with every ack?
-                - delay the hb
-            */
             HB_INTERVAL_MS: 10000,
             tid: null,
 
@@ -654,7 +643,7 @@ var worker = (function() {
             tasks: [],
 
             onData: function(jobId, splitId, data) {
-                worker.log('map.onData: ' + jobId + ', ' + splitId, 'log', LOG_ERROR);
+                worker.log('map.onData: ' + jobId + ', ' + splitId, 'log', LOG_INFO);
                 worker.log('map.onData: ' + data, 'log', LOG_DEBUG);
                 if (typeof(worker.map.tasks[splitId].onData) == 'function') {
                     worker.map.tasks[splitId].onData(data);
@@ -662,7 +651,7 @@ var worker = (function() {
             },
             onError: function(req) {
                 /*[FIXME: beter error handling?]*/
-                worker.log('fs fetchMapData() failed: ' + req.status, 'log', LOG_ERROR);
+                worker.log('fs fetchMapData() failed: ' + req.status, 'log', LOG_INFO);
             },
             startTask: function(spec) {
                 /*[FIXME: check for job/split safety]*/
@@ -700,7 +689,7 @@ var worker = (function() {
                 worker.active.status = 'reduceTask';
             },
             startLocalSplit: function(reduceTask, splitId) {
-                var t = worker.ReduceSplitFactory.createInstance(reduceTask.job, reduceTask.partitionId, splitId, null, 0);
+                var t = worker.ReduceSplitFactory.createInstance(reduceTask.job, reduceTask.partitionId, splitId, [], 0);
                 worker.reduce.tasks[t.partitionId].splits[t.splitId] = t;
                 worker.reduce.tasks[t.partitionId].splits[t.splitId].startLocal(worker.reduce.getLocalSplit(t.partitionId, t.splitId));
                 worker.active.jobId = t.job.jobId;
@@ -765,8 +754,6 @@ var worker = (function() {
         /*
             interaction with the output file system */
         out: {
-            //FS_BASE_URI: 'http://localhost:8080/fs/',
-
             onData: function(partitionId, response) {
                 if (typeof(worker.reduce.tasks[partitionId].onSave) == 'function') {
                     worker.log('fs writeOutputFile(): ' + partitionId + ' OK: ' + response, 'log', LOG_INFO);
@@ -774,62 +761,8 @@ var worker = (function() {
                 }
             },
             onError: function(req) {
-                worker.log('fs writeOutputFile() failed: ' + req.status, 'log', LOG_ERROR);
-            },
-
-            /*
-            writeOutputFile: function(jobId, partitionId) {
-                // connect to fs and upload partition
-                var req = new XMLHttpRequest();  
-                req.open('POST', worker.fs.getPartitionUrl(jobId, partitionId), true);  
-                req.onreadystatechange = function(aEvt) {  
-                    if (req.readyState == 4) {  
-                        if (req.status == 200) {
-                            if (typeof(worker.reduce.tasks[partitionId].onSave) == 'function') {
-                                worker.reduce.tasks[partitionId].onSave(req.responseText);
-                            }
-                        }
-                        else {
-                            worker.log('fs writeOutputFile() failed: ' + req.status, 'log', LOG_ERROR);
-                        }
-                    }  
-                };
-                req.overrideMimeType('text/plain');
-                req.send(worker.reduce.tasks[partitionId].getDataJSON());
-            },
-            */
-
-            /*
-            fetchMapData: function(jobId, splitId) {
-                // connect to fs and retrieve split
-                var req = new XMLHttpRequest();  
-                req.open('GET', worker.fs.getSplitUrl(jobId, splitId), true);  
-                req.onreadystatechange = function(aEvt) {  
-                    if (req.readyState == 4) {  
-                        if (req.status == 200) {
-                            if (typeof(worker.map.tasks[splitId].onData) == 'function') {
-                                worker.map.tasks[splitId].onData(req.responseText);
-                            }
-                        }
-                        else {
-                            worker.log('fs fetchMapData() failed: ' + req.status, 'log', LOG_ERROR);
-                        }
-                    }  
-                };
-                req.send(null);  
-            },
-            */
-
-            /*
-            getPartitionUrl: function(jobId, partitionId) {
-                worker.log(worker.fs.FS_BASE_URI + 'partitions/' + jobId + '/' + partitionId + '/', 'log', LOG_DEBUG);
-                return worker.fs.FS_BASE_URI + 'partitions/' + jobId + '/' + partitionId + '/';
-            },
-            getSplitUrl: function(jobId, splitId) {
-                worker.log(worker.fs.FS_BASE_URI + 'splits/' + jobId + '/' + splitId + '/', 'log', LOG_DEBUG);
-                return worker.fs.FS_BASE_URI + 'splits/' + jobId + '/' + splitId + '/';
+                worker.log('fs writeOutputFile() failed: ' + req.status, 'log', LOG_INFO);
             }
-            */
         },
 
         /*
@@ -845,52 +778,10 @@ var worker = (function() {
                 }
             },
             onError: function(jobId, partitionId, splitId, location) {
-                worker.log('p2p fetchIntermediateData() failed: ' + location, 'log', LOG_ERROR);
+                worker.log('p2p fetchIntermediateData() failed: ' + location, 'log', LOG_INFO);
                 /*[FIXME: temporarily disable error handling]*/
                 //worker.reduce.tasks[partitionId].splits[splitId].onError(location);
-            },
-
-            /*
-            fetchIntermediateData: function(jobId, partitionId, splitId, location) {
-                worker.log('p2p.fetchIntermediateData() :' + partitionId + ',' + splitId + ',' + location, 'log', LOG_DEBUG);
-
-                var msg = null;
-                if (worker.server.isLocal(location)) {
-                    var data = worker.map.tasks[splitId].result[partitionId];
-                    worker.reduce.tasks[partitionId].splits[splitId].onData(data);
-                }
-                else {
-                    // go over network to get the data
-                    var ws = new WebSocket(location);
-                    ws.onopen = function() {
-                        var m = worker.createMessage(worker.TYPE_P2P, {
-                            action: 'download',
-                            jobId: jobId,
-                            partitionId: partitionId,
-                            splitId: splitId,
-                            location: location
-                        });
-                        this.send(JSON.stringify(m));
-                    }
-                    ws.onmessage = function(e) {
-                        msg = worker.readMessage(e.data);
-                        worker.log(e.data, 'log', LOG_DEBUG);
-                    }
-                    ws.onclose = function() {
-                        if (msg) {
-                            if (msg.payload.action == 'upload') {
-                                if (typeof(worker.reduce.tasks[msg.payload.partitionId].splits[msg.payload.splitId].onData) == 'function') {
-                                    worker.reduce.tasks[msg.payload.partitionId].splits[msg.payload.splitId].onData(msg.payload.data);
-                                }
-                            }
-                        }
-                    }
-                    ws.onerror = function() {
-                        worker.reduce.tasks[msg.payload.partitionId].splits[msg.payload.splitId].onDataError(location);
-                    }
-                }
             }
-            */
         },
 
         /*
@@ -933,32 +824,32 @@ var worker = (function() {
                                     data: data
                                 });
                                 var j = JSON.stringify(m);
-                                worker.log('bs:handler:send: ' + msg.payload.partitionId + ', ' + msg.payload.splitId + ', ' + j.length, 'log', LOG_INFO);
+                                worker.log('bs:handler:send: ' + msg.payload.partitionId + ', ' + msg.payload.splitId + ', ' + j.length, 'log', LOG_DEBUG);
                                 this.send(j);
                                 break;
                             default:
                                 // swallow for now
                         }
                     }
-                    worker.log('bs:handler:onmessage: ' + msg.payload.partitionId + ', ' + msg.payload.splitId + ', ' + e.data, 'log', LOG_ERROR);
+                    worker.log('bs:handler:onmessage: ' + msg.payload.partitionId + ', ' + msg.payload.splitId + ', ' + e.data, 'log', LOG_INFO);
                     this.close();
                 }
                 this.onopen = function(e) { 
                     /*[TODO]*/
-                    worker.log('bs:handler:open', 'log', LOG_ERROR);
+                    worker.log('bs:handler:open', 'log', LOG_INFO);
                 }
                 this.onclose = function(e) {
                     /*[TODO]*/
-                    worker.log('bs:handler:close', 'log', LOG_ERROR);
+                    worker.log('bs:handler:close', 'log', LOG_INFO);
                 }
                 this.onerror = function(e) {
                     /*[TODO]*/
-                    worker.log('bs:handler:error: ' + e.data, 'log', LOG_ERROR);
+                    worker.log('bs:handler:error: ' + e.data, 'log', LOG_INFO);
                 }
             },
             onerror: function(e) {
                 /*[TODO]*/
-                worker.log('bs:error', 'log', LOG_ERROR);
+                worker.log('bs:error', 'log', LOG_INFO);
             },
             isLocal: function(addr) {
                 if (addr) {
@@ -986,7 +877,7 @@ var worker = (function() {
         },
         setStatus: function(status, msg) {
             if (msg) {
-                worker.log(msg, 'log', LOG_INFO);
+                worker.log(msg, 'log', LOG_ERROR);
             }
             worker.status = status;
         },

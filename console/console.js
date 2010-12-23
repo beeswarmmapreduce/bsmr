@@ -484,6 +484,7 @@ var konk = (function() {
                     konk.log(code);
                     var m = konk.createMessage(konk.TYPE_ADDJOB, {
                         code: code,
+                        inputRef: $('#inputRef').val(),
                         R: $('#R').val(),
                         M: $('#M').val(),
                         heartbeatTimeout: $('#heartbeatTimeout').val(),

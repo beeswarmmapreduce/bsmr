@@ -422,10 +422,10 @@ public class Message
 	{
 		if (map == null) return null;
 		
-		Long tmp = (Long)map.get(FIELD_SPLITID);
-		if (tmp == null) return null;
+		Object o = map.get(FIELD_SPLITID);
+		if (o == null) return null;
 		
-		Split s = new Split(tmp.intValue());
+		Split s = new Split(Util.getIntFromJSONObject(o));
 		return new MapStatus(s);
 	}
 	
@@ -466,15 +466,15 @@ public class Message
 	{
 		if (map == null) return null;
 		
-		Long tmp1 = (Long)map.get(FIELD_SPLITID);
-		Long tmp2 = (Long)map.get(FIELD_PARTITIONID);
-		
 		Split s = null;
-		if (tmp1 != null) s = new Split(tmp1.intValue());
-		
 		Partition p = null;
-		if (tmp2 != null) p = new Partition(tmp2.intValue());
-
+		
+		Object o1 = map.get(FIELD_SPLITID);
+		Object o2 = map.get(FIELD_PARTITIONID);
+		
+		if (o1 != null) s = new Split(Util.getIntFromJSONObject(o1));
+		if (o2 != null) p = new Partition(Util.getIntFromJSONObject(o2));
+		
 		// TODO: no locations in ACK messsages
 		
 		return new ReduceStatus(p, s, null);

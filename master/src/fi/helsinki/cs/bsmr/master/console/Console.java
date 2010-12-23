@@ -130,9 +130,10 @@ public class Console implements WebSocket
 		int partitions         = Util.getIntFromJSONObject(payload.get(Message.FIELD_NUM_PARTITIONS));
 		int heartbeatTimeout   = Util.getIntFromJSONObject(payload.get("heartbeatTimeout"));
 		int acknowledgeTimeout = Util.getIntFromJSONObject(payload.get("progressTimeout"));
-		Object code            = payload.get("code");
+		Object code            = payload.get(Message.FIELD_CODE);
+		Object inputRef        = payload.get(Message.FIELD_INPUTREF);
 		
-		Job newJob = master.createJob(splits, partitions, heartbeatTimeout, acknowledgeTimeout, code);
+		Job newJob = master.createJob(splits, partitions, heartbeatTimeout, acknowledgeTimeout, code, inputRef);
 		
 		logger.info("Adding new job: "+newJob);
 		try {

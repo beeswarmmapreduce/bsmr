@@ -251,7 +251,7 @@ public abstract class MasterStoreImpl implements MasterContext
 	}
 
 	@Override
-	public Job createJob(int splits, int partitions, int heartbeatTimeout, int acknowledgeTimeout, Object code)
+	public Job createJob(int splits, int partitions, int heartbeatTimeout, int acknowledgeTimeout, Object code, Object inputRef)
 	{
 		Job ret;
 		
@@ -263,7 +263,7 @@ public abstract class MasterStoreImpl implements MasterContext
 				thisJob = (int)((System.currentTimeMillis()/100) % Integer.MAX_VALUE);
 				
 			} while (jobMap.containsKey(thisJob));
-			ret = new Job(thisJob, splits, partitions, heartbeatTimeout, acknowledgeTimeout, code);
+			ret = new Job(thisJob, splits, partitions, heartbeatTimeout, acknowledgeTimeout, code, inputRef);
 			jobMap.put(thisJob, ret); // auto-boxing
 		}
 		

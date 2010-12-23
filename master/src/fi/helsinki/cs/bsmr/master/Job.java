@@ -33,7 +33,7 @@ public class Job
 	private long finishTime;
 	
 	private Object code;
-	
+	private Object inputRef;
 	
 	/**
 	 * Create a new job
@@ -45,7 +45,7 @@ public class Job
 	 * @param acknowledgeTimeout The acknowledgment timeout.
 	 * @param code The code the workers are sent.
 	 */
-	Job(int jobId, int splits, int partitions, int heartbeatTimeout, int acknowledgeTimeout, Object code)
+	Job(int jobId, int splits, int partitions, int heartbeatTimeout, int acknowledgeTimeout, Object code, Object inputRef)
 	{
 		this.jobId = jobId;
 		this.state = State.NEW;
@@ -57,6 +57,7 @@ public class Job
 		this.acknowledgeTimeout = acknowledgeTimeout;
 		
 		this.code = code;
+		this.inputRef = inputRef;
 	}
 	
 	/**
@@ -133,6 +134,10 @@ public class Job
 
 	public Object getCode() {
 		return code;
+	}
+
+	public Object getInputRef() {
+		return inputRef;
 	}
 	
 	public long getStartTime()

@@ -92,7 +92,7 @@ public interface MasterContext
 	 * @see Job#Job(int, int, int, int, int, Object)
 	 * @return the new Job.
 	 */
-	public Job     createJob(int splits, int partitions, int heartbeatTimeout, int acknowledgeTimeout, Object code);
+	public Job     createJob(int splits, int partitions, int heartbeatTimeout, int acknowledgeTimeout, Object code, Object inputRef);
 	
 	/**
 	 * Retrieve the job object for the unique id.

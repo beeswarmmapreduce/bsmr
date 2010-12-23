@@ -52,8 +52,8 @@ public class Message
 	public static final String FIELD_SOCKET_PORT     = "port";
 	public static final String FIELD_SOCKET_RESOURCE = "resource";
 	
-	
 	public static final String FIELD_CODE = "code";
+	public static final String FIELD_INPUTREF = "inputRef";
 	
 	private Type type;
 	private Action action;
@@ -301,6 +301,7 @@ public class Message
 		jobMap.put(FIELD_NUM_SPLITS, job.getSplits());
 		jobMap.put(FIELD_NUM_PARTITIONS, job.getPartitions());
 		jobMap.put(FIELD_CODE, job.getCode());
+		jobMap.put(FIELD_INPUTREF, job.getInputRef());
 		return jobMap;
 	}
 	

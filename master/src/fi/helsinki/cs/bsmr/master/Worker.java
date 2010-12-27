@@ -116,6 +116,9 @@ public class Worker implements WebSocket
 	{
 		TimeContext.markTime();
 		
+		// This check cannot be perfect, but we try to retrieve the information as early as possible
+		boolean hasQueuedMessage = hasQueuedMessage();
+		
 		if (logger.isLoggable(Level.FINE)) {
 			logger.finest( "onMessage(): '"+jsonMsg+"' (frame "+frame+")");
 		}	
@@ -174,7 +177,9 @@ public class Worker implements WebSocket
 					return;
 				}
 
-				if (hasQueuedMessage()) {
+				// Do not use the function. Instead use the value provided by the function at onMessage()
+				// Messages might still fall through the cracks (both the worker and master send out messages at the same time).
+				if (hasQueuedMessage) {
 					logger.fine("Worker idle and there's work to do. BUT! There's a queued message for this worker, so we wait...");
 					return;
 				}

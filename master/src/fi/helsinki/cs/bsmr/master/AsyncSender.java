@@ -315,4 +315,19 @@ public class AsyncSender implements Runnable
 			}
 		}
 	}
+
+	public boolean hasTasksFor(Outbound out) 
+	{
+		boolean ret = false;
+		
+		synchronized (messageQueue) {
+			for (Task t : messageQueue) {
+				if (t.out == out) {
+					ret = true;
+					break;
+				}
+			}
+		}
+		return ret;
+	}
 }

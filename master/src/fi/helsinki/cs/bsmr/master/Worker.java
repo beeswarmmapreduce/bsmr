@@ -173,6 +173,12 @@ public class Worker implements WebSocket
 					logger.finest("heartbeat");
 					return;
 				}
+
+				if (hasQueuedMessage()) {
+					logger.fine("Worker idle and there's work to do. BUT! There's a queued message for this worker, so we wait...");
+					return;
+				}
+				
 				logger.fine("Worker idle but there's work to do. Let's give it some!");
 			}
 
@@ -292,6 +298,16 @@ public class Worker implements WebSocket
 		}
 	}
 
+	public boolean hasQueuedMessage()
+	{
+		boolean ret;
+		synchronized (out) {
+			AsyncSender sender = AsyncSender.getSender(master);
+			ret = sender.hasTasksFor(out);
+		}
+		return ret;
+	}
+	
 	/**
 	 * Get the Socket URL for this worker. Note that the URL is actually stored in the master for which the worker
 	 * is created for.

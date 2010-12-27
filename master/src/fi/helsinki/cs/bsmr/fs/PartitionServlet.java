@@ -191,6 +191,7 @@ public class PartitionServlet extends HttpServlet
 			this.partitions = partitions;
 			this.savedPartitions = new HashSet<Integer>();
 			
+			logger.fine("Creating result file "+fileName);
 			this.fileName = savePath+"/"+this.jobId+".json"; 
 			
 			File f = new File(fileName);
@@ -233,6 +234,7 @@ public class PartitionServlet extends HttpServlet
 				savedPartitions.add(partition);
 				
 				if (savedPartitions.size() >= partitions) {
+					logger.fine("Finalizing output file "+fileName);
 					jobOutput.write("]\n");
 					jobOutput.flush();
 					jobOutput.close();

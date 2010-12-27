@@ -89,7 +89,7 @@ public interface MasterContext
 	
 	/**
 	 * Create a new job. The Master is responsible for creating a unique id for the job.
-	 * @see Job#Job(int, int, int, int, int, Object)
+	 * @see Job#Job(int, int, int, int, int, Object, Object)
 	 * @return the new Job.
 	 */
 	public Job     createJob(int splits, int partitions, int heartbeatTimeout, int acknowledgeTimeout, Object code, Object inputRef);

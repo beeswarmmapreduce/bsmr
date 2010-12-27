@@ -7,7 +7,8 @@ import java.util.logging.Logger;
 import org.codehaus.jackson.map.ObjectMapper;
 
 
-public class JSON {
+public class JSON 
+{
 	private static Logger logger = Logger.getLogger(JSON.class.getCanonicalName());
 	
 	public static Map<?,?> getJSONMapForJob(String s)
@@ -21,8 +22,6 @@ public class JSON {
 			logger.log(Level.SEVERE, "Could not parse JSON string '"+s+"'", e);
 			return null; 
 		}
-		
-		//System.out.println("got: "+ret);
 		
 		return ret;
 	}
@@ -45,7 +44,7 @@ public class JSON {
 			logger.log(Level.SEVERE, "Could not parse object to JSON '"+o+"'", e);
 			return null; 
 		}
-		//System.out.println("sending: "+ret);
+
 		return ret;
 	}
 	

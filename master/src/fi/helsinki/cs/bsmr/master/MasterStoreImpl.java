@@ -11,6 +11,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import fi.helsinki.cs.bsmr.master.console.Console;
+import fi.helsinki.cs.bsmr.master.console.ConsoleInformation;
 
 /**
  * Implementation of object storage parts of the MasterContext interface.
@@ -151,12 +152,14 @@ public abstract class MasterStoreImpl implements MasterContext
 		
 		if (activeJob != null) {
 			jobHistory.add(activeJob);
+			activeJob = null;
 		}
 		
 		activeJob = jobQueue.remove(0);
 		activeJob.startJob();
 		
-		Message dummyStatus = Message.pauseMessage();
+		// this is needed as selectTaskForWorker depends on a request message
+		Message dummyMsg = Message.pauseMessage();
 		
 		for (Worker w : getWorkers()) {
 			// TODO: update this comment to the year 2010. 
@@ -165,7 +168,7 @@ public abstract class MasterStoreImpl implements MasterContext
 			// it is difficult to verify) that sendMessage() is in fact synchronous.
 			if (!w.isAvailable(activeJob)) continue;
 			
-			Message msg = selectTaskForWorker(w, dummyStatus);
+			Message msg = selectTaskForWorker(w, dummyMsg);
 			
 			w.sendAsyncMessage(msg, 1000); // TODO: use a static 1s ramp up for now. Add it to Job parameters if deemed necessary
 			
@@ -300,6 +303,18 @@ public abstract class MasterStoreImpl implements MasterContext
 	public Set<Console> getConsoles()
 	{
 		return Collections.unmodifiableSet(consoles);
+	}
+	
+	@Override
+	public ConsoleInformation getConsoleInformation()
+	{
+		ConsoleInformation ci;
+		
+		synchronized (this) {
+			ci = new ConsoleInformation(this);
+		}
+
+		return ci;
 	}
 
 }

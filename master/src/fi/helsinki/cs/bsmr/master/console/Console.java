@@ -173,7 +173,7 @@ public class Console implements WebSocket
 	 */
 	public void sendStatus()
 	{
-		ConsoleInformation ci = new ConsoleInformation(master);
+		ConsoleInformation ci = master.getConsoleInformation();
 		String msg = ci.toJSONString();
 		sendMessage(msg);
 	}

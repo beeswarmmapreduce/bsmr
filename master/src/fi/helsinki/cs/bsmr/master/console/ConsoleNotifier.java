@@ -82,17 +82,12 @@ public class ConsoleNotifier implements Runnable
 			
 			TimeContext.markTime();
 			
-			String msg;
-			
-			synchronized (master) {
-				ConsoleInformation ci = new ConsoleInformation(master);
-				msg = ci.toJSONString();
-			}
-			
+			ConsoleInformation ci = master.getConsoleInformation();
+				
 			synchronized (Console.class) { // See Console.onDisconnect()
 				logger.finest("Informing all "+master.getConsoles().size()+" consoles");
 				for (Console c : master.getConsoles()) {
-					c.sendMessage(msg);
+					c.sendMessage(ci.toJSONString());
 				}
 			}
 

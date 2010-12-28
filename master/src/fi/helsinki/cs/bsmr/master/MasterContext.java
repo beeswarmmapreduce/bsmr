@@ -5,6 +5,7 @@ import java.util.Set;
 
 
 import fi.helsinki.cs.bsmr.master.console.Console;
+import fi.helsinki.cs.bsmr.master.console.ConsoleInformation;
 
 /**
  * Defines methods needed to implement a BSMR master
@@ -176,5 +177,10 @@ public interface MasterContext
 	 * @return Get a full list of Consoles attached to this master
 	 */
 	public Set<Console> getConsoles();
+
+	/**
+	 * @return A collection of information needed for status messages 
+	 */
+	public ConsoleInformation getConsoleInformation();
 	
 }

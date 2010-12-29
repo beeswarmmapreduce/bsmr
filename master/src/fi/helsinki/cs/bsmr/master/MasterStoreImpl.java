@@ -30,7 +30,11 @@ public abstract class MasterStoreImpl implements MasterContext
 	private Map<Worker, String> URLForWorker;
 	
 	// Job ID -> Job
-	private Map<Integer, Job> jobMap; 
+	private Map<Integer, Job> jobMap;
+	
+	// A copy of the real jobMap used for transient read operations. This allows
+	// for concurrent parsing of IDs to Jobs.
+	private Map<Integer, Job> readOnlyJobMap; 
 	
 	private List<Job> jobQueue;
 	private List<Job> jobHistory;
@@ -50,6 +54,7 @@ public abstract class MasterStoreImpl implements MasterContext
 		jobHistory = new LinkedList<Job>();
 		
 		jobMap     = new HashMap<Integer, Job>();
+		readOnlyJobMap   = new HashMap<Integer, Job>();
 		
 		consoles   = new HashSet<Console>();
 	}
@@ -216,6 +221,7 @@ public abstract class MasterStoreImpl implements MasterContext
 				
 		}
 		
+		copyJobMap();
 	}
 	
 	@Override
@@ -268,17 +274,27 @@ public abstract class MasterStoreImpl implements MasterContext
 			} while (jobMap.containsKey(thisJob));
 			ret = new Job(thisJob, splits, partitions, heartbeatTimeout, acknowledgeTimeout, code, inputRef);
 			jobMap.put(thisJob, ret); // auto-boxing
+			
+			copyJobMap();
 		}
 		
 		logger.info("Created new Job "+ret);
 		
+		
+		
 		return ret;
+	}
+	
+	private void copyJobMap()
+	{
+		Map<Integer, Job> tmp = new HashMap<Integer, Job>(jobMap);
+		readOnlyJobMap = tmp;
 	}
 	
 	@Override
 	public Job getJobById(int jobId)
 	{
-		return jobMap.get(jobId); // auto-boxing
+		return readOnlyJobMap.get(jobId); // auto-boxing
 	}
 	
 	// **************************** Console functionality

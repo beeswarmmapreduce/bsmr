@@ -182,7 +182,10 @@
                 <p>
                     <label for="code" class="textarea">Job code</label>
                     <textarea id="jobCode">
-                    function map(k, data, emit) { var ws = data.split(/\b/); for (var w in ws) { emit(ws[w], 1); } }
+                    /*function map(k, data, emit) { var ws = data.split(/\b/); for (var w in ws) { emit(ws[w], 1); } } */
+                    
+                    function map(k, data, emit) { var ws = data.split(""); for (var w in ws) { emit(ws[w], 1); } }
+                    
                     function reduce(k, vs, emit) { var tot = 0; for (var v in vs) { tot += vs[v]; } emit(tot); }
                     </textarea>
                 </p>

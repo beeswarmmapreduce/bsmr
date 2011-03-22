@@ -1,14 +1,15 @@
 /**
- worker.js
-
- BrowserSocket MapReduce
- worker node bootstrap and controller.
- Spawns a Web Worker thread which performs the actual work.
- 
- Konrad Markus <konker@gmail.com>
+ * worker.js
+ * 
+ * BrowserSocket MapReduce worker node bootstrap and controller. Spawns a Web
+ * Worker thread which performs the actual work.
+ * 
+ * Konrad Markus <konker@gmail.com>
  */
 
-var worker = (function() {
+var worker = (
+	
+	function() {
     /* the websocket url of the master to which this worker should use */
     var MASTER_WS_URL = 'ws://127.0.0.1:8080/bsmr/';
 
@@ -112,7 +113,7 @@ var worker = (function() {
     
 
     /* ReduceTask class */
-    function ReduceTask(jobSpec, partitionId) {
+    function ReduceTask(jobSpec, partitionId)                   {
         this.splits = [];
         this._mode = worker._reducemode;
         this._looped = false;
@@ -250,7 +251,7 @@ var worker = (function() {
         this.retries = retries || 0;
         this._retried = 0;
 
-        //this.result = null;
+        // this.result = null;
     }
     ReduceSplit.prototype.startLocal = function(data) {
         worker.log('ReduceSplit startLocal() :' + this.partitionId + ',' + this.splitId, 'log', LOG_INFO);
@@ -285,15 +286,10 @@ var worker = (function() {
         worker.reduce.tasks[this.partitionId].mergeSplit(data);
         this.done();
         /*
-        var m = worker.createMessage(worker.TYPE_DO, {
-            action: 'reduce',
-            job: this.job.spec,
-            partitionId: this.partitionId,
-            splitId: this.splitId,
-            data: data
-        });
-        worker.engine.sendMessage(m);
-        */
+		 * var m = worker.createMessage(worker.TYPE_DO, { action: 'reduce', job:
+		 * this.job.spec, partitionId: this.partitionId, splitId: this.splitId,
+		 * data: data }); worker.engine.sendMessage(m);
+		 */
     }
     ReduceSplit.prototype.onError = function(location) {
         worker.log('ReduceSplit onError() :' + this.partitionId + ',' + this.splitId, 'log', LOG_INFO);
@@ -468,7 +464,8 @@ var worker = (function() {
         },
 
         /*
-            web worker thread that does the actual work */
+		 * web worker thread that does the actual work
+		 */
         engine: {
             thread: null,
 
@@ -486,7 +483,7 @@ var worker = (function() {
                             worker.map.tasks[msg.data.payload.splitId].done(msg.data.payload.data); 
                             break;
                         case 'reduce':
-                            //worker.reduce.tasks[msg.data.payload.partitionId].splits[msg.data.payload.splitId].done(msg.data.payload.data); 
+                            // worker.reduce.tasks[msg.data.payload.partitionId].splits[msg.data.payload.splitId].done(msg.data.payload.data);
                             worker.reduce.tasks[msg.data.payload.partitionId].done(msg.data.payload.data); 
                             break;
                         default:    
@@ -505,13 +502,14 @@ var worker = (function() {
         },
 
         /*
-            websockets connection to the master server */
+		 * websockets connection to the master server
+		 */
         master: {
             /* the main ws channel to the master */
             ws: null,
 
             init: function() {
-                /*[TODO: should we have a protocol here?] */
+                /* [TODO: should we have a protocol here?] */
                 worker.master.ws = new WebSocket(MASTER_WS_URL, "worker");
                 worker.master.ws.onopen = worker.master.onopen;
                 worker.master.ws.onclose = worker.master.onclose;
@@ -544,9 +542,10 @@ var worker = (function() {
                 worker.master.ws.onmessage = worker.master.onmessage;
             },
 
-            /* 
-                if we receive a message from the master,
-                forward it to the engine thread */
+            /*
+			 * if we receive a message from the master, forward it to the engine
+			 * thread
+			 */
             onmessage: function(e) {
                 var msg = worker.readMessage(e.data);
                 if (msg.type == worker.TYPE_DO) {
@@ -568,17 +567,16 @@ var worker = (function() {
                     }
                 }
                 else if (msg.type == worker.TYPE_P2P) {
-                    //worker.reduce.startUploaded(msg.payload);
+                    // worker.reduce.startUploaded(msg.payload);
                     worker.p2p.exec(msg.payload);
                 }
                 else if (msg.type == worker.TYPE_CTL) {
                     worker.control.exec(msg.payload);
                 }
-                /*//[FIXME: remove?]
-                else if (msg.type == worker.TYPE_FS) {
-                    worker.fs.exec(msg.payload);
-                }
-                */
+                /*
+				 * //[FIXME: remove?] else if (msg.type == worker.TYPE_FS) {
+				 * worker.fs.exec(msg.payload); }
+				 */
                 worker.log(msg, 'm', LOG_DEBUG);
             },
             onopen: function(e) { 
@@ -595,7 +593,7 @@ var worker = (function() {
                 worker.stop();   
             },
             onerror: function(e) {
-                /*[TODO]*/
+                /* [TODO] */
                 worker.log('ws:error', 'log', LOG_INFO);
             },
             sendMessage: function(msg) {
@@ -637,7 +635,8 @@ var worker = (function() {
         },
 
         /*
-            map tasks */
+		 * map tasks
+		 */
         map: {
             tasks: [],
 
@@ -649,11 +648,11 @@ var worker = (function() {
                 }
             },
             onError: function(req) {
-                /*[FIXME: beter error handling?]*/
+                /* [FIXME: beter error handling?] */
                 worker.log('fs fetchMapData() failed: ' + req.status, 'log', LOG_ERROR);
             },
             startTask: function(spec) {
-                /*[FIXME: check for job/split safety]*/
+                /* [FIXME: check for job/split safety] */
                 var t = worker.MapTaskFactory.createInstance(spec.job, spec.mapStatus.splitId);
                 worker.map.tasks[t.splitId] = t;
                 worker.map.tasks[t.splitId].start();
@@ -667,7 +666,7 @@ var worker = (function() {
                     mapStatus: {
                         splitId: t.splitId
                     },
-                    reduceStatus: null, //TODO
+                    reduceStatus: null, // TODO
                     jobId: t.job.jobId
                 });
                 worker.master.sendMessage(m);
@@ -676,7 +675,7 @@ var worker = (function() {
         },
 
         reduce: {
-            //FIXME: there should only be one reduce task at any one time?
+            // FIXME: there should only be one reduce task at any one time?
             tasks: [],
 
             startTask: function(spec) {
@@ -733,7 +732,8 @@ var worker = (function() {
                     worker.map.tasks[splitId].result &&
                     worker.map.tasks[splitId].completed) {
 
-                    // if local map task results for this split exists return true
+                    // if local map task results for this split exists return
+					// true
                     return true;
                 }
                 return false;
@@ -751,7 +751,8 @@ var worker = (function() {
         },
 
         /*
-            interaction with the output file system */
+		 * interaction with the output file system
+		 */
         out: {
             onData: function(partitionId, response) {
                 if (typeof(worker.reduce.tasks[partitionId].onSave) == 'function') {
@@ -765,7 +766,8 @@ var worker = (function() {
         },
 
         /*
-            interaction with other worker nodes via browsersockets */
+		 * interaction with other worker nodes via browsersockets
+		 */
         p2p: {
             unreachable: [],
 
@@ -778,13 +780,14 @@ var worker = (function() {
             },
             onError: function(jobId, partitionId, splitId, location) {
                 worker.log('p2p fetchIntermediateData() failed: ' + location, 'log', LOG_ERROR);
-                /*[FIXME: temporarily disable error handling]*/
-                //worker.reduce.tasks[partitionId].splits[splitId].onError(location);
+                /* [FIXME: temporarily disable error handling] */
+                // worker.reduce.tasks[partitionId].splits[splitId].onError(location);
             }
         },
 
         /*
-            browsersocket connection to other worker nodes */
+		 * browsersocket connection to other worker nodes
+		 */
         server: {
             /* the browsersocket for communicating with other worker nodes */
             bs: null,
@@ -805,7 +808,7 @@ var worker = (function() {
             },
             handler: function(req) {
                 this.onmessage = function(e) {
-                    /*[TODO]*/
+                    /* [TODO] */
                     var msg = worker.readMessage(e.data);
                     if (msg.type == worker.TYPE_P2P) {
                         switch (msg.payload.action) {
@@ -834,20 +837,20 @@ var worker = (function() {
                     this.close();
                 }
                 this.onopen = function(e) { 
-                    /*[TODO]*/
+                    /* [TODO] */
                     worker.log('bs:handler:open', 'log', LOG_INFO);
                 }
                 this.onclose = function(e) {
-                    /*[TODO]*/
+                    /* [TODO] */
                     worker.log('bs:handler:close', 'log', LOG_INFO);
                 }
                 this.onerror = function(e) {
-                    /*[TODO]*/
+                    /* [TODO] */
                     worker.log('bs:handler:error: ' + e.data, 'log', LOG_INFO);
                 }
             },
             onerror: function(e) {
-                /*[TODO]*/
+                /* [TODO] */
                 worker.log('bs:error', 'log', LOG_INFO);
             },
             isLocal: function(addr) {
@@ -900,13 +903,8 @@ var worker = (function() {
 })();
 window.addEventListener('load', worker.init, false);
 
-/*[TODO: scrap] */
+/* [TODO: scrap] */
 /*
-function _gP(o) {
-    var s = '[';
-    for (var p in o) {
-        s += p + '->' + o[p] + ', ';
-    }
-    return (s + ']');
-}
-*/
+ * function _gP(o) { var s = '['; for (var p in o) { s += p + '->' + o[p] + ', '; }
+ * return (s + ']'); }
+ */

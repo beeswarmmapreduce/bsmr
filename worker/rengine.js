@@ -39,13 +39,13 @@ Rengine.prototype.reset = function(partitionId, splitId) {
 }
 
 Rengine.prototype.startWrite = function(splitId) {
-    this.split = splitId;
+    this.currentSplit = splitId;
 }
 
 Rengine.prototype.write = function(pairs, more) {
     this._reduceSome(pairs);
     if (!more) {
-        this.job.onSplitComplete(this.splitId);
+        this.job.onSplitComplete(this.currentSplit);
     }
 }
 

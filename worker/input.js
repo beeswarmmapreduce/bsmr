@@ -18,6 +18,7 @@ Input.prototype.start = function(splitId) {
 }
 
 function Fake(splitId, M) {
+    this.ret = this._repe(8);
     var pairs = this._createseq(splitId, M);
     this._buffer = this._parts(pairs);
 }
@@ -32,28 +33,26 @@ Fake.prototype.request = function() {
 
 Fake.prototype._parts = function(pairs) {
     var buffer = [];
-    var part = [];
-    var i = 0;
-    var pair;
-    while (pair = pairs.pop()) {
-        if (i > 4) {
-            buffer.push(part);
-            i = 0;
-            parts = [];
+    var current = [];
+    for (var i in pairs) {
+        pair = pairs[i];
+        current.push(pair);
+        if (Math.random() > 0.5) {
+            buffer.push(current);
+            current = [];
         }
-        part.push(pair);
-        i += 1;
     }
+    buffer.push(current);
     return buffer;
 }
 
 Fake.prototype._createseq = function(splitId, M) {
-    var ret = this._repe(4);
-    var rlen = ret.length;
-    var splitLen = Math.floor(rlen / M);
-    var s = ret.substr(splitId * splitLen, splitLen)
+    var rlen = this.ret.length;
+    var splitLen = Math.floor(rlen / M) + 1;
+    var s = this.ret.substr(splitId * splitLen, splitLen)
     var chars = s.split("")
     var pairs = Array.prototype.map.call(chars, this._makepair);
+    console.log(JSON.stringify(pairs))
     return pairs;
 }
 

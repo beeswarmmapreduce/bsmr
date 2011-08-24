@@ -8,8 +8,8 @@ function Job(description, worker) {
     this.mengine = new Mengine(description.mapper, this.inter);
     this.input = new Input(this.M, this.mengine);
     this.partition;
-    this.splits = [];
     this.worker = worker;
+    this.splits;
 }
 
 Job.prototype._nextSplit = function(partitionId) {
@@ -28,6 +28,7 @@ Job.prototype.onMap = function(splitId) {
 }
 
 Job.prototype.onReduceTask = function(partitionId) {
+    this.splits = [];
     this.partition = partitionId;
     this.rengine.reset();
     this.worker.reduceSplit(partitionId, this._nextSplit());
@@ -59,6 +60,6 @@ Job.prototype.onSplitComplete = function(splitId) {
 //events from output
 
 Job.prototype.onPartitionComplete = function() {
-    //this.worker.partitionComplete(this.partition);
+    this.worker.partitionComplete(this.partition);
 }
 

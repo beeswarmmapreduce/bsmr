@@ -48,7 +48,7 @@ Fake.prototype._parts = function(pairs) {
 }
 
 Fake.prototype._createseq = function(splitId, M) {
-    var ret = this._repe(7);
+    var ret = this._repe(4);
     var rlen = ret.length;
     var splitLen = Math.floor(rlen / M);
     var s = ret.substr(splitId * splitLen, splitLen)

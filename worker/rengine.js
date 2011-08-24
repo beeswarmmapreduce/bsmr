@@ -26,7 +26,8 @@ Rengine.prototype.saveResults = function() {
     for(var key in this.cores)
     {
         var values = this.cores[key].stop()
-        for(var value in values) {
+        for(var i in values) {
+            var value = values[i];
             this.output.write([[key, value]], true);
         }
     }

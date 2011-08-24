@@ -59,6 +59,6 @@ Job.prototype.onSplitComplete = function(splitId) {
 //events from output
 
 Job.prototype.onPartitionComplete = function() {
-    this.worker.partitionComplete(this.partition);
+    //this.worker.partitionComplete(this.partition);
 }
 

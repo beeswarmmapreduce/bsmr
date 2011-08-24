@@ -8,7 +8,7 @@ Output.prototype.startWrite = function(partitionId) {
 }
 
 Output.prototype.write = function(pairs, more) {
-    console.log(JSON.stringify(pairs));
+    console.log("OUTPUT: " + JSON.stringify(pairs));
     if (! more) {
         this.job.onPartitionComplete(this.paritionId);
     }

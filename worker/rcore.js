@@ -13,7 +13,7 @@ Rcore.prototype.reduce = function(value) {
 Rcore.prototype._step = function(v2) {
     var ret = this.reducer.send(v2); //TODO: Exceptions?
 
-    while(ret != undefined) {
+    while(typeof(ret) != typeof(undefined)) {
         if(typeof(ret) != typeof("")) {
             throw ("task returned " + typeof(ret) + ", should be " + typeof(""));
         }

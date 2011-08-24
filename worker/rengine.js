@@ -34,10 +34,16 @@ Rengine.prototype.saveResults = function() {
 }
 
 Rengine.prototype.reset = function(partitionId, splitId) {
-  this.gens = {}
+    this.reducers = {};
 }
 
-Rengine.prototype.reduce = function(partitionId, splitId) {
-    this.job.onSplitComplete(splitId);
+Rengine.prototype.startWrite = function(splitId) {
+    this.split = splitId;
+}
+
+Rengine.prototype.write = function(pairs, more) {
+    if (!more) {
+        this.job.onSplitComplete(this.splitId);
+    }
 }
 

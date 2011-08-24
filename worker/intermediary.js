@@ -1,8 +1,9 @@
 
-function Intermediary(R, next, job) {
+function Intermediary(R, rengine, job) {
     this.R = R;
-    this.local = new Localstore();
+    this.rengine = rengine;
     this.job = job;
+    this.local = new Localstore();
 }
 
 Intermediary.prototype._chooseBucket = function(key) {
@@ -14,25 +15,25 @@ Intermediary.prototype._chooseBucket = function(key) {
     return bucketId;
 }
 
-Intermediary.prototype.get = function(partitionId, splitId, cb) {
-    var chunk = this.local.get(partitionId, splitId);
-    cb(chunk);
+Intermediary.prototype.startWrite = function(splitId) {
+    this.splitId = splitId;
 }
 
-Intermediary.prototype.write = function(pairs) {
+Intermediary.prototype.write = function(pairs, more) {
     for (i in pairs) {
         var pair = pairs[i];
         var partitionId = this._chooseBucket(pair[0]);
         this.local.put(this.splitId, partitionId, pair);
     }
+    if (! more) {
+        console.log(JSON.stringify(this.local.local));
+        this.job.onMapComplete(this.splitId);
+    }
 }
 
-Intermediary.prototype.startWrite = function(splitId) {
-    this.splitId = splitId;
-}
-
-Intermediary.prototype.endWrite = function() {
-    console.log(JSON.stringify(this.local.local));
-    this.job.onMapComplete(this.splitId);
+Intermediary.prototype.start = function(partitionId, splitId) {
+    this.rengine.startWrite(splitId);
+    var chunk = this.local.get(partitionId, splitId);
+    this.rengine.write(chunk);
 }
 

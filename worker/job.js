@@ -39,9 +39,9 @@ Job.prototype.onMapComplete = function(splitId) {
     this.worker.mapComplete(splitId)
 }
 
-
 Job.prototype.onReduceSplit = function(partitionId, splitId) {
-    this.rengine.reduce(partitionId, splitId);
+    this.inter.start(partitionId, splitId)
+    //this.rengine.reduce(partitionId, splitId);
 }
 
 //events from rengine

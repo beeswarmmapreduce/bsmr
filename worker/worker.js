@@ -52,7 +52,6 @@ Worker.prototype.reduceSplit = function(partitionId, splitId) {
 Worker.prototype.partitionComplete = function(partitionId) {
     var back = {type: "ACK", payload: {action: "reduceTask", reduceStatus: {partitionId: partitionId}, unreachable: [], jobId: this._job.id}};
     this.ws.send(JSON.stringify(back));
-    console.log("END")
 }
 
 Worker.prototype._initjob = function(requested) {

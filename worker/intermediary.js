@@ -27,13 +27,11 @@ Intermediary.prototype.write = function(pairs, more) {
         this.local.put(this.splitId, partitionId, [pair]);
     }
     if (! more) {
-        console.log(JSON.stringify(this.local.local))
         this.job.onMapComplete(this.splitId);
     }
 }
 
 Intermediary.prototype.start = function(partitionId, splitId) {
-    console.log("RED:" + partitionId + " - " + splitId);
     this.rengine.startWrite(splitId);
     while(chunk = this.local.get(partitionId, splitId)) {
         this.rengine.write(chunk, true);

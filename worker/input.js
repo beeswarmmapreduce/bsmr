@@ -52,7 +52,6 @@ Fake.prototype._createseq = function(splitId, M) {
     var s = this.ret.substr(splitId * splitLen, splitLen)
     var chars = s.split("")
     var pairs = Array.prototype.map.call(chars, this._makepair);
-    console.log(JSON.stringify(pairs))
     return pairs;
 }
 

@@ -1,14 +1,15 @@
-function Rengine(reducer, output) {
+function Rengine(reducer, output, job) {
   this.reducer = reducer;
   this.output = output;
-  this.gens = {}
+  this.job = job;
+  this.reducers = {}
 }
 
 Rengine.prototype.getgen = function(k2) {
-    if (gens[k2] == undefined) {
-        gens[k2] = new Rcore(this.reducer());
+    if (reducers[k2] == undefined) {
+        reducers[k2] = new Rcore(this.reducer());
     }
-    return gens[k2];
+    return reducers[k2];
 }
 
 Rengine.prototype.reduceData = function(chunk) {
@@ -21,17 +22,22 @@ Rengine.prototype.reduceData = function(chunk) {
     }
 }
 
-Rengine.prototype.getResults = function() {
-    var results = {}
-    for(var k2 in gens)
+Rengine.prototype.saveResults = function() {
+    for(var key in this.reducers)
     {
-        results[k2] = gens[k2].stop();
-        gens[k2] = null;
-        //delete gens[k2];
+        var values = this.reducers[key].stop()
+        for(var value in values) {
+            this.output.write([[key, value]], true);
+        }
     }
-    return results
+    this.output.write([], false);
+}
+
+Rengine.prototype.reset = function(partitionId, splitId) {
+  this.gens = {}
 }
 
 Rengine.prototype.reduce = function(partitionId, splitId) {
+    this.job.onSplitComplete(splitId);
 }
 

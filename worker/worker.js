@@ -44,8 +44,8 @@ Worker.prototype._react = function(msg) {
     }
 }
 
-Worker.prototype.acceptReduceTask = function(partitionId) {
-        var back = {type: "ACK", payload: {action: "reduceSplit", reduceStatus: {partitionId: partitionId, splitId: 0}, unreachable: [], jobId: this._job.id}};
+Worker.prototype.reduceSplit = function(partitionId, splitId) {
+        var back = {type: "ACK", payload: {action: "reduceSplit", reduceStatus: {partitionId: partitionId, splitId: splitId}, unreachable: [], jobId: this._job.id}};
         this.ws.send(JSON.stringify(back));
 }
 

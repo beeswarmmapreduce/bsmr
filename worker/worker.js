@@ -49,15 +49,10 @@ Worker.prototype.reduceSplit = function(partitionId, splitId) {
         this.ws.send(JSON.stringify(back));
 }
 
-Worker.prototype.nextSplit = function() {
-    var back = {type: "ACK", payload: {action: "reduceTask", reduceStatus: {partitionId: partitionId}, unreachable: [], jobId: worker._job.id}};
-    ws.send(JSON.stringify(back));
-    console.log("END")
-}
-
-Worker.prototype.reduceComplete = function() {
-    var back = {type: "ACK", payload: {action: "reduceSplit", reduceStatus: {partitionId: partitionId, splitId: splitId}, unreachable: [], jobId: worker._job.id}};
+Worker.prototype.partitionComplete = function(partitionId) {
+    var back = {type: "ACK", payload: {action: "reduceTask", reduceStatus: {partitionId: partitionId}, unreachable: [], jobId: this._job.id}};
     this.ws.send(JSON.stringify(back));
+    console.log("END")
 }
 
 Worker.prototype._initjob = function(requested) {

@@ -1,7 +1,10 @@
 function Worker(masterUrl) {
+    var HB_INTERVAL = 15 * 1000 //10s
     this.masterUrl = masterUrl;
+    this._previousAction;
     this._job = {};
     this._callMaster();
+    this._sendHeartbeats(HB_INTERVAL);
 }
 
 Worker.prototype._callMaster = function() {
@@ -26,6 +29,7 @@ Worker.prototype._greet = function(msg) {
 Worker.prototype._react = function(msg) {
     var payload = msg.payload;
     var action = payload.action;
+    this._previousAction = action;
     if (payload.job) {
         this._initjob(payload.job);
     }
@@ -45,13 +49,22 @@ Worker.prototype._react = function(msg) {
 }
 
 Worker.prototype.reduceSplit = function(partitionId, splitId) {
-        var back = {type: "ACK", payload: {action: "reduceSplit", reduceStatus: {partitionId: partitionId, splitId: splitId}, unreachable: [], jobId: this._job.id}};
-        this.ws.send(JSON.stringify(back));
+        var msg = {type: "ACK", payload: {action: "reduceSplit", reduceStatus: {partitionId: partitionId, splitId: splitId}, unreachable: [], jobId: this._job.id}};
+        this.ws.send(JSON.stringify(msg));
 }
 
 Worker.prototype.partitionComplete = function(partitionId) {
-    var back = {type: "ACK", payload: {action: "reduceTask", reduceStatus: {partitionId: partitionId}, unreachable: [], jobId: this._job.id}};
-    this.ws.send(JSON.stringify(back));
+    var msg = {type: "ACK", payload: {action: "reduceTask", reduceStatus: {partitionId: partitionId}, unreachable: [], jobId: this._job.id}};
+    this.ws.send(JSON.stringify(msg));
+}
+
+Worker.prototype._sendHeartbeats = function(interval) {
+    var worker = this;
+    var hb = function() {
+        var msg = { "type": "HB", "payload": { "action": worker._previousAction, "jobId": worker.jobId}}
+        worker.ws.send(JSON.stringify(msg));
+    }
+    setInterval(hb, interval);
 }
 
 Worker.prototype._initjob = function(requested) {
@@ -64,8 +77,8 @@ Worker.prototype._initjob = function(requested) {
 }
 
 Worker.prototype.mapComplete = function(splitId) {
-    var back = {type: "ACK", payload: {action: "mapTask", mapStatus: {splitId: splitId}, reduceStatus: null, jobId: this._job.id}};
-    this.ws.send(JSON.stringify(back));
+    var msg = {type: "ACK", payload: {action: "mapTask", mapStatus: {splitId: splitId}, reduceStatus: null, jobId: this._job.id}};
+    this.ws.send(JSON.stringify(msg));
 }
 
 

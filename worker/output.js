@@ -3,14 +3,14 @@ function Output(job) {
     this.local = new Localstore()
 }
 
-Output.prototype.put = function(partitionId, splitId, x) {
-    this.local.put(partitionId, splitId, x)
+Output.prototype.startWrite = function(partitionId) {
+    this.partitionId = partitionId;
 }
 
 Output.prototype.write = function(pairs, more) {
-    console.log(this.local.local);
+    console.log(JSON.stringify(pairs));
     if (! more) {
-        this.job.onPartitionComplete();
+        this.job.onPartitionComplete(this.paritionId);
     }
 }
 

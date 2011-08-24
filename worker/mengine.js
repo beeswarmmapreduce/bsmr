@@ -6,8 +6,9 @@ function Mengine(mapper, inter) {
 
 Mengine.prototype.write = function(pairs, gotMore) {
     var inter = this.inter;
-    var emit = function(pairs) {
-        inter.write(pairs, true);
+    var emit = function(key, value) {
+        var pair = [key, value];
+        inter.write([pair], true);
     }
     for(var i in pairs) {
         this.mapper(pairs[i], emit);

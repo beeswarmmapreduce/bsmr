@@ -22,11 +22,11 @@ Intermediary.prototype.startWrite = function(splitId) {
 Intermediary.prototype.write = function(pairs, more) {
     for (i in pairs) {
         var pair = pairs[i];
-        var partitionId = this._chooseBucket(pair[0]);
+        var key = pair[0];
+        var partitionId = this._chooseBucket(key);
         this.local.put(this.splitId, partitionId, pair);
     }
     if (! more) {
-        console.log(JSON.stringify(this.local.local));
         this.job.onMapComplete(this.splitId);
     }
 }
@@ -34,6 +34,10 @@ Intermediary.prototype.write = function(pairs, more) {
 Intermediary.prototype.start = function(partitionId, splitId) {
     this.rengine.startWrite(splitId);
     var chunk = this.local.get(partitionId, splitId);
+    if (!chunk) {
+        this.rengine.write([]);
+    }
     this.rengine.write(chunk);
 }
+
 

@@ -1,10 +1,16 @@
 function Rcore(reducer) {
     this.reducer = reducer;
     this.results = [];
-    this.step(undefined); //start it
+    this._step(undefined); //start it
 }
 
-Rcore.prototype.step = function(v2) {
+Rcore.prototype.reduce = function(value) {
+    if (value) {
+        this._step(value);
+    }
+}
+
+Rcore.prototype._step = function(v2) {
     var ret = this.reducer.send(v2); //TODO: Exceptions?
 
     while(ret != undefined) {
@@ -18,7 +24,7 @@ Rcore.prototype.step = function(v2) {
 
 Rcore.prototype.stop = function() {
     try {
-        this.step(undefined);
+        this._step(undefined);
     }
     catch(ex) {
         if (!(ex instanceof StopIteration)) {

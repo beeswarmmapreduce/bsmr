@@ -40,8 +40,8 @@ Job.prototype.onMapComplete = function(splitId) {
 }
 
 Job.prototype.onReduceSplit = function(partitionId, splitId) {
+    this.output.startWrite(partitionId);
     this.inter.start(partitionId, splitId)
-    //this.rengine.reduce(partitionId, splitId);
 }
 
 //events from rengine

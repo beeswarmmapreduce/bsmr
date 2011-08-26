@@ -33,7 +33,7 @@ Localstore.prototype.canhaz = function(splitId) {
         
 }
 
-Localstore.prototype.start = function(splitId, partitionId, target) {
+Localstore.prototype.feed = function(splitId, partitionId, target) {
     var split = this.local[splitId];
     var chunks = split[partitionId];
     for (var i in chunks) {

@@ -28,7 +28,7 @@ Job.prototype._nextSplit = function(partitionId) {
 // events from worker
 
 Job.prototype.onMap = function(splitId) {
-    this.input.start(splitId);
+    this.input.feed(splitId);
 }
 
 Job.prototype.onReduceTask = function(partitionId) {
@@ -46,7 +46,7 @@ Job.prototype.onMapComplete = function(splitId) {
 }
 
 Job.prototype.onReduceSplit = function(splitId, partitionId) {
-    this.inter.start(splitId, partitionId)
+    this.inter.feed(splitId, partitionId)
 }
 
 Job.prototype.onUnreachable = function(splitId, partitionId, brokenUrls) {

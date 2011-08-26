@@ -4,7 +4,7 @@ function Input(M, target) {
     this.target = target;
 }
 
-Input.prototype.start = function(splitId) {
+Input.prototype.feed = function(splitId) {
     var input = this;
     var fake = new Fake(splitId, this.M);
     fake.ondata = function(some) {

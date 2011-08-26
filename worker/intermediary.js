@@ -30,9 +30,9 @@ Intermediary.prototype.write = function(splitId, pairs, more) {
     }
 }
 
-Intermediary.prototype.start = function(splitId, partitionId, peerUrls) {
+Intermediary.prototype.feed = function(splitId, partitionId, peerUrls) {
     if (this.local.canhaz(splitId)) {
-        this.local.start(splitId, partitionId, this.rengine);
+        this.local.feed(splitId, partitionId, this.rengine);
     } else {
         this.job.onUnreachable(splitId, partitionId, peerUrls);
     }

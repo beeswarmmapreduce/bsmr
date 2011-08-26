@@ -20,9 +20,12 @@ Intermediary.prototype.write = function(splitId, pairs, more) {
         var pair = pairs[i];
         var key = pair[0];
         var partitionId = this._chooseBucket(key);
-        this.local.write(splitId, partitionId, [pair]);
+        this.local.write(splitId, partitionId, [pair], true);
     }
     if (! more) {
+        for (var partitionId = 0; partitionId < this.R; partitionId += 1) {
+            this.local.write(splitId, partitionId, [], false);
+        }
         this.job.onMapComplete(splitId);
     }
 }

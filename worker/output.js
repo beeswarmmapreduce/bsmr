@@ -1,11 +1,13 @@
 function Output(job) {
     this.job = job;
-    this.local = new Localstore()
+    this.pairs = [];
 }
 
 Output.prototype.write = function(partitionId, pairs, more) {
-    console.log("OUTPUT: " + JSON.stringify(pairs));
+    this.pairs = this.pairs.concat(pairs);
     if (! more) {
+        console.log("PARTITION" + partitionId+ ": " + JSON.stringify(this.pairs));
+        this.pairs = [];
         this.job.onPartitionComplete(partitionId);
     }
 }

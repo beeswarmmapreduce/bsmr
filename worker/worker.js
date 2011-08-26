@@ -4,6 +4,7 @@ function Worker(masterUrl) {
     this._previousAction;
     this._job = {};
     this._callMaster();
+    this._previousAction = "idle";
     this._sendHeartbeats(HB_INTERVAL);
 }
 
@@ -45,6 +46,9 @@ Worker.prototype._react = function(msg) {
         var partitionId = payload.reduceStatus.partitionId
         var splitId = payload.reduceStatus.splitId
         this._job.onReduceSplit(splitId, partitionId);
+    }
+    if (action == "idle") {
+        console.log('"sola och bada i piña colada"');
     }
 }
 

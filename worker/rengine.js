@@ -5,7 +5,7 @@ function Rengine(reducer, output, job) {
   this.cores = {}
 }
 
-Rengine.prototype.getcore = function(key) {
+Rengine.prototype._getcore = function(key) {
     if (this.cores[key] == undefined) {
         this.cores[key] = new Rcore(this.reducer());
     }
@@ -17,7 +17,7 @@ Rengine.prototype._reduceSome = function(pairs) {
         var pair = pairs[i];
         var key = pair[0];
         var value = pair[1];
-        var core = this.getcore(key);
+        var core = this._getcore(key);
         core.reduce(value);
     }
 }

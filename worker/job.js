@@ -5,7 +5,12 @@ function Job(description, worker) {
     this.output = new Output(this);
     this.rengine = new Rengine(description.reducer, this.output, this);
     this.inter = new Intermediary(this.R, this.rengine, this);
-    this.mengine = new Mengine(description.mapper, this.inter);
+    var mengineout = this.inter;
+    if (description.combiner) {
+        this.cengine = new Cengine(description.combiner, this.inter);
+        mengineout = this.cengine;
+    }
+    this.mengine = new Mengine(description.mapper, mengineout);
     this.input = new Input(this.M, this.mengine);
     this.partition;
     this.worker = worker;

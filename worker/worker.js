@@ -72,6 +72,9 @@ Worker.prototype._initjob = function(requested) {
         eval(requested.code);
         requested.mapper = mapper;
         requested.reducer = reducer;
+        if (typeof(combiner) != typeof(undefined)) {
+            requested.combiner = combiner;
+        }
         this._job = new Job(requested, this);
     }
 }

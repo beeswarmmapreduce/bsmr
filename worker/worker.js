@@ -21,7 +21,7 @@ Worker.prototype._callMaster = function() {
 }
 
 Worker.prototype._greet = function(msg) {
-    var msg = {type: "ACK", payload: {action: "socket", protocol: "ws", port: 12345, resource: "omg"}};
+    var msg = {type: "ACK", payload: {action: "socket", protocol: "ws", port: 12345, resource: "omg" + String(Math.random()).split(".")[1]}};
     this.ws.send(JSON.stringify(msg));
 
 }
@@ -44,12 +44,12 @@ Worker.prototype._react = function(msg) {
     if (action == "reduceSplit") {
         var partitionId = payload.reduceStatus.partitionId
         var splitId = payload.reduceStatus.splitId
-        this._job.onReduceSplit(partitionId, splitId);
+        this._job.onReduceSplit(splitId, partitionId);
     }
 }
 
-Worker.prototype.reduceSplit = function(partitionId, splitId) {
-        var msg = {type: "ACK", payload: {action: "reduceSplit", reduceStatus: {partitionId: partitionId, splitId: splitId}, unreachable: [], jobId: this._job.id}};
+Worker.prototype.reduceSplit = function(splitId, partitionId, unreachable) {
+        var msg = {type: "ACK", payload: {action: "reduceSplit", reduceStatus: {partitionId: partitionId, splitId: splitId}, unreachable: unreachable, jobId: this._job.id}};
         this.ws.send(JSON.stringify(msg));
 }
 

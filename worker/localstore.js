@@ -1,29 +1,51 @@
 function Localstore() {
     this.local = {};
+    this.tmp = {};
 }
 
-Localstore.prototype._storageId = function(partitionId, splitId) {
-    var storageId = partitionId + '-' + splitId;
-    if(!this.local[storageId]) {
-        this.local[storageId] = [];
+Localstore.prototype._write = function(splitId, partitionId, content) {
+    if(!this.tmp[splitId]) {
+        this.tmp[splitId] = {};
     }
-    return storageId;
+    if(!this.tmp[splitId][partitionId]) {
+        this.tmp[splitId][partitionId] = [];
+    }
+    this.tmp[splitId][partitionId].push(content);
 }
 
-//get some data for a split
-Localstore.prototype.get = function(partitionId, splitId) {
-    var storageId = this._storageId(partitionId, splitId);
-    var chunk = this.local[storageId].pop();
-    return chunk;
+Localstore.prototype._commit = function(splitId, partitionId) {
+    if(!this.local[splitId]) {
+        this.local[splitId] = {};
+    }
+    this.local[splitId][partitionId] = this.tmp[splitId][partitionId];
+    this.tmp[splitId][partitionId] = undefined;
 }
 
-//add some data for a split
-Localstore.prototype.put = function(splitId, partitionId, content) {
-    var storageId = this._storageId(partitionId, splitId);
-    this.local[storageId].push(content);
+Localstore.prototype.write = function(splitId, partitionId, content, more) {
+    this._write(splitId, partitionId, content);
+    if (!more) {
+        this._commit(splitId, partitionId);
+    }
 }
 
-//get a full partition
+Localstore.prototype.canhaz = function(splitId) {
+    return typeof(this.local[splitId]) != typeof(undefined);
+        
+}
+
+Localstore.prototype.start = function(splitId, partitionId, target) {
+    var split = this.local[splitId];
+    var chunks = split[partitionId];
+    for (var i in chunks) {
+        var chunk = chunks[i];
+        target.write(splitId, chunk, true);
+    }
+    target.write(splitId, [], false);
+}
+
+/*
 Localstore.prototype.getPartition = function(partitionId) {
     
 }
+
+*/

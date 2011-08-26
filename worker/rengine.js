@@ -34,7 +34,7 @@ Rengine.prototype.saveResults = function(partitionId) {
     this.output.write(partitionId, [], false);
 }
 
-Rengine.prototype.reset = function(partitionId, splitId) {
+Rengine.prototype.reset = function() {
     this.cores = {};
 }
 

@@ -35,7 +35,8 @@ Job.prototype.onReduceTask = function(partitionId) {
     this.splits = [];
     this.partition = partitionId;
     this.rengine.reset();
-    this.worker.reduceSplit(partitionId, this._nextSplit());
+    var brokenUrls = [];
+    this.worker.reduceSplit(this._nextSplit(), partitionId, brokenUrls);
 }
 
 //events from inter
@@ -44,8 +45,12 @@ Job.prototype.onMapComplete = function(splitId) {
     this.worker.mapComplete(splitId)
 }
 
-Job.prototype.onReduceSplit = function(partitionId, splitId) {
-    this.inter.start(partitionId, splitId)
+Job.prototype.onReduceSplit = function(splitId, partitionId) {
+    this.inter.start(splitId, partitionId)
+}
+
+Job.prototype.onUnreachable = function(splitId, partitionId, brokenUrls) {
+    this.worker.reduceSplit(this._nextSplit(), partitionId, brokenUrls);
 }
 
 //events from rengine
@@ -54,7 +59,8 @@ Job.prototype.onSplitComplete = function(splitId) {
     this.splits[splitId] = true;
     var nextId = this._nextSplit();
     if (nextId) {
-        this.worker.reduceSplit(this.partition, nextId);
+        brokenUrls = []; //TODO: report some?
+        this.worker.reduceSplit(nextId, this.partition, brokenUrls);
     } else {
         this.rengine.saveResults(this.partition);
     }

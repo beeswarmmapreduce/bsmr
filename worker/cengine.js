@@ -34,7 +34,7 @@ Cengine.prototype._complete = function(splitId) {
     this._reset();
 }
 
-Cengine.prototype._reset = function(partitionId, splitId) {
+Cengine.prototype._reset = function() {
     this.cores = {};
 }
 

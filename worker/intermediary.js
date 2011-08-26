@@ -20,18 +20,19 @@ Intermediary.prototype.write = function(splitId, pairs, more) {
         var pair = pairs[i];
         var key = pair[0];
         var partitionId = this._chooseBucket(key);
-        this.local.put(splitId, partitionId, [pair]);
+        this.local.write(splitId, partitionId, [pair]);
     }
     if (! more) {
         this.job.onMapComplete(splitId);
     }
 }
 
-Intermediary.prototype.start = function(partitionId, splitId, peerUrls) {
-    while(chunk = this.local.get(partitionId, splitId)) {
-        this.rengine.write(splitId, chunk, true);
+Intermediary.prototype.start = function(splitId, partitionId, peerUrls) {
+    if (this.local.canhaz(splitId)) {
+        this.local.start(splitId, partitionId, this.rengine);
+    } else {
+        this.job.onUnreachable(splitId, partitionId, peerUrls);
     }
-    this.rengine.write(splitId, []);
 }
 
 

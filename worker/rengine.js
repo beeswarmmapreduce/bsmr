@@ -22,30 +22,26 @@ Rengine.prototype._reduceSome = function(pairs) {
     }
 }
 
-Rengine.prototype.saveResults = function() {
+Rengine.prototype.saveResults = function(partitionId) {
     for(var key in this.cores)
     {
         var values = this.cores[key].stop()
         for(var i in values) {
             var value = values[i];
-            this.output.write([[key, value]], true);
+            this.output.write(partitionId, [[key, value]], true);
         }
     }
-    this.output.write([], false);
+    this.output.write(partitionId, [], false);
 }
 
 Rengine.prototype.reset = function(partitionId, splitId) {
     this.cores = {};
 }
 
-Rengine.prototype.startWrite = function(splitId) {
-    this.currentSplit = splitId;
-}
-
-Rengine.prototype.write = function(pairs, more) {
+Rengine.prototype.write = function(splitId, pairs, more) {
     this._reduceSome(pairs);
     if (!more) {
-        this.job.onSplitComplete(this.currentSplit);
+        this.job.onSplitComplete(splitId);
     }
 }
 

@@ -9,7 +9,7 @@ Input.prototype.start = function(splitId) {
     var fake = new Fake(splitId, this.M);
     fake.ondata = function(some) {
         var gotMore = fake.items() > 0;
-        input.target.write(some, gotMore);
+        input.target.write(splitId, some, gotMore);
     }
     var items = fake.items();
     for (var i = 0; i < items; i++) {

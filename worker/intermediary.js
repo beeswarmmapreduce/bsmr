@@ -15,28 +15,23 @@ Intermediary.prototype._chooseBucket = function(key) {
     return bucketId;
 }
 
-Intermediary.prototype.startWrite = function(splitId) {
-    this.splitId = splitId;
-}
-
-Intermediary.prototype.write = function(pairs, more) {
+Intermediary.prototype.write = function(splitId, pairs, more) {
     for (i in pairs) {
         var pair = pairs[i];
         var key = pair[0];
         var partitionId = this._chooseBucket(key);
-        this.local.put(this.splitId, partitionId, [pair]);
+        this.local.put(splitId, partitionId, [pair]);
     }
     if (! more) {
-        this.job.onMapComplete(this.splitId);
+        this.job.onMapComplete(splitId);
     }
 }
 
-Intermediary.prototype.start = function(partitionId, splitId) {
-    this.rengine.startWrite(splitId);
+Intermediary.prototype.start = function(partitionId, splitId, peerUrls) {
     while(chunk = this.local.get(partitionId, splitId)) {
-        this.rengine.write(chunk, true);
+        this.rengine.write(splitId, chunk, true);
     }
-    this.rengine.write([]);
+    this.rengine.write(splitId, []);
 }
 
 

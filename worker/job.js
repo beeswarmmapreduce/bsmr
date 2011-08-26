@@ -23,7 +23,6 @@ Job.prototype._nextSplit = function(partitionId) {
 // events from worker
 
 Job.prototype.onMap = function(splitId) {
-    this.inter.startWrite(splitId);
     this.input.start(splitId);
 }
 
@@ -41,7 +40,6 @@ Job.prototype.onMapComplete = function(splitId) {
 }
 
 Job.prototype.onReduceSplit = function(partitionId, splitId) {
-    this.output.startWrite(partitionId);
     this.inter.start(partitionId, splitId)
 }
 

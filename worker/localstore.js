@@ -30,7 +30,6 @@ Localstore.prototype.write = function(splitId, partitionId, content, more) {
 
 Localstore.prototype.canhaz = function(splitId) {
     return typeof(this.local[splitId]) != typeof(undefined);
-        
 }
 
 Localstore.prototype.feed = function(splitId, partitionId, target) {

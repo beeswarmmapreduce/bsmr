@@ -1,18 +1,25 @@
-function Inter(R, job) {
-    this.R = R;
+function Inter(job) {
     this.job = job;
 }
 
-Inter.prototype.chooseBucket = function(key) {
-    var bucketId = 0;
-    for (var i = 0; i < key.length; i++) {
-        bucketId += key.charCodeAt(i);
-        bucketId %= this.R;
-    }
-    return bucketId;
-}
+Inter.prototype.feed = function(splitId, partitionId, urls, target) {
+    var failed = 0;
 
-Inter.prototype.feed = function(splitId, partitionId, peerUrls, target) {
-        this.job.onUnreachable(splitId, partitionId, peerUrls);
+    var failure = function(url) {
+        job.markUnreachable(url);
+        failed += 1;
+        if (failed >= urls.length) {
+            this.job.onSplitFail(splitId, partitionId);
+        }
+    }
+
+    var write = function(chunk, more) {
+        target.write(splitId, partitionId, chunk, moer);
+    }
+
+    for (var i in urls) {
+        var url = urls[i];
+        request(url, write, failure);
+    }
 }
 

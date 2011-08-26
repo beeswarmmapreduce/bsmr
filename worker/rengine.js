@@ -38,10 +38,10 @@ Rengine.prototype.reset = function() {
     this.cores = {};
 }
 
-Rengine.prototype.write = function(splitId, pairs, more) {
+Rengine.prototype.write = function(splitId, partitionId, pairs, more) {
     this._reduceSome(pairs);
     if (!more) {
-        this.job.onSplitComplete(splitId);
+        this.job.onSplitComplete(splitId, partitionId);
     }
 }
 

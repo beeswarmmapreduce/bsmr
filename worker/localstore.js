@@ -38,9 +38,9 @@ Localstore.prototype.feed = function(splitId, partitionId, target) {
     var chunks = split[partitionId];
     for (var i in chunks) {
         var chunk = chunks[i];
-        target.write(splitId, chunk, true);
+        target.write(splitId, partitionId, chunk, true);
     }
-    target.write(splitId, [], false);
+    target.write(splitId, partitionId, [], false);
 }
 
 /*

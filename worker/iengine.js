@@ -1,16 +1,17 @@
 
-function Iengine(R, job) {
+function Iengine(R, job, chooseBucket) {
     this.R = R;
     this.job = job;
     this.local = new Localstore();
-    this.inter = new Inter(R, job)
+    this.inter = new Inter(job)
+    this.chooseBucket = chooseBucket;
 }
 
 Iengine.prototype.write = function(splitId, pairs, more) {
     for (i in pairs) {
         var pair = pairs[i];
         var key = pair[0];
-        var partitionId = this.inter.chooseBucket(key);
+        var partitionId = this.chooseBucket(key);
         this.local.write(splitId, partitionId, [pair], true);
     }
     if (! more) {
@@ -28,5 +29,4 @@ Iengine.prototype.feed = function(splitId, partitionId, peerUrls, target) {
         this.inter.feed(splitId, partitionId, peerUrls, target);
     }
 }
-
 

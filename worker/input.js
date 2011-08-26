@@ -1,15 +1,13 @@
 
-function Input(M, target) {
+function Input(M) {
     this.M = M;
-    this.target = target;
 }
 
-Input.prototype.feed = function(splitId) {
-    var input = this;
+Input.prototype.feed = function(splitId, target) {
     var fake = new Fake(splitId, this.M);
     fake.ondata = function(some) {
         var gotMore = fake.items() > 0;
-        input.target.write(splitId, some, gotMore);
+        target.write(splitId, some, gotMore);
     }
     var items = fake.items();
     for (var i = 0; i < items; i++) {

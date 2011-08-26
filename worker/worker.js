@@ -45,7 +45,8 @@ Worker.prototype._react = function(msg) {
     if (action == "reduceSplit") {
         var partitionId = payload.reduceStatus.partitionId
         var splitId = payload.reduceStatus.splitId
-        this._job.onReduceSplit(splitId, partitionId);
+        var urls = payload.reduceStatus.locations
+        this._job.onReduceSplit(splitId, partitionId, urls);
     }
     if (action == "idle") {
         console.log('"sola och bada i piña colada"');

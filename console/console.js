@@ -366,6 +366,8 @@ var konk = (function() {
         },
         jobs: {
             t: null,
+/*
+            BUG: PLUGIN FEATURE IS CURRENTLY DISABLED
 
             getInputCode: function() {
                 var pluginId = $('#inputPlugin').val();
@@ -392,6 +394,18 @@ var konk = (function() {
                 var paramName = 'outputParams';
 
                 return konk.jobs._getCode(pluginId, src, paramPrefix, paramName);
+            },
+*/
+            getInputCode: function() {
+                return "";
+            },
+
+            getP2pCode: function() {
+                return "";
+            },
+
+            getOutputCode: function() {
+                return "";
             },
             _getCode: function(pluginId, src, paramPrefix, paramName) {
                 var params = {};

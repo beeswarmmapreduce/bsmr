@@ -10,7 +10,7 @@ Input.prototype.feed = function(splitId, target) {
         target.write(splitId, some, gotMore);
     }
     var items = fake.items();
-    for (var i = 0; i < items; i++) {
+    for (var i = 0; i < items; i++) {
         fake.request()
     }
 }

@@ -14,7 +14,7 @@ Inter.prototype.feed = function(splitId, partitionId, urls, target) {
         }
     }
 
-    var write = function(chunk, more)Â {
+    var write = function(chunk, more) {
         target.write(splitId, partitionId, chunk, more);
     }
 

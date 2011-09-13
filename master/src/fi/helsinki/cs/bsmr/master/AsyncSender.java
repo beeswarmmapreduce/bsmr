@@ -28,6 +28,7 @@ package fi.helsinki.cs.bsmr.master;
  */
 
 import java.io.IOException;
+
 import java.util.Collection;
 import java.util.Deque;
 import java.util.HashMap;
@@ -39,7 +40,7 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.eclipse.jetty.websocket.WebSocket.Outbound;
+import org.eclipse.jetty.websocket.WebSocket.Connection;
 
 
 /**
@@ -156,7 +157,7 @@ public class AsyncSender implements Runnable
 	 * @param out The socket to send the message to
 	 * @param cumulativeDelay Amount of milliseconds to wait after starting to process this message but before sending it 
 	 */
-	public void sendAsyncMessage(String msg, Outbound out, long cumulativeDelay)
+	public void sendAsyncMessage(String msg, Connection out, long cumulativeDelay)
 	{
 		synchronized (messageQueue) {			
 			messageQueue.addLast( new Task(msg, out, cumulativeDelay));
@@ -171,7 +172,7 @@ public class AsyncSender implements Runnable
 	 * @param msg The message to send
 	 * @param out The socket to send the message to
 	 */
-	public void sendAsyncMessage(String msg, Outbound out)
+	public void sendAsyncMessage(String msg, Connection out)
 	{
 		synchronized (messageQueue) {			
 			messageQueue.addLast( new Task(msg, out));
@@ -245,13 +246,13 @@ public class AsyncSender implements Runnable
 			logger.log(Level.SEVERE, "Asynchronous send failed, disconnecting endpoint "+owner+" and flushing further messages", tfe);
 			
 			synchronized (messageQueue) {
-				Collection<Task> pairsForDeadOutbound = new LinkedList<Task>();
+				Collection<Task> pairsForDeadConnection = new LinkedList<Task>();
 				for (Task t : messageQueue) {
 					if (t.out == tfe.out) {
-						pairsForDeadOutbound.add(t);
+						pairsForDeadConnection.add(t);
 					}
 				}
-				messageQueue.removeAll(pairsForDeadOutbound);
+				messageQueue.removeAll(pairsForDeadConnection);
 			}
 			
 			if (tfe.out != null) {
@@ -266,15 +267,15 @@ public class AsyncSender implements Runnable
 	private class Task
 	{
 		String message;
-		Outbound out;
+		Connection out;
 		long delay;
 		
-		public Task(String message, Outbound out)
+		public Task(String message, Connection out)
 		{
 			this(message,out,0);
 		}
 		
-		public Task(String message, Outbound out, long delay)
+		public Task(String message, Connection out, long delay)
 		{
 			this.message = message;
 			this.out = out;
@@ -304,8 +305,8 @@ public class AsyncSender implements Runnable
 	{
 		private static final long serialVersionUID = 1L;
 		
-		Outbound out;
-		public TaskFailedException(Outbound out, Throwable cause)
+		Connection out;
+		public TaskFailedException(Connection out, Throwable cause)
 		{
 			super(cause);
 			this.out = out;
@@ -323,7 +324,7 @@ public class AsyncSender implements Runnable
 	 *  
 	 * @param out The socket for which all tasks need to be removed 
 	 */
-	public void removeTasksFor(Outbound out) 
+	public void removeTasksFor(Connection out) 
 	{
 		Set<Task> removeThese = null;
 		synchronized (messageQueue) {
@@ -343,7 +344,7 @@ public class AsyncSender implements Runnable
 		}
 	}
 
-	public boolean hasTasksFor(Outbound out) 
+	public boolean hasTasksFor(Connection out) 
 	{
 		boolean ret = false;
 		

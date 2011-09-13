@@ -53,11 +53,11 @@ private static Logger logger = Util
 		.getLoggerForClass(MasterWebSocketServlet.class);
 
 @Override
-protected String checkOrigin(HttpServletRequest request, String host,
+public boolean checkOrigin(HttpServletRequest request, 
 		String origin)
 	{
-	logger.fine("checkOrigin(): " + request + ", " + host + ", " + origin);
-	return super.checkOrigin(request, host, origin);
+	logger.fine("checkOrigin(): " + request + ", "+ origin);
+	return super.checkOrigin(request, origin);
 	}
 
 @Override
@@ -69,7 +69,7 @@ protected void service(HttpServletRequest request, HttpServletResponse response)
 	}
 
 @Override
-protected WebSocket doWebSocketConnect(HttpServletRequest request,
+public WebSocket doWebSocketConnect(HttpServletRequest request,
 		String service)
 	{
 	TimeContext.markTime();

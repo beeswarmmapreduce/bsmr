@@ -28,6 +28,7 @@ package fi.helsinki.cs.bsmr.master;
  */
 
 import java.io.IOException;
+
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -42,11 +43,11 @@ import fi.helsinki.cs.bsmr.master.Message.Type;
  * @author stsavola
  *
  */
-public class Worker implements WebSocket 
+public class Worker implements WebSocket, WebSocket.OnTextMessage 
 {
 	private static Logger logger = Util.getLoggerForClass(Worker.class);
 	
-	private Outbound out;
+	private Connection out;
 	private MasterContext master;
 	private String workerRemoteAddr;
 	
@@ -90,7 +91,7 @@ public class Worker implements WebSocket
 	/** WebSocket callback implementations **/
 	
 	@Override
-	public void onConnect(Outbound out) 
+	public void onOpen(Connection out) 
 	{
 		TimeContext.markTime();
 		
@@ -108,7 +109,7 @@ public class Worker implements WebSocket
 	}
 
 	@Override
-	public void onDisconnect()
+	public void onClose(int i, String s)
 	{
 		TimeContext.markTime();
 		
@@ -139,7 +140,7 @@ public class Worker implements WebSocket
 	 * @see MasterContext#selectTaskForWorker(Worker, Message)
 	 */
 	@Override
-	public void onMessage(byte frame, String jsonMsg) 
+	public void onMessage(String jsonMsg) 
 	{
 		TimeContext.markTime();
 		
@@ -147,7 +148,7 @@ public class Worker implements WebSocket
 		boolean hasQueuedMessage = hasQueuedMessage();
 		
 		if (logger.isLoggable(Level.FINE)) {
-			logger.finest( "onMessage(): '"+jsonMsg+"' (frame "+frame+")");
+			logger.finest( "onMessage(): '"+jsonMsg);
 		}	
 		
 		Message msg;
@@ -309,7 +310,7 @@ public class Worker implements WebSocket
 	/**
 	 * Send the message synchronously in the current thread. The message is as a String so that the message encoding
 	 * can be done before sending the message. This eliminates the need to make this call within the "big lock".
-	 * Sending is synchronized on the Outbound object used by this worker. This is to eliminate concurrency issues
+	 * Sending is synchronized on the Connection object used by this worker. This is to eliminate concurrency issues
 	 * with the async and sync messaging. See AsyncSender$Task.run().
 	 *  
 	 * @param msg The message to the worker
@@ -361,21 +362,5 @@ public class Worker implements WebSocket
 		return connectTime;
 	}
 	
-	@Override
-	public void onMessage(byte arg0, byte[] arg1, int arg2, int arg3)
-	{
-		TimeContext.markTime();
-		logger.severe("onMessage() byte format unsupported!");
-		throw new RuntimeException("onMessage() byte format unsupported!");
-	}
-
-	@Override
-	public void onFragment(boolean arg0, byte arg1, byte[] arg2, int arg3,
-			int arg4) 
-	{
-		TimeContext.markTime();
-		logger.severe("onFragment() byte format unsupported!");
-		throw new RuntimeException("onFragment() byte format unsupported!");
-	}
 	
 }

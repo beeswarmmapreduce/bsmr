@@ -28,6 +28,7 @@ package fi.helsinki.cs.bsmr.master.console;
  */
 
 import java.util.Map;
+
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -48,11 +49,11 @@ import fi.helsinki.cs.bsmr.master.Util;
  * @author stsavola
  * 
  */
-public class Console implements WebSocket
+public class Console implements WebSocket, WebSocket.OnTextMessage
 {
 private static Logger logger = Util.getLoggerForClass(Console.class);
 
-private Outbound out;
+private Connection out;
 private MasterContext master;
 
 public Console(MasterContext master)
@@ -66,7 +67,7 @@ public void disconnect()
 	}
 
 @Override
-public void onConnect(Outbound out)
+public void onOpen(Connection out)
 	{
 	TimeContext.markTime();
 	logger.fine("connected");
@@ -79,7 +80,7 @@ public void onConnect(Outbound out)
 	}
 
 @Override
-public void onDisconnect()
+public void onClose(int i, String s)
 	{
 	TimeContext.markTime();
 	master.removeConsole(this);
@@ -88,9 +89,10 @@ public void onDisconnect()
 	logger.fine("disconnected");
 	}
 
+
 @SuppressWarnings("unchecked")
 @Override
-public void onMessage(byte frame, String msg)
+public void onMessage(String msg)
 	{
 	TimeContext.markTime();
 
@@ -205,19 +207,6 @@ private void addJob(Map<Object, Object> payload)
 
 	}
 
-@Override
-public void onMessage(byte arg0, byte[] arg1, int arg2, int arg3)
-	{
-	TimeContext.markTime();
-	throw new RuntimeException("onMessage() byte format unsupported!");
-	}
-
-@Override
-public void onFragment(boolean arg0, byte arg1, byte[] arg2, int arg3, int arg4)
-	{
-	TimeContext.markTime();
-	throw new RuntimeException("onFragment() byte format unsupported!");
-	}
 
 /**
  * Create a new ConsoleInformation message and send it to the console.

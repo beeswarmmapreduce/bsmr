@@ -2,7 +2,7 @@ function Job(description, worker) {
     this.id = description.jobId;
     this.R = description.R;
     this.M = description.M;
-    this.output = new Output(this);
+    this.output = description.output(this);
     this.rengine = new Rengine(description.reducer, this.output, this);
     this.iengine = new Iengine(this.R, this, description.inter, description.chooseBucket);
     var mengineout = this.iengine;

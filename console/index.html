@@ -217,6 +217,14 @@ reducer = function() {
 
 combiner = reducer;
 
+chooseBucket = function(key) {
+    var bucketId = 0;
+    for (var i = 0; i &lt; key.length; i++) {
+        bucketId += key.charCodeAt(i);
+        bucketId %= this.R;
+    }
+    return bucketId;
+}
                     </textarea>
                 </p>
                 <p>

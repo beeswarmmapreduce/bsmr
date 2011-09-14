@@ -27,6 +27,7 @@ var konk = (function() {
             if (ms && ms[1]) {
                 $('#master').val('ws://' + ms[1] + '/bsmr');
             }
+            konk.connect();
         },
         connect: function() {
             if (konk.ws) {

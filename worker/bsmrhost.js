@@ -20,6 +20,7 @@ if (typeof(importScripts) == typeof(undefined)) {
 importScripts("console.js",
               "lib/generator.js",
               "lib/boringbucket.js",
+              "lib/flashinter.js",
               "lib/nointer.js",
               "lib/debuginput.js",
               "lib/consoleout.js",

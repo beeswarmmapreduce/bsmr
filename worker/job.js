@@ -11,7 +11,7 @@ function Job(description, worker) {
         mengineout = this.cengine;
     }
     this.mengine = new Mengine(description.mapper, mengineout);
-    this.input = new Input(this.M);
+    this.input = description.input(this.M);
     this.worker = worker;
     this.splits;
     this.unreachable = [];

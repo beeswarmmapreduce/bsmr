@@ -19,9 +19,9 @@ if (typeof(importScripts) == typeof(undefined)) {
 
 importScripts("console.js",
               "localstore.js",
-              "generator.js",
+              "generator.js", //convenience
               "iengine.js",
-              "input.js",
+              "debuginput.js", //convenience
               "output.js",
               "inter.js",
               "rengine.js",

@@ -18,14 +18,14 @@ if (typeof(importScripts) == typeof(undefined)) {
 }
 
 importScripts("console.js",
-              "localstore.js",
               "lib/generator.js",
               "lib/boringbucket.js",
               "lib/nointer.js",
-              "iengine.js",
               "lib/debuginput.js",
               "lib/consoleout.js",
               "lib/nointer.js",
+              "localstore.js",
+              "iengine.js",
               "rengine.js",
               "rcore.js",
               "cengine.js",

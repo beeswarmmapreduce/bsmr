@@ -1,8 +1,9 @@
 == Dependencies ==
 
-You need Jetty (developed with version 8.0.0.M2). To retrieve & untar, you can
-try getdeps.sh. Otherwise download it manually and make sure the jetty is 
-available as master/jetty-distribution-8.0.0.M2
+You need Jetty (developed with version 8.0.0.M2, and later ported to use
+8.0.1.v20110908). To retrieve & untar, you can try getdeps.sh. Otherwise
+download it manually and make sure the jetty is available as
+master/jetty-distribution-8.0.1.v20110908
 
 Note! The Eclipse project file refers to this directory and the libraries 
 contain the version number of Eclipse. So if you use a different version of 

@@ -78,6 +78,7 @@ Worker.prototype._initjob = function(requested) {
         requested.mapper = mapper;
         requested.reducer = reducer;
         requested.input = input;
+        requested.inter = inter;
         requested.chooseBucket = chooseBucket;
         if (typeof(combiner) != typeof(undefined)) {
             requested.combiner = combiner;

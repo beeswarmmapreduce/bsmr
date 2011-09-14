@@ -1,9 +1,9 @@
 
-function Iengine(R, job, chooseBucket) {
+function Iengine(R, job, inter, chooseBucket) {
     this.R = R;
     this.job = job;
     this.local = new Localstore();
-    this.inter = new Inter(job)
+    this.inter = inter(job)
     this.chooseBucket = chooseBucket;
 }
 

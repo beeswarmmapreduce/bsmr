@@ -4,7 +4,7 @@ function Job(description, worker) {
     this.M = description.M;
     this.output = new Output(this);
     this.rengine = new Rengine(description.reducer, this.output, this);
-    this.iengine = new Iengine(this.R, this, description.chooseBucket);
+    this.iengine = new Iengine(this.R, this, description.inter, description.chooseBucket);
     var mengineout = this.iengine;
     if (description.combiner) {
         this.cengine = new Cengine(description.combiner, this.iengine);

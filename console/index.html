@@ -187,16 +187,6 @@ mapper = function(pair, emit) {
     emit(word, '1');
 }
 
-/*
-reducer = function() {
-    var x = 0;
-    while (y = yield) {
-        x += parseInt(y, 10);
-    }
-    yield x.toString();
-}
-*/
-
 reducer = function() {
     function Adder() {
         this.x = 0;
@@ -216,17 +206,8 @@ reducer = function() {
 }
 
 combiner = reducer;
-
-input = debuginput;
-
-chooseBucket = function(key) {
-    var bucketId = 0;
-    for (var i = 0; i &lt; key.length; i++) {
-        bucketId += key.charCodeAt(i);
-        bucketId %= this.R;
-    }
-    return bucketId;
-}
+input = debugInput;
+chooseBucket = boringBucket;
                     </textarea>
                 </p>
                 <p>

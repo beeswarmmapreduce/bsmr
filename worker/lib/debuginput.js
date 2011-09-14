@@ -1,4 +1,4 @@
-function debuginput(M) {
+function debugInput(M) {
     
     function Input(M) {
         this.M = M;

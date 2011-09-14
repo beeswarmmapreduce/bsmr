@@ -19,9 +19,10 @@ if (typeof(importScripts) == typeof(undefined)) {
 
 importScripts("console.js",
               "localstore.js",
-              "generator.js", //convenience
+              "lib/generator.js",
+              "lib/boringbucket.js",
               "iengine.js",
-              "debuginput.js", //convenience
+              "lib/debuginput.js",
               "output.js",
               "inter.js",
               "rengine.js",

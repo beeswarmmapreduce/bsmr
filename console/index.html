@@ -13,11 +13,13 @@
         <h1>
             BS/MR Console
         </h1>
+<div style="display: none;"> <!-- hack to hide old stuff -->
         <div id="control">
             <label for="master">master</label>
             <input type="text" id="master" value="ws://localhost:8080/bsmr/" />
             <input type="button" id="connect" value="connect"/>
         </div>
+</div> <!-- hack to hide old stuff -->
         <div id="dashboard">
             <h2>Current work</h2>
 
@@ -138,10 +140,12 @@
         <div id="jobInput">
             <h2>Add job</h2>
             <form>
+<div style="display: none;"> <!-- hack to hide old stuff -->
                 <p>
                     <label for="inputRef">Input ref.</label>
                     <input type="text" id="inputRef" name="inputRef"/value="enwiki.xml">
                 </p>
+</div> <!-- hack to hide old stuff -->
                 <p>
                     <label for="M">Number splits (M)</label>
                     <input type="text" id="M" name="M"/value="10">
@@ -158,6 +162,7 @@
                     <label for="progressTimeout">Progress timeout</label>
                     <input type="text" id="progressTimeout" name="progressTimeout" value="300000"/>
                 </p>
+<div style="display: none;"> <!-- hack to hide old stuff -->
                 <p>
                     <label for="inputPlugin">Input plugin</label>
                     <select id="inputPlugin">
@@ -179,6 +184,7 @@
                     </select>
                     <div id="outputPluginParams"></div>
                 </p>
+</div> <!-- hack to hide old stuff -->
                 <p>
                     <label for="code" class="textarea">Job code</label>
                     <textarea id="jobCode">

@@ -32,6 +32,7 @@ import java.io.File;
 import java.io.RandomAccessFile;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.logging.Logger;
 
 
@@ -50,13 +51,16 @@ import javax.servlet.http.HttpServletResponse;
  *
  * Get / post Parameters
  *
- * operation = read | write
+ * operation = read | write | sizeof
  * filename = [string]
  * begin = [integer]		//inclusive begin offset  
  * length = [integer]			//number of bytes to read or write 
  *  
- *  Example URL: http://localhost:8080/fs/filesystem?operation=read&filename=alphabet.txt&begin=2&length=3
+ *  Example URLs: 
  *  
+ *  http://localhost:8080/fs/filesystem?operation=read&filename=alphabet.txt&begin=2&length=3
+ *  http://localhost:8080/fs/filesystem?operation=sizeof&filename=alphabet.txt
+ * 
  * @author pzsavola
  * @see FsServlet
  */
@@ -189,6 +193,37 @@ private void handleLs(String filename, HttpServletRequest req, HttpServletRespon
 
 	}
 
+
+private void handleSizeof(String filename, HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException
+{
+RandomAccessFile input = null;
+PrintWriter output = null;
+
+try	{
+	input = new RandomAccessFile(filename, "r"); 
+	output = new PrintWriter(resp.getOutputStream());
+	output.write(""+input.length());
+	}
+
+catch (IOException e2)
+	{
+	logger.severe(e2.toString());
+	throw e2;
+	}
+
+finally
+	{
+	if (input!=null)
+		input.close();
+	
+	if (output!=null)
+		{	
+		output.flush();
+		output.close();
+		}
+	}
+}
+
 @Override
 protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException 
 	{
@@ -209,8 +244,11 @@ protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws Se
 	if ("write".equalsIgnoreCase(operation))
 		this.handleWrite(filename, req, resp);
 	
-	if ("write".equalsIgnoreCase(operation))
+	if ("ls".equalsIgnoreCase(operation))
 		this.handleLs(filename, req, resp);
+	
+	if ("sizeof".equalsIgnoreCase(operation))
+		this.handleSizeof(filename, req, resp);
 	
 	}
 

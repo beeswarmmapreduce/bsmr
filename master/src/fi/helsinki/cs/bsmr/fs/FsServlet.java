@@ -28,8 +28,8 @@ package fi.helsinki.cs.bsmr.fs;
  */
 
 import java.io.File;
+
 import java.io.RandomAccessFile;
-import java.io.FileInputStream;
 
 import java.io.IOException;
 import java.util.logging.Logger;

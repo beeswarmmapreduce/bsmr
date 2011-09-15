@@ -27,6 +27,7 @@ package fi.helsinki.cs.bsmr.fs;
  *
  */
 
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.HttpURLConnection;
@@ -58,6 +59,21 @@ public class Util
 		PrintWriter pw = resp.getWriter();
 		pw.println("ERROR: "+msg);
 		pw.close();
+	}
+
+public static String fixPathSeparators(String s)
+	{
+	if (File.separatorChar == '/')
+		{
+		s = s.replace('\\', '/');
+		}
+
+	if (File.separatorChar == '\\')
+		{
+		s = s.replace('/', '\\');
+		}
+	
+	return s;
 	}
 	
 }

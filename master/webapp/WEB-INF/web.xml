@@ -27,6 +27,15 @@
   </servlet>
 
   <servlet>
+    <servlet-name>Fs</servlet-name>
+    <servlet-class>fi.helsinki.cs.bsmr.fs.FsServlet</servlet-class>
+    <init-param>
+    	<param-name>loadPath</param-name>
+    	<param-value>data/</param-value>
+    </init-param>
+  </servlet>	
+
+  <servlet>
     <servlet-name>Partitions</servlet-name>
     <servlet-class>fi.helsinki.cs.bsmr.fs.PartitionServlet</servlet-class>
     <init-param>
@@ -46,6 +55,11 @@
     <url-pattern>/fs/splits/*</url-pattern>
   </servlet-mapping>
 
+  <servlet-mapping>
+    <servlet-name>Fs</servlet-name>
+    <url-pattern>/fs/filesystem</url-pattern>
+  </servlet-mapping>
+  
   <servlet-mapping>
     <servlet-name>Partitions</servlet-name>
     <url-pattern>/fs/partitions/*</url-pattern>

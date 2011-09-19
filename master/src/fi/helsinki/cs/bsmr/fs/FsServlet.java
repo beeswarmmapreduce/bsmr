@@ -29,6 +29,7 @@ package fi.helsinki.cs.bsmr.fs;
 
 import java.io.File;
 
+
 import java.io.RandomAccessFile;
 
 import java.io.IOException;
@@ -39,6 +40,7 @@ import java.util.logging.Logger;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.ServletOutputStream;
+import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -51,15 +53,29 @@ import javax.servlet.http.HttpServletResponse;
  *
  * Get / post Parameters
  *
- * operation = read | write | sizeof
+ * operation = read | write | ls | sizeof
  * filename = [string]
  * begin = [integer]		//inclusive begin offset  
  * length = [integer]			//number of bytes to read or write 
  *  
+ * 
+ * read returns the raw data
+ * 
+ * sizeof returns the size of the file as a number
+ * 
+ * ls returns the directory listing as a JSON array
+ * 
+ * write takes the binary data to be written in the POST data, returns the number of bytes written 
+ *  
  *  Example URLs: 
  *  
  *  http://localhost:8080/fs/filesystem?operation=read&filename=alphabet.txt&begin=2&length=3
+ *
+ *  http://localhost:8080/fs/filesystem?operation=write&filename=alphabet.txt&begin=2&length=3
+ * 
  *  http://localhost:8080/fs/filesystem?operation=sizeof&filename=alphabet.txt
+ *  
+ *  http://localhost:8080/fs/filesystem?operation=ls&filename=
  * 
  * @author pzsavola
  * @see FsServlet
@@ -185,12 +201,127 @@ private void handleRead(String filename, HttpServletRequest req, HttpServletResp
 
 private void handleWrite(String filename, HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException
 	{
+	RandomAccessFile target = null;
+	PrintWriter output = null;
+	ServletInputStream input = null;
+	
+	
+	
+	int beginOffset = 0; 
+	int length = -1;
+	int totalWritten = 0;
+	
+	
+	
+	try	{
+		beginOffset = Integer.parseInt(req.getParameter("begin"));
+		}
+	catch (Exception e)
+		{}
+	
+	try	{
+		length = Integer.parseInt(req.getParameter("length"));
+		}
+	catch (Exception e)
+		{}
+	
+	try	{
+		
+		target = new RandomAccessFile(filename, "rw"); 
+		input = req.getInputStream();
+		
+		output = new PrintWriter(resp.getOutputStream());
+		
+		if (beginOffset>0)
+			{
+			target.seek(beginOffset);
+			}
+		
+		
+		
+		byte[] buffer = new byte[4096];
+		int bytesRead = 0;
+		int totalRead = 0;
+		
+		
+		
+		while ((bytesRead = input.read(buffer)) != -1)
+			{
+			totalRead += bytesRead;
+			if (length != -1 && totalRead > length) 
+				{
+				target.write(buffer, 0, length-totalWritten);  // write
+				break;
+				}
+			target.write(buffer, 0, bytesRead); // write
+			totalWritten += bytesRead;
+			}
+		
+		output.write(""+totalWritten);
+		}
+		
 
+	catch (IOException e2)
+		{
+		logger.severe(e2.toString());
+		throw e2;
+		}
+
+	finally
+		{
+		if (input!=null)
+			input.close();
+		
+		if (target!=null)
+			target.close();
+		
+		if (output!=null)
+			{	
+			output.flush();
+			output.close();
+			}
+		}
 	}
 
 private void handleLs(String filename, HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException
 	{
+	File input = null;
+	PrintWriter output = null;
 
+	try	{
+		input = new File(filename); 
+		String[] listing = input.list();
+	
+		output = new PrintWriter(resp.getOutputStream());
+		output.write("[");
+	
+		if (listing != null)
+			{
+			for (int i=0; i< listing.length; i++)
+				{
+				output.write(listing[i]);
+				if (i<(listing.length-1))
+					output.write(",");
+				}
+			}
+	
+		output.write("]");
+		}
+
+	catch (IOException e2)
+		{
+		logger.severe(e2.toString());
+		throw e2;
+		}
+
+	finally
+		{
+		if (output!=null)
+			{	
+			output.flush();
+			output.close();
+			}
+		}
 	}
 
 

@@ -22,7 +22,7 @@ Worker.prototype._callMaster = function() {
 }
 
 Worker.prototype._greet = function(msg) {
-    var msg = {type: "ACK", payload: {action: "socket", protocol: "ws", port: 12345, resource: "omg" + String(Math.random()).split(".")[1]}};
+    var msg = {type: "ACK", payload: {action: "socket", protocol: "peer", port: 12345 + Math.floor(Math.random()*1000), resource: String(Math.random()).split(".")[1]}};
     this.ws.send(JSON.stringify(msg));
 
 }
@@ -49,7 +49,7 @@ Worker.prototype._react = function(msg) {
         this._job.onReduceSplit(splitId, partitionId, urls);
     }
     if (action == "idle") {
-        console.log('"sola och bada i piña colada"');
+        //console.log('worker idle');
     }
 }
 

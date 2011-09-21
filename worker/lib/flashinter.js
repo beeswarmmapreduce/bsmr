@@ -3,15 +3,16 @@ function flashInter(job, local) {
     function Inter(job, local) {
         this.job = job;
         this.local = local
+        this.buffer = [];
     }
 
     //server side
 
     Inter.prototype.write = function(splitId, partitionId, pairs, more) {
-        send(splitId, partitionId, pairs); //BUG: there is no send
+        this.buffer = this.buffer.concat(pairs)
         if (!more) {
-            var EOF = null;
-            send(splitId, partitionId, EOF)
+            send(splitId, partitionId, this.buffer)
+            this.buffer = [];
         }
     }
 

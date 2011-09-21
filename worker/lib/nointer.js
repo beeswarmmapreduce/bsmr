@@ -1,4 +1,4 @@
-function noInter(job) {
+function noInter(job, localStore) {
     
     function Inter(job) {
         this.job = job;

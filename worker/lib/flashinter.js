@@ -1,9 +1,39 @@
-function flashInter(job) {
-    
-    function Inter(job) {
+function flashInter(job, local) {
+
+    function Inter(job, local) {
         this.job = job;
+        this.local = local
+    }
+
+    //server side
+
+    Inter.prototype.write = function(splitId, partitionId, pairs, more) {
+        send(splitId, partitionId, pairs); //BUG: there is no send
+        if (!more) {
+            var EOF = null;
+            send(splitId, partitionId, EOF)
+        }
+    }
+
+    Inter.prototype.fail = function(splitId, partitionId) {
+        //BUG: there is not fail
+        fail(splitId, partitionId)
     }
     
+    //BUG: no one calls onRequest
+    Inter.prototype.onRequest = function(splitId, partitionId) {
+        this.remoteFeed(splitId, partitionId, this);
+    }
+
+    Inter.prototype.remoteFeed = function(splitId, partitionId, remoteTarget) {
+        if (this.local.canhaz(splitId)) {
+            this.local.feed(splitId, partitionId, remoteTarget);
+        }
+        remoteTarget.fail(splitId, partitionId);
+    }
+
+    //client side
+
     Inter.prototype.feed = function(splitId, partitionId, urls, target) {
         var failed = 0;
         var job = this;
@@ -21,7 +51,7 @@ function flashInter(job) {
         }
     
         var request = function(url, write, failure) {
-            failure(url); //THIS IS A DUMMY THAT FAILS ALWAYS
+            failure(url); //BUG: THIS IS A DUMMY THAT FAILS ALWAYS
         }
     
         for (var i in urls) {
@@ -29,5 +59,6 @@ function flashInter(job) {
             request(url, write, failure);
         }
     }
-    return new Inter(job);
+
+    return new Inter(job, local);
 }

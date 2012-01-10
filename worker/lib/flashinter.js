@@ -38,9 +38,21 @@ function flashInter(job, local) {
 
     //client side
 
+    Inter.prototype.onResponse = function(peerId, splitId, partitionId, chunk) {
+    	 
+    	target.write(splitId, partitionId, chunk, false);	
+    	
+    }
+    
+    
+    //Public Interface that Job calls
+    
+    
+    //Start feeding data identified by splitId, partitionId from urls into target
+    
     Inter.prototype.feed = function(splitId, partitionId, urls, target) {
         var failed = 0;
-        var job = this;
+        var job = this.job;
     
         var failure = function(url) {
             job.markUnreachable(url);

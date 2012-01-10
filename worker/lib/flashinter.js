@@ -4,6 +4,9 @@ function flashInter(job, local) {
         this.job = job;
         this.local = local
         this.buffer = [];
+        
+        var url = "dummyid://peer-13";
+        this.job.setOwnPeerId(url);
     }
 
     //server side

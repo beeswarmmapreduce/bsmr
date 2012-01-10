@@ -44,6 +44,10 @@ Job.prototype.onReduceTask = function(partitionId) {
 
 //events from inter
 
+Job.setOwnPeerId = function(url) {
+	//BUG: not implemented
+}
+
 Job.prototype.onSplitFail = function(splitId, partitionId) {
     this.worker.reduceSplit(this._nextSplit(), partitionId, this.unreachable);
 }

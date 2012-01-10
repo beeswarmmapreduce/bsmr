@@ -2,6 +2,33 @@
 // FlashP2P
 
 
+/*
+The simple JSON request-response protocol for bsmr, examples of the message types
+
+{
+operation: "request",
+splitId: 24,
+partitionId: 11
+}
+
+{
+operation: "response",
+split_id: 24,
+partition_id: 11,
+data: "ihwao98fh292hf9h84293hf4298h298h4f"
+}
+
+
+{
+operation: "not_found",
+split_id: 24,
+partition_id: 11
+}
+
+
+*/
+
+
 function FlashCommunicator()
    {
    var self = this;
@@ -9,9 +36,11 @@ function FlashCommunicator()
    var outgoingQueue = new Array();			//if no connection to a peer, the message gets queued here 
    
    var responseListeners = new Array();
+   var requestListeners = new Array();
+   var errorListeners = new Array();
+   var idChangeListeners = new Array();
    
-   
-   //Public interface towards BSMR's FlashInter
+   //Public interface that BSMR's FlashInter calls
    
    this.sendRequest = function(peerId, splitId, partitionId)
    		{
@@ -27,55 +56,120 @@ function FlashCommunicator()
 	   		}
 	   	
    		}
+   
+   this.sendResponse = function(peerId, splitId, partitionId, data)
+   		{
+	   
+   		}
   
+   
+   // Public interface for adding listeners 
+   
    this.addResponseListener = function(listener)
    		{
 	   	responseListeners.push(listener);
    		}
    
+   this.addRequestListener = function(listener)
+		{
+	   	requestListeners.push(listener);
+		}
    
-   //Private functions  implementing the public interface
+   this.addErrorListener = function(listener)
+		{
+	   	errorListeners.push(listener);
+		}
    
+   this.addIdChangeListener = function(listener)
+		{
+	   	idChangeListeners.push(listener);
+		}
    
+   //Private helper functions
    
-   
-   this.connectToCirrus = function()
+   var connectToCirrus = function()
    		{
    		flashP2P.connectToCirrus("rtmfp://p2p.rtmfp.net/ac5e767303706ffbc314d1e3-7b419bc16675/");
    		}
-   		
-   this.onCirrusConnectionStatus = function(ownId, status, statusCode, statusLevel)
+  
+   var listen = function()
    		{
-   		dump("Application::onCirrusConnectionStatus() "+ ownId+" "+status+"\r\n");
-   		
-   		if (status != flashP2P.STATUS_UNKNOWN)
-   			document.testForm.statusField.value = status;
-   		
-   		document.testForm.idField.value = ownId; 
-   		}		
-   
-   this.listen = function()
-   		{
-   		dump("Application::listen()\r\n");
+   		dump("FlashCommunicator::listen()\r\n");
    		flashP2P.listen();
    		}
    
+   var connect = function()
+		{
+		dump("FlashCommunicator::connect()"+"\r\n");
+		flashP2P.connect(document.connectForm.connectField.value);
+		}
+
+   var sendText = function(text)
+		{
+		flashP2P.send(peer,text);
+		}
+   
+   
+   //Callbacks to be called  by FlashP2P
+   
+   this.onCirrusConnectionStatus = function(ownId, status, statusCode, statusLevel)
+   		{
+   		dump("FlashCommunicator::onCirrusConnectionStatus() "+ ownId+" "+status+"\r\n");
+   		
+   		parent.setOwnPeerId(ownId);
+   		}		
+  
+  
    this.onDataArrived = function(peerId, data)
    		{
-   		dump("Application::onDataArrived(), peerId: "+peerId+" data: "+data+"\r\n")
-   		document.htmlForm.receivedField.value = data;
+   		// A message has arrived from a remote peer whose peer id is peerID
+	    // This function will decode the message and act accordingly
+	   	
+	   	dump("FlashCommunicator::onDataArrived(), peerId: "+peerId+" data: "+data+"\r\n")
+   
+   		
+	   	var message = JSON.parse(data);
+   		
+	   	if (meassage.operation == "request")
+	   		{
+	   		var listeners = requestListeners;
+			for (var i=0; i<listeners.length; i++)
+	    		{
+	    		listeners[i].onRequest(peerId, message.split_id, message.partition_id);
+	    		}
+	   		}
+	   
+	   	if (meassage.operation == "response")
+   			{
+	   		var listeners = responseListeners;
+			for (var i=0; i<listeners.length; i++)
+	    		{
+	    		listeners[i].onResponse(peerId, message.split_id,message.partition_id,message.data);
+	    		}
+   			}
+   		
+	   	if (meassage.operation == "not_found")
+   			{
+	   		var listeners = errorListeners;
+			for (var i=0; i<listeners.length; i++)
+	    		{
+	    		listeners[i].onError(peerId, data);
+	    		}
+   			}
+   		
+   		
    		}	
    		
    this.onConnectionAccepted = function(peerId)
    		{
-   		dump("Application::onConnectionAccepted(), connection from peer "+peerId+"\r\n");
+   		dump("FlashCommunicator::onConnectionAccepted(), connection from peer "+peerId+"\r\n");
    		peer = peerId;
    		flashP2P.addDataListener(peerId,self.onDataArrived);
    		}
    		
    this.onPeerConnectionStatus = function(peerId, status, statusCode, statusLevel)		
    		{
-   		dump("Application::onPeerCOnnectionStatus(), connection to peer "+peerId+" "+status+" "+statusCode+"\r\n");
+   		dump("FlashCommunicator::onPeerConnectionStatus(), connection to peer "+peerId+" "+status+" "+statusCode+"\r\n");
    		
    		if (status != flashP2P.STATUS_UNKNOWN)
    			document.connectForm.statusField.value = status;
@@ -87,21 +181,13 @@ function FlashCommunicator()
    			}
    		}
    		
-   this.connect = function()
-   		{
-   		dump("Application::connect()"+"\r\n");
-   		flashP2P.connect(document.connectForm.connectField.value);
-   		}
    
-   this.sendText = function(text)
-   		{
-   		flashP2P.send(peer,text);
-   		}
    		
-   	
+   //initialization	
    
    flashP2P.addCirrusConnectionListener(self.onCirrusConnectionStatus);
    flashP2P.addAcceptListener(self.onConnectionAccepted);
    flashP2P.addPeerConnectionListener(self.onPeerConnectionStatus);
+   self.connectToCirrus();
    
    }

@@ -74,8 +74,7 @@ Worker.prototype._sendHeartbeats = function(interval) {
     	if (typeof(peerId) == typeof(undefined)) {
     		peerId = null;
     	}
-        //var msg = { "type": "HB", "payload": { "action": worker._previousAction, "jobId": worker.jobId, "peerId": peerId}};
-    	var msg = { "type": "HB", "payload": { "action": worker._previousAction, "jobId": worker.jobId}};
+        var msg = { "type": "HB", "payload": { "action": worker._previousAction, "jobId": worker.jobId, "peerId": peerId}};
         worker.ws.send(JSON.stringify(msg));
     }
     setInterval(hb, interval);

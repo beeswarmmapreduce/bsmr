@@ -1,4 +1,5 @@
 function Job(description, worker) {
+    this.peerId = null;
     this.id = description.jobId;
     this.R = description.R;
     this.M = description.M;
@@ -45,7 +46,7 @@ Job.prototype.onReduceTask = function(partitionId) {
 //events from inter
 
 Job.setOwnPeerId = function(url) {
-	//BUG: not implemented
+	this.peerId = url;
 }
 
 Job.prototype.onSplitFail = function(splitId, partitionId) {

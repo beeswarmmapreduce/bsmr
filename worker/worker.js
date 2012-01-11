@@ -1,5 +1,6 @@
 function Worker(masterUrl) {
-    var HB_INTERVAL = 15 * 1000 //10s
+    //var HB_INTERVAL = 15 * 1000 //10s
+    var HB_INTERVAL = 15 * 100000 //10s
     this.masterUrl = masterUrl;
     this._previousAction;
     this._job = {};
@@ -66,7 +67,15 @@ Worker.prototype.partitionComplete = function(partitionId) {
 Worker.prototype._sendHeartbeats = function(interval) {
     var worker = this;
     var hb = function() {
-        var msg = { "type": "HB", "payload": { "action": worker._previousAction, "jobId": worker.jobId}}
+    	var peerId;
+    	var job = worker._job;
+    	if (typeof(job) != typeof(undefined)) {
+	  	    peerId = job.peerId;
+    	}
+    	if (typeof(peerId) == typeof(undefined)) {
+    		peerId = null;
+    	}
+        var msg = { "type": "HB", "payload": { "action": worker._previousAction, "jobId": worker.jobId, "peerId": peerId}}
         worker.ws.send(JSON.stringify(msg));
     }
     setInterval(hb, interval);

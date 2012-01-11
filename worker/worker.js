@@ -1,6 +1,5 @@
 function Worker(masterUrl) {
-    //var HB_INTERVAL = 15 * 1000 //10s
-    var HB_INTERVAL = 15 * 100000 //10s
+    var HB_INTERVAL = 15 * 1000 //10s
     this.masterUrl = masterUrl;
     this._previousAction;
     this._job = {};
@@ -75,7 +74,8 @@ Worker.prototype._sendHeartbeats = function(interval) {
     	if (typeof(peerId) == typeof(undefined)) {
     		peerId = null;
     	}
-        var msg = { "type": "HB", "payload": { "action": worker._previousAction, "jobId": worker.jobId, "peerId": peerId}}
+        //var msg = { "type": "HB", "payload": { "action": worker._previousAction, "jobId": worker.jobId, "peerId": peerId}};
+    	var msg = { "type": "HB", "payload": { "action": worker._previousAction, "jobId": worker.jobId}};
         worker.ws.send(JSON.stringify(msg));
     }
     setInterval(hb, interval);

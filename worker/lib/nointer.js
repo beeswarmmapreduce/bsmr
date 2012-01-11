@@ -6,10 +6,10 @@ function noInter(job, localStore) {
     
     Inter.prototype.feed = function(splitId, partitionId, urls, target) {
         var failed = 0;
-        var job = this;
+        var job = this.job;
     
         var failure = function(url) {
-            job.markUnreachable(url);
+        	job.markUnreachable(url);
             failed += 1;
             if (failed >= urls.length) {
                 job.onSplitFail(splitId, partitionId);

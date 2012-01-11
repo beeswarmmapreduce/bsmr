@@ -1,21 +1,26 @@
 
-if (typeof(importScripts) == typeof(undefined)) {
-    // Mimes webworker importScripts function. Respects import order, but does not block!
-    var importScripts = function() {
-        var args = Array.prototype.slice.call(arguments);
-        var filename = args.shift();
-        if (!filename) {
-            return;
-        }
-        var addQuotes = function(s) {
-            return '"' + s + '"'; 
-        }
-        var quoted = Array.prototype.map.call(args, addQuotes);
-        var newargs = quoted.join(',');
-        var tag = "<script type='text/javascript' src='" + filename + "' onload='importScripts(" + newargs + ")'></scr" + "ipt>";
-        document.write(tag);
+var importScripts = function(){
+	// Mimes webworker importScripts function. Respects import order, but does not block!
+	var myImport = function() {
+		var args = Array.prototype.slice.call(arguments);
+	    var filename = args.shift();
+	    if (typeof(filename) == typeof(undefined)) {
+	        return;
+	    }
+	    var next = function(){myImport.apply(null, args);};
+	    var tag = document.createElement('script');
+	    tag.type = 'text/javascript';
+	    tag.src = filename;
+	    tag.onreadystatechange = next;
+	    tag.onload = next;
+	    var head = document.getElementsByTagName('head')[0];
+	    head.appendChild(tag);
+	}
+    if (typeof(importScripts) == typeof(undefined)) {
+    	return myImport;
     }
-}
+    return importScripts;
+}();
 
 importScripts("console.js",
               "lib/generator.js",

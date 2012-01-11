@@ -33,7 +33,7 @@ Localstore.prototype.canhaz = function(splitId, partitionId) {
 	if (typeof(split) == typeof(undefined)) {
 		return false;
 	}
-	var chunks = this.local[partitionId];
+	var chunks = split[partitionId];
 	if (typeof(chunks) == typeof(undefined)) {
 		return false;
 	}

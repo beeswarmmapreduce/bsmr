@@ -3,7 +3,7 @@ function Iengine(R, job, inter, chooseBucket) {
     this.R = R;
     this.job = job;
     this.local = new Localstore();
-    this.inter = inter(job, this.local)
+    this.inter = inter(job, this.local);
     this.chooseBucket = chooseBucket;
 }
 
@@ -23,7 +23,7 @@ Iengine.prototype.write = function(splitId, pairs, more) {
 }
 
 Iengine.prototype.feed = function(splitId, partitionId, peerUrls, target) {
-    if (this.local.canhaz(splitId)) {
+    if (this.local.canhaz(splitId, partitionId)) {
         this.local.feed(splitId, partitionId, target);
     } else {
         this.inter.feed(splitId, partitionId, peerUrls, target);

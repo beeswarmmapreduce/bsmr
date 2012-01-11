@@ -7,6 +7,7 @@ The simple JSON request-response protocol for bsmr, examples of the message type
 
 {
 operation: "request",
+jobId: 2313,
 splitId: 24,
 partitionId: 11
 }
@@ -33,35 +34,42 @@ function FlashCommunicator()
    {
    var self = this;
    var connectedPeers = new Object();
-   var outgoingQueue = new Array();			//if no connection to a peer, the message gets queued here 
+   var outgoingQueue = new Object();			//if no connection to a peer, the message gets queued here 
    
    var responseListeners = new Array();
    var requestListeners = new Array();
    var errorListeners = new Array();
    var idChangeListeners = new Array();
+   var notFoundListeners = new Array();
    
    //Public interface that BSMR's FlashInter calls
    
-   this.sendRequest = function(peerId, splitId, partitionId)
+   this.sendRequest = function(peerId, jobId, splitId, partitionId)
    		{
-	   	if (connectedPeers[peerId])
-	   		{
-	   		self.sendRequestMessage(peerId, splitId, partitionId);
-	   		}
+	    queueRequestMessage(peerId, jobId, splitId, partitionId);
 	   	
+	    if (connectedPeers[peerId])
+	   		{
+	   		sendQueuedRequestMessages(peerId);
+	   		}
 	   	else
 	   		{
-	   		self.queueRequestMessage(peerId, splitId, partitionId);
-	   		self.connect(peerId);
+	   		connect(peerId);
 	   		}
-	   	
    		}
    
-   this.sendResponse = function(peerId, splitId, partitionId, data)
+   this.sendResponse = function(peerId, jobId, splitId, partitionId, data)
    		{
-	   
-   		}
+	   	var response = createResponseMessage(jobId, splitId, partitionId, data);
+	   	sendMessage(peerId, response);	
+  		}
   
+   
+   this.sendNotFound = function(peerId, jobId, splitId, partitionId)
+		{
+	   	var message = createNotFoundMessage(jobId, splitId, partitionId);
+	   	sendMessage(peerId, message);	
+		}
    
    // Public interface for adding listeners 
    
@@ -85,7 +93,82 @@ function FlashCommunicator()
 	   	idChangeListeners.push(listener);
 		}
    
+   this.addNotFoundListener = function(listener)
+		{
+	   	notFoundListeners.push(listener);
+		}
    //Private helper functions
+   
+   
+   var createRequestMessage = function(jobId, splitId, partitionId)
+   		{
+	   	var request = new Object();
+	   	request.operation = "request";
+	   	request.jobId = jobId;
+	   	request.splitId = splitId;
+	   	request.partitionId =partitionId;
+   		return request;
+   		}
+   
+   var createResponseMessage = function(jobId, splitId, partitionId, data)
+   		{
+		var response = new Object();
+		response.operation = "response";
+		response.jobId = jobId;
+		response.splitId = splitId;
+		response.partitionId = partitionId;
+   		response.data = data;
+		return response;
+   		}
+   
+   var createNotFoundMessage = function(jobId, splitId, partitionId)
+		{
+	   	var message = new Object();
+	   	message.operation = "notFound";
+	   	message.jobId = jobId;
+	   	message.splitId = splitId;
+	   	message.partitionId =partitionId;
+		return request;
+		}
+   
+   var queueRequestMessage = function(peerId, jobId, splitId, partitionId)
+   		{
+	   	if (!outgoingQueue[peerId])
+	   		{
+	   		outgoingQueue[peerId] = new Array();
+	   		}
+	   	
+	   	var request = createRequestMessage(peerId, jobId, splitId, partitionId); 
+	   	outgoingQueue[peerId].push(request);
+   		}
+   
+   var sendQueuedRequestMessages = function(peerId) 
+   		{
+	   	if (outgoingQueue[peerId])
+	   		{
+	   		var requests = outgoingQueue[peerId];
+	   		
+	   		while (true)
+	   			{
+	   			var request = requests.pop();
+	   			if (request==null || typeof(request) == typeof(undefined))
+	   				break;
+	   			
+	   			sendMessage(peerId, request);
+	   			}		
+	   		}
+   		}
+   
+   
+   //This can only be called after the peer with peerId is connected
+   
+   var sendMessage = function(peerId, message)
+		{
+	   if (!connectedPeers[peerId])
+		   return;
+	
+	   flashP2P.send(peerId, JSON.stringify(message));
+		}
    
    var connectToCirrus = function()
    		{
@@ -98,17 +181,13 @@ function FlashCommunicator()
    		flashP2P.listen();
    		}
    
-   var connect = function()
+   var connect = function(peerId)
 		{
 		dump("FlashCommunicator::connect()"+"\r\n");
-		flashP2P.connect(document.connectForm.connectField.value);
+		flashP2P.connect(peerId);
 		}
 
-   var sendText = function(text)
-		{
-		flashP2P.send(peer,text);
-		}
-   
+
    
    //Callbacks to be called  by FlashP2P
    
@@ -116,7 +195,11 @@ function FlashCommunicator()
    		{
    		dump("FlashCommunicator::onCirrusConnectionStatus() "+ ownId+" "+status+"\r\n");
    		
-   		parent.setOwnPeerId(ownId);
+   		var listeners = idChangeListeners;
+		for (var i=0; i<listeners.length; i++)
+    		{
+    		listeners[i](ownId);
+    		}
    		}		
   
   
@@ -135,7 +218,7 @@ function FlashCommunicator()
 	   		var listeners = requestListeners;
 			for (var i=0; i<listeners.length; i++)
 	    		{
-	    		listeners[i].onRequest(peerId, message.split_id, message.partition_id);
+	    		listeners[i](peerId, message.jobId, message.splitId, message.partitionId);
 	    		}
 	   		}
 	   
@@ -144,26 +227,29 @@ function FlashCommunicator()
 	   		var listeners = responseListeners;
 			for (var i=0; i<listeners.length; i++)
 	    		{
-	    		listeners[i].onResponse(peerId, message.split_id,message.partition_id,message.data);
+	    		listeners[i](peerId, message.jobId, message.splitId,message.partitionId,message.data);
 	    		}
    			}
    		
-	   	if (meassage.operation == "not_found")
+	   	if (meassage.operation == "notFound")
    			{
-	   		var listeners = errorListeners;
+	   		var listeners = notFoundListeners;
 			for (var i=0; i<listeners.length; i++)
 	    		{
-	    		listeners[i].onError(peerId, data);
+	    		listeners[i](peerId, message.jobId, message.splitId, message.partitionId);
 	    		}
    			}
    		
    		
    		}	
    		
+   		
    this.onConnectionAccepted = function(peerId)
    		{
-   		dump("FlashCommunicator::onConnectionAccepted(), connection from peer "+peerId+"\r\n");
-   		peer = peerId;
+   		//incoming connection established
+	   
+	   	dump("FlashCommunicator::onConnectionAccepted(), connection from peer "+peerId+"\r\n");
+   		connectedPeers[peerId] = true;
    		flashP2P.addDataListener(peerId,self.onDataArrived);
    		}
    		
@@ -171,23 +257,34 @@ function FlashCommunicator()
    		{
    		dump("FlashCommunicator::onPeerConnectionStatus(), connection to peer "+peerId+" "+status+" "+statusCode+"\r\n");
    		
-   		if (status != flashP2P.STATUS_UNKNOWN)
-   			document.connectForm.statusField.value = status;
    	
+   	
+  		//outgoing connection established
+   		
    		if (status == flashP2P.STATUS_CONNECTED)
    			{	
-   			peer = peerId;
+   			connectedPeers[peerId] = true;
    			flashP2P.addDataListener(peerId,self.onDataArrived);
+   			sendQueuedRequestMessages(peerId);
    			}
+   		
+   		else 
+   			{
+   			var listeners = errorListeners;
+   			for (var i=0; i<listeners.length; i++)
+   				{
+   				listeners[i](status);
+   				}
+   			}
+   		
    		}
    		
    
-   		
    //initialization	
    
    flashP2P.addCirrusConnectionListener(self.onCirrusConnectionStatus);
    flashP2P.addAcceptListener(self.onConnectionAccepted);
    flashP2P.addPeerConnectionListener(self.onPeerConnectionStatus);
    self.connectToCirrus();
-   
+   listen();
    }

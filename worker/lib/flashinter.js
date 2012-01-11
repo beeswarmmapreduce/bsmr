@@ -1,80 +1,113 @@
-function flashInter(job, local) {
+function FlashInter(job, localStorage)
+{
+var self = this;	
 
-    function Inter(job, local) {
-        this.job = job;
-        this.local = local
-        this.buffer = [];
-        
-        var url = "dummyid://peer-13";
-        this.job.setOwnPeerId(url);
+var target = null;
+var peerUrls = null;
+var peerUrlIndex = null;
+var currentSplitId = null;
+var currentPartitionId = null;
+var jobId = job.id;
+
+var flashCommunicator= new FlashCommunicator();
+
+
+
+// Starts feeding a chunk identified by splitId, partitionId from peerUrl
+// into the target 
+
+this.feed = function(splitId, partitionId, _peerUrls, _target) 
+	{
+	currentSplitId = splitId;
+	currentPartitionId = partitionId;
+	target = _target;
+    peerUrls = _peerUrls;
+    peerUrlIndex = 0;
+	
+    flashCommunicator.sendRequest(peerUrls[peerUrlIndex], jobId, splitId, partitionId);
     }
 
-    //server side
 
-    Inter.prototype.write = function(splitId, partitionId, pairs, more) {
-        this.buffer = this.buffer.concat(pairs)
-        if (!more) {
-            send(splitId, partitionId, this.buffer)
-            this.buffer = [];
-        }
-    }
+//interface that the FlashCommunicator calls
 
-    Inter.prototype.fail = function(splitId, partitionId) {
-        //BUG: there is not fail
-        fail(splitId, partitionId)
-    }
-    
-    //BUG: no one calls onRequest
-    Inter.prototype.onRequest = function(splitId, partitionId) {
-        this.remoteFeed(splitId, partitionId, this);
-    }
+//inner class needed for storing the peerid and buffer
 
-    Inter.prototype.remoteFeed = function(splitId, partitionId, remoteTarget) {
-        if (this.local.canhaz(splitId)) {
-            this.local.feed(splitId, partitionId, remoteTarget);
-        }
-        remoteTarget.fail(splitId, partitionId);
-    }
+function Responder(peerId)
+	{
+	var self = this;
+	var buffer = new Array();
+	
+	this.write = function(splitId, partitionId, pairs, more) 
+		{
+    	buffer = buffer.concat(pairs);
+    	if (!more) 
+    		{
+        	flashCommunicator.sendResponse(peerId, jobId, splitId, partitionId, buffer);
+        	buffer = undefined;
+        	buffer = new Array();
+        	}
+		}
+	}
 
-    //client side
+this.onRequest = function(peerId, jobId, splitId, partitionId)
+	{
+	if (localStorage.canhaz(splitId,partitionId))
+		{
+		//if we have the data
+		var responder = new Responder(peerId);
+		
+		localStorage.feed(splitId, partitionId, responder);
+		}
+	
+	else
+		{
+		flashCommunicator.sendNotFound(peerId, jobId, splitId, partitionId);
+		}
+	}
 
-    Inter.prototype.onResponse = function(peerId, splitId, partitionId, chunk) {
-    	 
-    	target.write(splitId, partitionId, chunk, false);	
-    	
-    }
-    
-    
-    //Public Interface that Job calls
-    
-    
-    //Start feeding data identified by splitId, partitionId from urls into target
-    
-    Inter.prototype.feed = function(splitId, partitionId, urls, target) {
-        var failed = 0;
-        var job = this.job;
-    
-        var failure = function(url) {
-            job.markUnreachable(url);
-            failed += 1;
-            if (failed >= urls.length) {
-                job.onSplitFail(splitId, partitionId);
-            }
-        }
-    
-        var write = function(chunk, more) {
-            target.write(splitId, partitionId, chunk, more);
-        }
-    
-        var request = function(url, write, failure) {
-            failure(url); //BUG: THIS IS A DUMMY THAT FAILS ALWAYS
-        }
-    
-        for (var i in urls) {
-            var url = urls[i];
-            request(url, write, failure);
-        }
-    }
 
-    return new Inter(job, local);
+this.onNotFound = function(peerId, jobId, splitId, partitionId)
+	{
+	self.onError("Requested Data Not Found");
+	}
+
+this.onResponse = function(peerId, jobId, splitId, partitionId, data)
+	{
+	target.write(splitId, partitionId, data);
+	}
+
+this.onError = function(status)
+	{
+	dump("FlashInter::onError "+status);
+	
+	job.markUnreachable(peerUrls[peerUrlIndex]);
+	
+	peerUrlIndex++;
+	
+	if (peerUrlIndex >= peerUrls.legth)
+		 job.onSplitFail(currentSplitId, currentPartitionId);
+	else
+		 flashCommunicator.sendRequest(peerUrls[peerUrlIndex], jobId, splitId, partitionId);
+	
+	}
+
+this.onIdChange = function(id)
+	{
+	job.setOwnPeerId(id);
+	}
+
+//initialization
+flashCommunicator.addRequestListener(this.onRequest);
+flashCommunicator.addResponseListener(this.onResponse);
+flashCommunicator.addErrorListener(this.onError);
+flashCommunicator.addIdChangeListener(this.onIdChange);
+flashCommunicator.addNotFoundListener(this.onNotFound);
 }
+
+
+//Factory method
+
+function flashInter(job, localStorage)
+	{
+	return new FlashInter(job, localStorage);
+	}

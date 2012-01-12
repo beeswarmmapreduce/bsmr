@@ -171,10 +171,20 @@ public class Worker implements WebSocket, WebSocket.OnTextMessage
 			return;
 		}
 		
-		
+		if (msg.getType() == Type.HB) {
+			
+			if (msg.getPeerId() != null)
+				{
+				master.setWorkerURL(this, msg.getPeerId());
+				}
+			else
+				{
+				master.setWorkerURL(this, msg.getSocketURL());
+				}
+		}
 
 		if (msg.getAction() == Message.Action.socket) {
-			master.setWorkerURL(this, msg.getSocketURL());
+			//master.setWorkerURL(this, msg.getSocketURL());
 		}
 	
 		if (msg.getJob() != null && msg.getJob() != master.getActiveJob()) {

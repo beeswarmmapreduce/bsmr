@@ -81,6 +81,11 @@ public static final String FIELD_SOCKET_RESOURCE = "resource";
 public static final String FIELD_CODE = "code";
 public static final String FIELD_INPUTREF = "inputRef";
 
+// var msg = {type: "ACK", payload: {action: "socket", protocol: "peer", port: 12345 + Math.floor(Math.random()*1000), resource: String(Math.random()).split(".")[1]}};
+//var msg = { "type": "HB", "payload": { "action": worker._previousAction, "jobId": worker.jobId, "peerId": peerId}};
+
+public static final String FIELD_PEERID = "peerId";
+
 private Type type;
 private Action action;
 
@@ -90,6 +95,7 @@ private String socketUrl;
 private MapStatus mapStatus;
 private ReduceStatus reduceStatus;
 private Set<Worker> unreachableWorkers;
+private String peerId = null;
 
 private Message(Type t, Action a)
 	{
@@ -164,7 +170,16 @@ private Message(Map<Object, Object> d, MasterContext master, String remoteAddr)
 			}
 
 		}
-
+	
+	if (payload.containsKey(FIELD_PEERID))
+		{
+		Object o = payload.get(FIELD_PEERID);
+		if (o != null)
+			{
+			this.peerId = (String)o;
+			}
+		}
+	
 	this.socketUrl = constructURL((String) payload.get(FIELD_SOCKET_PROTOCOL),
 			remoteAddr, payload.get(FIELD_SOCKET_PORT), (String) payload
 					.get(FIELD_SOCKET_RESOURCE));
@@ -455,7 +470,7 @@ public static Message findSplitAtMessage(Partition p, Split s, Job j,
 	for (Worker w : j.getSplitInformation().whoHasSplit(s))
 		{
 
-		if (unreachableWorkers.contains(w))
+		if (unreachableWorkers.contains(w) || w.getSocketURL() == null)
 			continue;
 
 		hasSplit.add(w);
@@ -475,6 +490,11 @@ public Set<Worker> getUnareachableWorkers()
 public String getSocketURL()
 	{
 	return socketUrl;
+	}
+
+public String getPeerId()
+	{
+	return peerId;
 	}
 
 /**

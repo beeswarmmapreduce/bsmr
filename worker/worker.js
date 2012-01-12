@@ -63,19 +63,26 @@ Worker.prototype.partitionComplete = function(partitionId) {
     this.ws.send(JSON.stringify(msg));
 }
 
+Worker.prototype.hb = function() {
+	var worker = this;
+	var peerId;
+	var job = worker._job;
+	if (typeof(job) != typeof(undefined)) {
+  	    peerId = job.peerId;
+	}
+	if (typeof(peerId) == typeof(undefined)) {
+		peerId = null;
+	}
+    var msg = { "type": "HB", "payload": { "action": worker._previousAction, "jobId": worker.jobId, "peerId": peerId}};
+    console.log(msg);
+    worker.ws.send(JSON.stringify(msg));
+}
+
+
 Worker.prototype._sendHeartbeats = function(interval) {
     var worker = this;
     var hb = function() {
-    	var peerId;
-    	var job = worker._job;
-    	if (typeof(job) != typeof(undefined)) {
-	  	    peerId = job.peerId;
-    	}
-    	if (typeof(peerId) == typeof(undefined)) {
-    		peerId = null;
-    	}
-        var msg = { "type": "HB", "payload": { "action": worker._previousAction, "jobId": worker.jobId, "peerId": peerId}};
-        worker.ws.send(JSON.stringify(msg));
+    	worker.hb();
     }
     setInterval(hb, interval);
 }

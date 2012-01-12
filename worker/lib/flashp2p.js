@@ -66,8 +66,7 @@ function FlashP2P()
     
     this.connectToCirrus = function(cirrusUrl)
     	{
-    	var foo = getFlashMovie("JavascriptInterface");
-    	console.log(foo);
+    	console.log("FlashP2P::connectToCirrus() "+ cirrusUrl);
     	
     	getFlashMovie("JavascriptInterface").connectToCirrus(cirrusUrl);
     	}

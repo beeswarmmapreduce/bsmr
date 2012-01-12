@@ -29,21 +29,24 @@ partition_id: 11
 
 */
 
+var flashP2P;
 
 function FlashCommunicator()
    {
    var self = this;
    
-   var flashP2P = new FlashP2P();
+   flashP2P = new FlashP2P();
    
    var connectedPeers = new Object();
    var outgoingQueue = new Object();			//if no connection to a peer, the message gets queued here 
-   
+  
    var responseListeners = new Array();
    var requestListeners = new Array();
    var errorListeners = new Array();
    var idChangeListeners = new Array();
    var notFoundListeners = new Array();
+   
+   var connectedToCirrus = false;
    
    //Public interface that BSMR's FlashInter calls
    
@@ -55,10 +58,12 @@ function FlashCommunicator()
 	   		{
 	   		sendQueuedRequestMessages(peerId);
 	   		}
-	   	else
+	    
+	    else if (connectedToCirrus)
 	   		{
 	   		connect(peerId);
 	   		}
+	   
    		}
    
    this.sendResponse = function(peerId, jobId, splitId, partitionId, data)
@@ -163,6 +168,7 @@ function FlashCommunicator()
    		}
    
    
+ 
    //This can only be called after the peer with peerId is connected
    
    var sendMessage = function(peerId, message)
@@ -187,6 +193,7 @@ function FlashCommunicator()
    var connect = function(peerId)
 		{
 		console.log("FlashCommunicator::connect()"+"\r\n");
+		console.log(peerId);
 		flashP2P.connect(peerId);
 		}
 
@@ -198,11 +205,19 @@ function FlashCommunicator()
    		{
    		console.log("FlashCommunicator::onCirrusConnectionStatus() "+ ownId+" "+status+"\r\n");
    		
+   		connectedToCirrus = true;
+   
    		var listeners = idChangeListeners;
 		for (var i=0; i<listeners.length; i++)
     		{
     		listeners[i](ownId);
     		}
+		
+		for (var i in outgoingQueue)
+			{
+			connect(i); 
+			}
+		
 		listen();
    		}		
   

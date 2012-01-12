@@ -45,8 +45,10 @@ Job.prototype.onReduceTask = function(partitionId) {
 
 //events from inter
 
-Job.setOwnPeerId = function(url) {
+Job.prototype.setOwnPeerId = function(url) {
 	this.peerId = url;
+	console.log("Job::setOwnPeerId() "+this.peerId);
+	this.worker.hb();
 }
 
 Job.prototype.onSplitFail = function(splitId, partitionId) {

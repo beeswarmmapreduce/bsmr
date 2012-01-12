@@ -1,8 +1,10 @@
 //This is a JavaScript wrapper for the P2P functionality of Adobe Flash
 
+addFlashBinary();
+
 function FlashP2P()
     {
-    dump("FlashP2P()");
+    console.log("FlashP2P()");
     
     var self = this;
     
@@ -23,13 +25,13 @@ function FlashP2P()
     
    this.listen = function()
 		{
-		dump("FlashP2P::listen()\r\n");
+		console.log("FlashP2P::listen()\r\n");
 		getFlashMovie("JavascriptInterface").listen();
 		}	 	 
    
    this.connect = function(peerId)
     	{
-    	dump("FlashP2P::connect()\r\n");
+    	console.log("FlashP2P::connect()\r\n");
     	getFlashMovie("JavascriptInterface").connect(peerId);
     	}
    
@@ -64,6 +66,9 @@ function FlashP2P()
     
     this.connectToCirrus = function(cirrusUrl)
     	{
+    	var foo = getFlashMovie("JavascriptInterface");
+    	console.log(foo);
+    	
     	getFlashMovie("JavascriptInterface").connectToCirrus(cirrusUrl);
     	}
     	
@@ -73,7 +78,7 @@ function FlashP2P()
     
     this.onDataArrived = function(peerId, data)
 		{
-		dump("FlashP2P::onDataArrived(), peerId: "+peerId+" data: "+data+"\r\n");
+		console.log("FlashP2P::onDataArrived(), peerId: "+peerId+" data: "+data+"\r\n");
 		var listeners = dataListeners[peerId];
 		for (var i=0; i<listeners.length; i++)
     		{
@@ -83,7 +88,7 @@ function FlashP2P()
 		
     this.onCirrusConnectionStatus = function(nearId, statusCode, statusLevel)
     	{
-    	dump("FlashP2P::onCirrusConnectionStatus(), ownId: "+nearId+"\r\n");
+    	console.log("FlashP2P::onCirrusConnectionStatus(), ownId: "+nearId+"\r\n");
     	ownId = nearId;
     	
     	var status = self.STATUS_UNKNOWN;
@@ -105,7 +110,7 @@ function FlashP2P()
     		
     this.onConnectionAccepted = function(peerId)
     	{
-    	dump("FlashP2P::onConnectionAccepted(), peerId: "+peerId+"\r\n");
+    	console.log("FlashP2P::onConnectionAccepted(), peerId: "+peerId+"\r\n");
     	for (var i=0; i<acceptListeners.length; i++)
     		{
     		acceptListeners[i](peerId);
@@ -114,7 +119,7 @@ function FlashP2P()
     	
 	this.onPeerConnectionStatus = function(peerId, statusCode, statusLevel)
      	{
-     	dump("FlashP2P::onPeerConnectionStatus(), peerId: "+peerId+"\r\n");
+     	console.log("FlashP2P::onPeerConnectionStatus(), peerId: "+peerId+"\r\n");
      	
      	var status = self.STATUS_UNKNOWN;
      	

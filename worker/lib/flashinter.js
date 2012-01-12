@@ -2,6 +2,8 @@ function FlashInter(job, localStorage)
 {
 var self = this;	
 
+//addFlashBinary();
+
 var target = null;
 var peerUrls = null;
 var peerUrlIndex = null;
@@ -78,7 +80,7 @@ this.onResponse = function(peerId, jobId, splitId, partitionId, data)
 
 this.onError = function(status)
 	{
-	dump("FlashInter::onError "+status);
+	console.log("FlashInter::onError "+status);
 	
 	job.markUnreachable(peerUrls[peerUrlIndex]);
 	

@@ -33,6 +33,9 @@ partition_id: 11
 function FlashCommunicator()
    {
    var self = this;
+   
+   var flashP2P = new FlashP2P();
+   
    var connectedPeers = new Object();
    var outgoingQueue = new Object();			//if no connection to a peer, the message gets queued here 
    
@@ -177,13 +180,13 @@ function FlashCommunicator()
   
    var listen = function()
    		{
-   		dump("FlashCommunicator::listen()\r\n");
+   		console.log("FlashCommunicator::listen()\r\n");
    		flashP2P.listen();
    		}
    
    var connect = function(peerId)
 		{
-		dump("FlashCommunicator::connect()"+"\r\n");
+		console.log("FlashCommunicator::connect()"+"\r\n");
 		flashP2P.connect(peerId);
 		}
 
@@ -193,13 +196,14 @@ function FlashCommunicator()
    
    this.onCirrusConnectionStatus = function(ownId, status, statusCode, statusLevel)
    		{
-   		dump("FlashCommunicator::onCirrusConnectionStatus() "+ ownId+" "+status+"\r\n");
+   		console.log("FlashCommunicator::onCirrusConnectionStatus() "+ ownId+" "+status+"\r\n");
    		
    		var listeners = idChangeListeners;
 		for (var i=0; i<listeners.length; i++)
     		{
     		listeners[i](ownId);
     		}
+		listen();
    		}		
   
   
@@ -208,7 +212,7 @@ function FlashCommunicator()
    		// A message has arrived from a remote peer whose peer id is peerID
 	    // This function will decode the message and act accordingly
 	   	
-	   	dump("FlashCommunicator::onDataArrived(), peerId: "+peerId+" data: "+data+"\r\n")
+	   	console.log("FlashCommunicator::onDataArrived(), peerId: "+peerId+" data: "+data+"\r\n")
    
    		
 	   	var message = JSON.parse(data);
@@ -248,14 +252,14 @@ function FlashCommunicator()
    		{
    		//incoming connection established
 	   
-	   	dump("FlashCommunicator::onConnectionAccepted(), connection from peer "+peerId+"\r\n");
+	   	console.log("FlashCommunicator::onConnectionAccepted(), connection from peer "+peerId+"\r\n");
    		connectedPeers[peerId] = true;
    		flashP2P.addDataListener(peerId,self.onDataArrived);
    		}
    		
    this.onPeerConnectionStatus = function(peerId, status, statusCode, statusLevel)		
    		{
-   		dump("FlashCommunicator::onPeerConnectionStatus(), connection to peer "+peerId+" "+status+" "+statusCode+"\r\n");
+   		console.log("FlashCommunicator::onPeerConnectionStatus(), connection to peer "+peerId+" "+status+" "+statusCode+"\r\n");
    		
    	
    	
@@ -285,6 +289,5 @@ function FlashCommunicator()
    flashP2P.addCirrusConnectionListener(self.onCirrusConnectionStatus);
    flashP2P.addAcceptListener(self.onConnectionAccepted);
    flashP2P.addPeerConnectionListener(self.onPeerConnectionStatus);
-   self.connectToCirrus();
-   listen();
+   connectToCirrus();
    }

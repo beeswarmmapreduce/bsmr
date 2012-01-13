@@ -29,12 +29,15 @@ Localstore.prototype.write = function(splitId, partitionId, content, more) {
 }
 
 Localstore.prototype.canhaz = function(splitId, partitionId) {
+	console.log("Localstore::canhaz(), "+splitId+","+partitionId+",");
 	var split = this.local[splitId];
 	if (typeof(split) == typeof(undefined)) {
+		console.log("Localstore::canhaz(), split was undefined");
 		return false;
 	}
 	var chunks = split[partitionId];
 	if (typeof(chunks) == typeof(undefined)) {
+		console.log("Localstore::canhaz(), chunks was undefined");
 		return false;
 	}
 	return true;

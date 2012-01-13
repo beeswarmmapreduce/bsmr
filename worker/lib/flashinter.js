@@ -20,6 +20,7 @@ var flashCommunicator= new FlashCommunicator();
 
 this.feed = function(splitId, partitionId, _peerUrls, _target) 
 	{
+	console.log("FlashInter::feed() "+splitId+", "+partitionId);
 	currentSplitId = splitId;
 	currentPartitionId = partitionId;
 	target = _target;
@@ -41,28 +42,33 @@ function Responder(peerId)
 	
 	this.write = function(splitId, partitionId, pairs, more) 
 		{
+		console.log("Responder::write(), "+splitId+", "+partitionId+", "+pairs+" ,"+more );
+		console.log(pairs);		
     	buffer = buffer.concat(pairs);
     	if (!more) 
     		{
         	flashCommunicator.sendResponse(peerId, jobId, splitId, partitionId, buffer);
-        	buffer = undefined;
-        	buffer = new Array();
+        	//buffer = undefined;
+        	//buffer = new Array();
         	}
 		}
 	}
 
 this.onRequest = function(peerId, jobId, splitId, partitionId)
 	{
+	console.log("FlashInter::onRequest() "+peerId+" ,"+jobId+" ,"+splitId+" ,"+partitionId);
 	if (localStorage.canhaz(splitId,partitionId))
 		{
 		//if we have the data
 		var responder = new Responder(peerId);
 		
+		console.log("FlashInter::onRequest(), we have the data, calling localStorage.feed()");
 		localStorage.feed(splitId, partitionId, responder);
 		}
 	
 	else
 		{
+		console.log("FlashInter::onRequest(), we don't have the data");
 		flashCommunicator.sendNotFound(peerId, jobId, splitId, partitionId);
 		}
 	}
@@ -75,6 +81,7 @@ this.onNotFound = function(peerId, jobId, splitId, partitionId)
 
 this.onResponse = function(peerId, jobId, splitId, partitionId, data)
 	{
+	console.log("FlashInter::onResponse()");
 	target.write(splitId, partitionId, data);
 	}
 

@@ -17,7 +17,7 @@ function debugInput(M) {
     }
     
     function Fake(splitId, M) {
-        this.ret = this._repe(10);
+        this.ret = this._repe(15);
         var pairs = this._createseq(splitId, M);
         this._buffer = this._parts(pairs);
     }

@@ -37,6 +37,7 @@ function FlashP2P()
    
     this.send = function(peerId, data)
     	{
+    	console.log("FlashP2P::send(), "+peerId+", "+data);
     	getFlashMovie("JavascriptInterface").send(peerId,data);
     	}
     	
@@ -61,7 +62,8 @@ function FlashP2P()
     	if (!dataListeners[peerId])
     		dataListeners[peerId] = new Array();
     	
-    	dataListeners[peerId].push(listener);  
+    	if (dataListeners[peerId].indexOf(listener) == -1)
+    		dataListeners[peerId].push(listener);  
     	}
     
     this.connectToCirrus = function(cirrusUrl)

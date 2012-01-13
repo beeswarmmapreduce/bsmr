@@ -75,6 +75,7 @@ function FlashCommunicator()
    
    this.sendNotFound = function(peerId, jobId, splitId, partitionId)
 		{
+	   	console.log("FlashCommunicator::sendNotFound()");
 	   	var message = createNotFoundMessage(jobId, splitId, partitionId);
 	   	sendMessage(peerId, message);	
 		}
@@ -136,7 +137,7 @@ function FlashCommunicator()
 	   	message.jobId = jobId;
 	   	message.splitId = splitId;
 	   	message.partitionId =partitionId;
-		return request;
+		return message;
 		}
    
    var queueRequestMessage = function(peerId, jobId, splitId, partitionId)
@@ -146,7 +147,7 @@ function FlashCommunicator()
 	   		outgoingQueue[peerId] = new Array();
 	   		}
 	   	
-	   	var request = createRequestMessage(peerId, jobId, splitId, partitionId); 
+	   	var request = createRequestMessage(jobId, splitId, partitionId); 
 	   	outgoingQueue[peerId].push(request);
    		}
    
@@ -193,7 +194,6 @@ function FlashCommunicator()
    var connect = function(peerId)
 		{
 		console.log("FlashCommunicator::connect()"+"\r\n");
-		console.log(peerId);
 		flashP2P.connect(peerId);
 		}
 
@@ -232,7 +232,7 @@ function FlashCommunicator()
    		
 	   	var message = JSON.parse(data);
    		
-	   	if (meassage.operation == "request")
+	   	if (message.operation == "request")
 	   		{
 	   		var listeners = requestListeners;
 			for (var i=0; i<listeners.length; i++)
@@ -241,7 +241,7 @@ function FlashCommunicator()
 	    		}
 	   		}
 	   
-	   	if (meassage.operation == "response")
+	   	if (message.operation == "response")
    			{
 	   		var listeners = responseListeners;
 			for (var i=0; i<listeners.length; i++)
@@ -250,7 +250,7 @@ function FlashCommunicator()
 	    		}
    			}
    		
-	   	if (meassage.operation == "notFound")
+	   	if (message.operation == "notFound")
    			{
 	   		var listeners = notFoundListeners;
 			for (var i=0; i<listeners.length; i++)

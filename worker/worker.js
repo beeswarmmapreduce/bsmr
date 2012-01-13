@@ -74,7 +74,7 @@ Worker.prototype.hb = function() {
 		peerId = null;
 	}
     var msg = { "type": "HB", "payload": { "action": worker._previousAction, "jobId": worker.jobId, "peerId": peerId}};
-    console.log(msg);
+    //console.log(msg);
     worker.ws.send(JSON.stringify(msg));
 }
 

@@ -1,229 +1,531 @@
-<!DOCTYPE html>
+
+<body>
 <html>
-    <head>
-        <title>bsmr console</title>
-        <script type="text/javascript" src="json2.js"></script>
-        <script type="text/javascript" src="console.js"></script>
-        <script type="text/javascript" src="jquery.js"></script>
-        <style type="text/css">
-            @import url(console.css);
-        </style>
-    </head>
-    <body>
-        <h1>
-            BS/MR Console
-        </h1>
-<div style="display: none;"> <!-- hack to hide old stuff -->
-        <div id="control">
-            <label for="master">master</label>
-            <input type="text" id="master" value="ws://localhost:8080/bsmr/" />
-            <input type="button" id="connect" value="connect"/>
-        </div>
-</div> <!-- hack to hide old stuff -->
-        <div id="dashboard">
-            <h2>Current work</h2>
+<head>
+<title>Bee Swarm Console</title>
+<script>
+	var COMPLETE = '&#10003;';
+	//var DELETED = '&#128293;';
+	var RUNNING = '&#127939;';
+	var QUEUED = '&#8987;';
 
-            <h3>map</h3>
-            <table id="splits">
-                <tr class="queued">
-                    <td class="label">queued</td>
-                    <td class="value">0</td>
-                </tr>
-                <tr class="done">
-                    <td class="label">done</td>
-                    <td class="value">0</td>
-                </tr>
-            </table>
-            <table id="splitsVisual" class="visual"></table>
+  var previoustab;
+  var currenttab;
 
-            <h3>reduce</h3>
-            <table id="partitions">
-                <tr class="queued">
-                    <td class="label">queued</td>
-                    <td class="value">0</td>
-                </tr>
-                <tr class="done">
-                    <td class="label">done</td>
-                    <td class="value">0</td>
-                </tr>
-            </table>
-            <table id="partitionsVisual" class="visual"></table>
+  var workercount = 0;
+  var jobcount = 0;
+  var jobs = [];
+  var ended = [];
 
-            <h2>Workers (<span id="workerCount">0</span>)</h2>
-            <table id="workers">
-                <thead>
-                    <tr>
-                        <th>Status</th>
-                        <th>Url</th>
-                        <th>Connected</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr class="template">
-                        <td class="status"></td>
-                        <td class="url"></td>
-                        <td class="connectTime"></td>
-                    </tr>
-                </tbody>
-            </table>
-            <h2>Active job (<span id="activeJobCount">0</span>)</h2>
-            <table id="activeJob" class="job-table">
-                <thead>
-                    <tr>
-                        <th></th>
-                        <th>id</th>
-                        <th>R</th>
-                        <th>M</th>
-                        <th>code</th>
-                        <th>start</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr class="template">
-                        <td class="tools"><a href="#" class="rm">rm</a></td>
-                        <td class="jobId"></td>
-                        <td class="R"></td>
-                        <td class="M"></td>
-                        <td class="code"><pre></pre></td>
-                        <td class="startTime"></td>
-                    </tr>
-                <tbody>
-            </table>
-            <h2>Job queue (<span id="jobQueueCount">0</span>)</h2>
-            <table id="jobQueue" class="job-table">
-                <thead>
-                    <tr>
-                        <th></th>
-                        <th>id</th>
-                        <th>R</th>
-                        <th>M</th>
-                        <th>code</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr class="template">
-                        <td class="tools"><a href="#" class="rm">rm</a></td>
-                        <td class="jobId"></td>
-                        <td class="R"></td>
-                        <td class="M"></td>
-                        <td class="code"><pre></pre></td>
-                    </tr>
-                <tbody>
-            </table>
-            <h2>Job history (<span id="jobHistoryCount">0</span>)</h2>
-            <table id="jobHistory" class="job-table">
-                <thead>
-                    <tr>
-                        <th></th>
-                        <th>id</th>
-                        <th>R</th>
-                        <th>M</th>
-                        <th>code</th>
-                        <th>start</th>
-                        <th>finish</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr class="template">
-                        <td class="tools"><a href="#" class="rm">rm</a></td>
-                        <td class="jobId"></td>
-                        <td class="R"></td>
-                        <td class="M"></td>
-                        <td class="code"><pre></pre></td>
-                        <td class="startTime"></td>
-                        <td class="finishTime"></td>
-                    </tr>
-                <tbody>
-            </table>
-        </div>
+  var ws = new WebSocket("ws://localhost:8080/bsmr", "console");
+  ws.onmessage = function(e) { msgparse(JSON.parse(e.data)); };
 
-        <div id="jobInput">
-            <h2>Add job</h2>
-            <form>
-<div style="display: none;"> <!-- hack to hide old stuff -->
-                <p>
-                    <label for="inputRef">Input ref.</label>
-                    <input type="text" id="inputRef" name="inputRef"/value="enwiki.xml">
-                </p>
-</div> <!-- hack to hide old stuff -->
-                <p>
-                    <label for="M">Number splits (M)</label>
-                    <input type="text" id="M" name="M"/value="10">
-                </p>
-                <p>
-                    <label for="R">Number partitions (R)</label>
-                    <input type="text" id="R" name="R" value="10"/>
-                </p>
-                <p>
-                    <label for="heartbeatTimeout">Heartbeat timeout</label>
-                    <input type="text" id="heartbeatTimeout" name="heartbeatTimeout" value="60000"/>
-                </p>
-                <p>
-                    <label for="progressTimeout">Progress timeout</label>
-                    <input type="text" id="progressTimeout" name="progressTimeout" value="300000"/>
-                </p>
-<div style="display: none;"> <!-- hack to hide old stuff -->
-                <p>
-                    <label for="inputPlugin">Input plugin</label>
-                    <select id="inputPlugin">
-                        <option value="null">Please select</option>
-                    </select>
-                    <div id="inputPluginParams"></div>
-                </p>
-                <p>
-                    <label for="p2pPlugin">P2P plugin</label>
-                    <select id="p2pPlugin">
-                        <option value="null">Please select</option>
-                    </select>
-                    <div id="p2pPluginParams"></div>
-                </p>
-                <p>
-                    <label for="outputPlugin">Output plugin</label>
-                    <select id="outputPlugin">
-                        <option value="null">Please select</option>
-                    </select>
-                    <div id="outputPluginParams"></div>
-                </p>
-</div> <!-- hack to hide old stuff -->
-                <p>
-                    <label for="code" class="textarea">Job code</label>
-                    <textarea id="jobCode">
-mapper = function(pair, emit) {
-    var word = pair[1];
-    emit(word, '1');
+  function creategrid(id, length, cellstatus) {
+	  if (typeof(cellstatus) == typeof(undefined)) {
+		cellstatus = 'unknown';
+	  }
+	  var LINELEN = 50;
+	  var i = 0;
+	  html = '<table class="grid" id="grid-' + id + '">';
+	  while (i < length) {
+		html += '<tr>';
+			for (var j = 0; j < LINELEN; j++) {
+				var classes = cellstatus;
+				if (i >= length) {
+					classes = 'disabled';
+				}
+
+				html += '<td title="' + i + ', ' + classes + '" class="' + classes + '" id="grid-' + id + '-cell-' + i + '"></td>'
+			i++;
+		}
+		html += '</tr>';
+	}
+	html += '</table>';
+	return html;
+
+  }
+
+  function clearjobs() {
+	for (var i in ended) {
+		jobId = ended[i];
+		removejob(jobId);
+	}
+  }
+
+  function nukejobs() {
+	for (var i in jobs) {
+		jobId = jobs[i];
+		removejob(jobId);
+	}
+  }
+
+  function updateworkers(workers) {
+		  wc = 0;
+		  var html = '<tr><th class="number">worker</th><th class="number">connect time</th><th class="status">status</th><th colspan="2" class="url">inter url</th></tr>';
+		  for (var id in workers) {
+			  worker = workers[id];
+			  html += '<tr><td class="number">' + id + '</td><td class="number">' + worker.connectTime+ '</td><td class="status">' + worker.status + '</td><td class="url">' + worker.url + '</td></tr>'
+			  wc += 1;
+		  }
+		  document.getElementById('workers').innerHTML = html;
+		  workercount = wc;
+
+  }
+
+  function tabhead(id, statussymbol, hidetitle) {
+	var title = id;
+	var classes = '';
+	if (hidetitle == true) {
+		title = ''
+	}
+	if (typeof(statussymbol) == typeof(undefined)) {
+		statussymbol = '';
+	}
+	if (id == currenttab) {
+		classes = 'selected';
+	}
+
+	return '<td id="head-' + id + '" class="' + classes + '" title="' + id + '" onClick="switchtab(\'' + id + '\');"><span class="symbol" id="status-' + id + '">' + statussymbol + '</span> ' + title + '</td>';
+  }
+  function updatejobbar(payload) {
+	  var completed = payload.jobHistory;
+	  var queued = payload.jobQueue;
+	  var current = payload.job;
+	  jobcount = completed.length + queued.length + 1;
+	  var hidetitle = jobcount > 10;
+	  var html = '';
+	  var all = [];
+	  var gone = [];
+
+	  var currentok = false;
+	if (currenttab == '+') {
+		currentok = true;
+	}
+	  for (var i in completed) {
+	  	var job = completed[i];
+		all.push(job.jobId);
+		gone.push(job.jobId);
+		if (currenttab == job.jobId) {
+			currentok = true;
+		}
+		html += tabhead(job.jobId, COMPLETE, hidetitle);
+		}
+	ended = gone;
+	if (typeof(current) != typeof(undefined)) {
+		if (currenttab == current.jobId) {
+			currentok = true;
+		}
+		all.push(current.jobId);
+		if (current.finished == true) {
+			html += tabhead(current.jobId, COMPLETE, true);
+		} else {
+			html += tabhead(current.jobId, RUNNING);
+		}
+	}
+	for (var i in queued) {
+		var job = queued[i];
+		all.push(job.jobId);
+		if (currenttab == job.jobId) {
+			currentok = true;
+		}
+		html += tabhead(job.jobId, QUEUED, hidetitle);
+
+	}
+	jobs = all;
+	html += tabhead('+');
+
+	if (currentok == false) {
+		var id = currenttab;
+		switchtab('+');
+		destroytab(id);
+	}
+
+	var headholder = document.getElementById('heads');
+	headholder.innerHTML = html;
+
+
 }
 
-reducer = function() {
-    function Adder() {
-        this.x = 0;
-    }
-    Adder.prototype = new Generator();
-    Adder.prototype._step = function(y) {
-        if (y) {
-            this.x += parseInt(y, 10);
-        }
-        else {
-            this._lastrun();
-            var result = this.x.toString();
-            this._emit(result);
-        }
-    }
-    return new Adder();
+function updatetab(job, partitions, splits, workers) {
+	var id = job.jobId;
+	var tab = document.getElementById('tab-' + id);
+	if (tab == null) {
+		var tabs = document.getElementById('tabs');
+		var title = '<h3>job ' + id + '</h3>'
+		var map = '<h4>mapping</h4><div id="map-' + id + '"></div>';
+		var reduce = '<h4>reducing</h4><div id="red-' + id + '"></div>';
+		var code = '<h4>code</h4><textarea disabled="disabled" id="code-' + id + '"></textarea>';
+		var remove = '<div class="jobtools"><input type="button" value="remove job" onclick="removejob(' + id + ')"/></div>';
+		var html = title + remove + map + reduce + code;
+		newtab(id, html);
+	}
+	var mapstat;
+	var redstat;
+	if (job.finished) {
+		mapstat = 'gone';
+		redstat = 'done';
+	}
+
+	var mgrid = creategrid('map-' + id, job.M, mapstat);
+	document.getElementById('map-' + id).innerHTML = mgrid;
+	var rgrid = creategrid('red-' + id, job.R, redstat);
+	document.getElementById('red-' + id).innerHTML = rgrid;
+	function setcell(gridid, cellid, cellstatus) {
+		var id = 'grid-' + gridid + '-cell-' + cellid;
+		var cell = document.getElementById(id);
+		if (cell != null) {
+			cell.setAttribute('title', cellid + ', ' + cellstatus)
+			cell.setAttribute('class', cellstatus)
+		}
+	}
+	function setcellsbyranges(gridid, ranges, cellstatus) {
+		for (var i in ranges) {
+			var range = ranges[i];
+			var start = range[0];
+			var end = range[1];
+			for (var j = start; j < end + 1; j++) {
+				setcell(gridid, j, cellstatus);
+			}
+		}
+	}
+
+	function setcellsbynodelists(gridid, nodelists, cellstatus) {
+		
+		for (var cellid in nodelists) {
+			var nodes =  nodelists[cellid];
+			setcell(gridid, cellid, cellstatus);
+		}
+	}
+
+	if (job.finished != true) {
+		if (typeof(splits) != typeof(undefined)) {
+			for (var cellstatus in splits) {
+				var nodelists = splits[cellstatus];
+				setcellsbynodelists('map-' + id, nodelists, cellstatus);
+			}
+		}
+		if (typeof(partitions) != typeof(undefined)) {
+			for (var cellstatus in partitions) {
+				var data = partitions[cellstatus];
+				if (cellstatus == 'done') {
+					setcellsbyranges('red-' + id, data, cellstatus);
+				} else {
+					setcellsbynodelists('red-' + id, data, cellstatus);
+				}
+			}
+		}
+	}
+	var code = document.getElementById('code-' + id);
+	code.innerHTML = job.code;
+}
+  
+
+	function updatetabs(payload) {
+
+	  var completed = payload.jobHistory;
+	  var current = payload.job;
+	  var queued = payload.jobQueue;
+	for (var i in completed) {
+		var job = completed[i];
+		job.finished = true;
+		updatetab(job);
+	}
+	if (typeof(current) != typeof(undefined)) {
+		updatetab(current, payload.partitions, payload.splits);
+	}
+	for (var i in queued) {
+	  	var job = queued[i];
+		updatetab(job);
+	}
+
+  }
+
+  function autofollow(id) {
+	var autof = document.getElementById('autof').checked;
+	if(autof == true) {
+		switchtab(id);
+	}
+  }
+
+  function autoclear() {
+	var autoc = document.getElementById('autoc').checked;
+	if(autoc == true) {
+		clearjobs();
+	}
+  }
+
+  function msgparse(msg) {
+	  if (msg.type = 'STATUS') {
+		  var payload = msg.payload;
+		  var workers = payload.workers;
+		  updateworkers(workers);
+		  updatetabs(payload);
+		  updatejobbar(payload);
+		  var job = payload.job;
+		  if (typeof(job) != typeof(undefined)) {
+		  	if (job.finished != true) {
+				autofollow(payload.job.jobId);
+			}
+		}
+		autoclear();
+
+	  }
+  }
+
+  function defaultcode() {
+	var request = new XMLHttpRequest();
+	request.open('GET', 'defaultjob.js', false);
+	request.send(null);
+	if (request.status === 200) {
+		return request.responseText;
+	}
 }
 
-combiner = reducer;
-input = debugInput;
-inter = noInter;
-output = consoleOut;
-chooseBucket = boringBucket;
-                    </textarea>
-                </p>
-                <p>
-                    <input type="button" id="addJob" value="Add job"/>
-                </p>
-            </form>
-        </div>
-        <div id="log">
-        </div>
-    </body>
+function updatemfoo() {
+	var cells = parseInt(document.getElementById('M').value, 10);
+	document.getElementById('newmfoo').innerHTML = creategrid('mfoo', cells);
+}
+
+function updaterfoo() {
+	var cells = parseInt(document.getElementById('R').value, 10);
+	document.getElementById('newrfoo').innerHTML = creategrid('rfoo', cells);
+}
+
+function newtabcode() {
+	var defaultm = 100;
+	var defaultr = 100;
+	var mgrid = creategrid('mfoo', defaultm);
+	var rgrid = creategrid('rfoo', defaultr);
+	var title = '<h3><em>new job</em></h3>'
+	var map = '<h4>mapping</h4><input id="M" type="text" value="' + defaultm + '" onchange="updatemfoo();" /><div id="newmfoo">' + mgrid + '</div>';
+	var red = '<h4>reducing</h4><input id="R" type="text" value="' + defaultr + '" onchange="updaterfoo();" /><div id="newrfoo">' + rgrid + '</div>';
+	var code = '<h4>code</h4><form><textarea id="jobcode">' + defaultcode() + '</textarea>';
+		var add = '<div class="jobtools"><input id="jobaddbutton" type="button" value="add job" onClick="addjob();" /></form></div>';
+	return title + add + map + red + code;
+}
+
+function addjob() {
+	var payload = {};
+	payload.code = document.getElementById("jobcode").value;
+	payload.R = document.getElementById("R").value;
+	payload.M = document.getElementById("M").value;
+	payload.heartbeatTimeout = "60000";
+	payload.progressTimeout = "300000";
+	var msg = {};
+	msg.type = "ADDJOB";
+	msg.payload = payload;
+	var jsonmsg = JSON.stringify(msg);
+	ws.send(jsonmsg);
+}
+
+function removejob(id) {
+	var payload = {};
+	payload.id = id;
+	var msg = {};
+	msg.type = "REMOVEJOB";
+	msg.payload = payload;
+	var jsonmsg = JSON.stringify(msg);
+	ws.send(jsonmsg);
+}
+
+function switchtab(id) {
+	if (id == currenttab) {
+		return;
+	}
+	next = document.getElementById('tab-' + id);
+	if (next == null) {
+		return;
+	}
+	next.setAttribute("style", "display: block;");
+
+
+	nexthead = document.getElementById('head-' + id);
+	if (nexthead != null) {
+		nexthead.setAttribute("class", "selected");
+	}
+
+	if (typeof(currenttab) != typeof(undefined)) {
+		current = document.getElementById('tab-' + currenttab);
+		currenthead = document.getElementById('head-' + currenttab);
+		current.removeAttribute("style");
+		currenthead.removeAttribute("class");
+	}
+	previoustab = currenttab;
+	currenttab = id;
+}
+
+function destroytab(id) {
+	tab = document.getElementById('tab-' + id);
+	if (tab == null) {
+		return;
+	}
+	var tabholder = document.getElementById('tabs');
+	tabholder.removeChild(tab);
+	if(previoustab == id) {
+		previoustab = undefined;
+	}
+	if(currenttab == id) {
+		currenttab = undefined;
+	}
+}
+
+function newtab(id, code) {
+	tab = document.getElementById('tab-' + id);
+	if (tab != null) {
+		return;
+	}
+	if (typeof(statussymbol) == typeof(undefined)) {
+		statussymbol = '';
+	}
+	var tabholder = document.getElementById('tabs');
+	tabholder.innerHTML += '<div id="tab-' + id + '">' + code + '</div>';
+}
+
+function init() {
+	newtab('+', newtabcode());
+	switchtab('+');
+}
+</script>
+<style>
+body
+{
+	background-color: #aaa;
+	font-family: sans-serif;
+}
+textarea {
+	width: 100%;
+	height: 20em;
+	font-family: monospace;
+}
+h3
+{
+	text-align: right;
+	padding: 0 4%;
+	margin: 0 auto 0.2em auto;
+}
+.grid {
+	width: 100%;
+	border-spacing: 0;
+	border-width: 0;
+	cursor: default;
+}
+
+.grid td {
+	background-color: #0ff;
+	width: 2%;
+	height: 2em;
+	border: thin solid #000;
+	border-width: 0 thin thin 0;
+	font-size: 0.7em;
+}
+
+.grid td:first-child {
+	border-width: 0 thin thin thin;
+}
+
+.grid tr:first-child td {
+	border-width: thin thin thin 0;
+}
+
+.grid tr:first-child td:first-child {
+	border-width: thin thin thin thin;
+}
+
+.grid td.gone {
+	background-color: #ddd;
+}
+
+.grid td.done {
+	background-color: #0a0;
+}
+
+.grid td.queued {
+	background-color: #ffa;
+}
+
+.grid td.unknown {
+	background-color: #fff;
+}
+
+td.disabled {
+	visibility: hidden;
+}
+
+#tabs > div
+{
+	background-color: #ffe;
+	display: none;
+	border: thin solid #000;
+	padding: 1em;
+}
+#heads > td {
+	background-color: #ddc;
+	border: thin solid #000;
+	border-width: thin thin 0 thin;
+	padding: 0.4em 0.8em;
+	cursor: pointer;
+}
+#heads > td:hover {
+	background-color: #fff;
+}
+#heads > td.selected {
+	background-color: #ffe;
+	cursor: default;
+}
+.symbol {
+	font-family: symbola, sans-serif;
+}
+#workers {
+	padding: 1em;
+	width: 100%;
+	border: thin solid #000;
+	background-color: #ffe;
+}
+
+th.number, td.number {
+	text-align: right;
+	width: 9em;
+}
+
+td.status {
+	text-align: center;
+	width: 5em;
+
+}
+
+th.url, td.url {
+	text-align: left;
+}
+
+.jobtools {
+	text-align: right;
+	padding: 0 4%;
+	margin: 0 auto;
+	}
+
+.jobstools {
+background-color: #bbb;
+	padding: 1em;
+	text-align: left;
+}
+</style>
+</head>
+<body onload = "init();">
+  <h1>Bee Swarm MapReduce</h1>
+  <h2>jobs</h2>
+  <table><tr id="heads">
+  </tr></table>
+  <div id="tabs">
+  </div>
+  <div class="jobstools">
+	  <input type="button" value="nuke all" onclick="nukejobs();" />
+	  <input type="button" value="clear old" onclick="clearjobs();" />
+	  <input id="autoc" type="checkbox" /> autoclear
+	  <input id="autof" type="checkbox" /> autofollow
+  </div>
+  <h2>workers</h2>
+  <table id="workers">
+	
+  </table>
+</body>
 </html>

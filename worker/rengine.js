@@ -22,26 +22,26 @@ Rengine.prototype._reduceSome = function(pairs) {
     }
 }
 
-Rengine.prototype.saveResults = function(partitionId) {
+Rengine.prototype.saveResults = function(bucketId) {
     for(var key in this.cores)
     {
         var values = this.cores[key].stop()
         for(var i in values) {
             var value = values[i];
-            this.output.write(partitionId, [[key, value]], true);
+            this.output.write(bucketId, [[key, value]], true);
         }
     }
-    this.output.write(partitionId, [], false);
+    this.output.write(bucketId, [], false);
 }
 
 Rengine.prototype.reset = function() {
     this.cores = {};
 }
 
-Rengine.prototype.write = function(splitId, partitionId, pairs, more) {
+Rengine.prototype.write = function(splitId, bucketId, pairs, more) {
     this._reduceSome(pairs);
     if (!more) {
-        this.job.onSplitComplete(splitId, partitionId);
+        this.job.onChunkComplete(splitId, bucketId);
     }
 }
 

@@ -38,28 +38,28 @@ Worker.prototype._react = function(msg) {
         var splitId = payload.mapStatus.splitId;
         this._job.onMap(splitId);
     }
-    if (action == "reduceTask") {
-        var partitionId = payload.reduceStatus.partitionId
-        this._job.onReduceTask(partitionId);
+    if (action == "reduceTask") { //reduce bucket
+        var bucketId = payload.reduceStatus.partitionId
+        this._job.onReduceBucket(bucketId);
     }
-    if (action == "reduceSplit") {
-        var partitionId = payload.reduceStatus.partitionId
+    if (action == "reduceSplit") { //reduce chunk
+        var bucketId = payload.reduceStatus.partitionId
         var splitId = payload.reduceStatus.splitId
         var urls = payload.reduceStatus.locations
-        this._job.onReduceSplit(splitId, partitionId, urls);
+        this._job.onReduceChunk(splitId, bucketId, urls);
     }
     if (action == "idle") {
         //console.log('worker idle');
     }
 }
 
-Worker.prototype.reduceSplit = function(splitId, partitionId, unreachable) {
-        var msg = {type: "ACK", payload: {action: "reduceSplit", reduceStatus: {partitionId: partitionId, splitId: splitId}, unreachable: unreachable, jobId: this._job.id}};
+Worker.prototype.reduceChunk = function(splitId, bucketId, unreachable) {
+        var msg = {type: "ACK", payload: {action: "reduceSplit", reduceStatus: {partitionId: bucketId, splitId: splitId}, unreachable: unreachable, jobId: this._job.id}};
         this.ws.send(JSON.stringify(msg));
 }
 
-Worker.prototype.partitionComplete = function(partitionId) {
-    var msg = {type: "ACK", payload: {action: "reduceTask", reduceStatus: {partitionId: partitionId}, unreachable: [], jobId: this._job.id}};
+Worker.prototype.bucketComplete = function(bucketId) {
+    var msg = {type: "ACK", payload: {action: "reduceTask", reduceStatus: {partitionId: bucketId}, unreachable: [], jobId: this._job.id}};
     this.ws.send(JSON.stringify(msg));
 }
 

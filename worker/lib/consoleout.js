@@ -5,12 +5,12 @@ function consoleOut(job) {
         this.pairs = [];
     }
     
-    Output.prototype.write = function(partitionId, pairs, more) {
+    Output.prototype.write = function(bucketId, pairs, more) {
         this.pairs = this.pairs.concat(pairs);
         if (! more) {
-            console.log("PARTITION" + partitionId+ ": " + JSON.stringify(this.pairs));
+            console.log("RESULT" + bucketId+ ": " + JSON.stringify(this.pairs));
             this.pairs = [];
-            this.job.onPartitionComplete(partitionId);
+            this.job.onBucketComplete(bucketId);
         }
     }
     return new Output(job);

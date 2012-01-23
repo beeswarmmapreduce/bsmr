@@ -11,22 +11,22 @@ Iengine.prototype.write = function(splitId, pairs, more) {
     for (i in pairs) {
         var pair = pairs[i];
         var key = pair[0];
-        var partitionId = this.chooseBucket(key);
-        this.local.write(splitId, partitionId, [pair], true);
+        var bucketId = this.chooseBucket(key);
+        this.local.write(splitId, bucketId, [pair], true);
     }
     if (! more) {
-        for (var partitionId = 0; partitionId < this.R; partitionId += 1) {
-            this.local.write(splitId, partitionId, [], false);
+        for (var bucketId = 0; bucketId < this.R; bucketId += 1) {
+            this.local.write(splitId, bucketId, [], false);
         }
         this.job.onMapComplete(splitId);
     }
 }
 
-Iengine.prototype.feed = function(splitId, partitionId, peerUrls, target) {
-    if (this.local.canhaz(splitId, partitionId)) {
-        this.local.feed(splitId, partitionId, target);
+Iengine.prototype.feed = function(splitId, bucketId, peerUrls, target) {
+    if (this.local.canhaz(splitId, bucketId)) {
+        this.local.feed(splitId, bucketId, target);
     } else {
-        this.inter.feed(splitId, partitionId, peerUrls, target);
+        this.inter.feed(splitId, bucketId, peerUrls, target);
     }
 }
 

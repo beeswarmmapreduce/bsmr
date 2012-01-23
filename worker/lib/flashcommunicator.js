@@ -9,13 +9,13 @@ The simple JSON request-response protocol for bsmr, examples of the message type
 operation: "request",
 jobId: 2313,
 splitId: 24,
-partitionId: 11
+bucketId: 11
 }
 
 {
 operation: "response",
 split_id: 24,
-partition_id: 11,
+bucket_id: 11,
 data: "ihwao98fh292hf9h84293hf4298h298h4f"
 }
 
@@ -23,7 +23,7 @@ data: "ihwao98fh292hf9h84293hf4298h298h4f"
 {
 operation: "not_found",
 split_id: 24,
-partition_id: 11
+bucket_id: 11
 }
 
 
@@ -50,9 +50,9 @@ function FlashCommunicator()
    
    //Public interface that BSMR's FlashInter calls
    
-   this.sendRequest = function(peerId, jobId, splitId, partitionId)
+   this.sendRequest = function(peerId, jobId, splitId, bucketId)
    		{
-	    queueRequestMessage(peerId, jobId, splitId, partitionId);
+	    queueRequestMessage(peerId, jobId, splitId, bucketId);
 	   	
 	    if (connectedPeers[peerId])
 	   		{
@@ -66,17 +66,17 @@ function FlashCommunicator()
 	   
    		}
    
-   this.sendResponse = function(peerId, jobId, splitId, partitionId, data)
+   this.sendResponse = function(peerId, jobId, splitId, bucketId, data)
    		{
-	   	var response = createResponseMessage(jobId, splitId, partitionId, data);
+	   	var response = createResponseMessage(jobId, splitId, bucketId, data);
 	   	sendMessage(peerId, response);	
   		}
   
    
-   this.sendNotFound = function(peerId, jobId, splitId, partitionId)
+   this.sendNotFound = function(peerId, jobId, splitId, bucketId)
 		{
 	   	console.log("FlashCommunicator::sendNotFound()");
-	   	var message = createNotFoundMessage(jobId, splitId, partitionId);
+	   	var message = createNotFoundMessage(jobId, splitId, bucketId);
 	   	sendMessage(peerId, message);	
 		}
    
@@ -109,45 +109,45 @@ function FlashCommunicator()
    //Private helper functions
    
    
-   var createRequestMessage = function(jobId, splitId, partitionId)
+   var createRequestMessage = function(jobId, splitId, bucketId)
    		{
 	   	var request = new Object();
 	   	request.operation = "request";
 	   	request.jobId = jobId;
 	   	request.splitId = splitId;
-	   	request.partitionId =partitionId;
+	   	request.bucketId =bucketId;
    		return request;
    		}
    
-   var createResponseMessage = function(jobId, splitId, partitionId, data)
+   var createResponseMessage = function(jobId, splitId, bucketId, data)
    		{
 		var response = new Object();
 		response.operation = "response";
 		response.jobId = jobId;
 		response.splitId = splitId;
-		response.partitionId = partitionId;
+		response.bucketId = bucketId;
    		response.data = data;
 		return response;
    		}
    
-   var createNotFoundMessage = function(jobId, splitId, partitionId)
+   var createNotFoundMessage = function(jobId, splitId, bucketId)
 		{
 	   	var message = new Object();
 	   	message.operation = "notFound";
 	   	message.jobId = jobId;
 	   	message.splitId = splitId;
-	   	message.partitionId =partitionId;
+	   	message.bucketId =bucketId;
 		return message;
 		}
    
-   var queueRequestMessage = function(peerId, jobId, splitId, partitionId)
+   var queueRequestMessage = function(peerId, jobId, splitId, bucketId)
    		{
 	   	if (!outgoingQueue[peerId])
 	   		{
 	   		outgoingQueue[peerId] = new Array();
 	   		}
 	   	
-	   	var request = createRequestMessage(jobId, splitId, partitionId); 
+	   	var request = createRequestMessage(jobId, splitId, bucketId); 
 	   	outgoingQueue[peerId].push(request);
    		}
    
@@ -237,7 +237,7 @@ function FlashCommunicator()
 	   		var listeners = requestListeners;
 			for (var i=0; i<listeners.length; i++)
 	    		{
-	    		listeners[i](peerId, message.jobId, message.splitId, message.partitionId);
+	    		listeners[i](peerId, message.jobId, message.splitId, message.bucketId);
 	    		}
 	   		}
 	   
@@ -246,7 +246,7 @@ function FlashCommunicator()
 	   		var listeners = responseListeners;
 			for (var i=0; i<listeners.length; i++)
 	    		{
-	    		listeners[i](peerId, message.jobId, message.splitId,message.partitionId,message.data);
+	    		listeners[i](peerId, message.jobId, message.splitId,message.bucketId,message.data);
 	    		}
    			}
    		
@@ -255,7 +255,7 @@ function FlashCommunicator()
 	   		var listeners = notFoundListeners;
 			for (var i=0; i<listeners.length; i++)
 	    		{
-	    		listeners[i](peerId, message.jobId, message.splitId, message.partitionId);
+	    		listeners[i](peerId, message.jobId, message.splitId, message.bucketId);
 	    		}
    			}
    		

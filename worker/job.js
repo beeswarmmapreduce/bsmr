@@ -14,7 +14,7 @@ function Job(description, worker) {
     this.mengine = new Mengine(description.mapper, mengineout);
     this.input = description.input(this.M);
     this.worker = worker;
-    this.splits;
+    this.completedChunks;
     this.unreachable = [];
 }
 
@@ -22,9 +22,9 @@ Job.prototype.markUnreachable = function(url) {
     this.unreachable.push(url);
 }
 
-Job.prototype._nextSplit = function(partitionId) {
+Job.prototype._nextChunkID = function(partitionId) {
     for (var i = 0; i < this.M; i++) {
-        if (!this.splits[i]) {
+        if (!this.completedChunks[i]) {
             return i;
         }
     }
@@ -36,11 +36,16 @@ Job.prototype.onMap = function(splitId) {
     this.input.feed(splitId, this.mengine);
 }
 
-Job.prototype.onReduceTask = function(partitionId) {
-    this.splits = [];
+Job.prototype.onReduceBucket = function(bucketId) {
+    this.completedChunks = [];
     this.rengine.reset();
     this.unreachable = [];
-    this.worker.reduceSplit(this._nextSplit(), partitionId, this.unreachable);
+    this.worker.reduceChunk(this._nextChunkID(), bucketId, this.unreachable);
+}
+
+Job.prototype.onReduceChunk = function(splitId, bucketId, someUrls) {
+    this.unreachable = [];
+    this.iengine.feed(splitId, bucketId, someUrls, this.rengine)
 }
 
 //events from inter
@@ -51,8 +56,8 @@ Job.prototype.setOwnPeerId = function(url) {
 	this.worker.hb();
 }
 
-Job.prototype.onSplitFail = function(splitId, partitionId) {
-    this.worker.reduceSplit(this._nextSplit(), partitionId, this.unreachable);
+Job.prototype.onChunkFail = function(splitId, bucketId) {
+    this.worker.reduceChunk(this._nextChunkID(), bucketId, this.unreachable);
 }
 
 //events from iengine
@@ -61,26 +66,21 @@ Job.prototype.onMapComplete = function(splitId) {
     this.worker.mapComplete(splitId)
 }
 
-Job.prototype.onReduceSplit = function(splitId, partitionId, someUrls) {
-    this.unreachable = [];
-    this.iengine.feed(splitId, partitionId, someUrls, this.rengine)
-}
-
 //events from rengine
 
-Job.prototype.onSplitComplete = function(splitId, partitionId) {
-    this.splits[splitId] = true;
-    var nextId = this._nextSplit();
+Job.prototype.onChunkComplete = function(splitId, bucketId) {
+    this.completedChunks[splitId] = true;
+    var nextId = this._nextChunkID();
     if (nextId) {
-        this.worker.reduceSplit(nextId, partitionId, this.unreachable);
+        this.worker.reduceChunk(nextId, bucketId, this.unreachable);
     } else {
-        this.rengine.saveResults(partitionId);
+        this.rengine.saveResults(bucketId);
     }
 }
 
 //events from output
 
-Job.prototype.onPartitionComplete = function(partitionId) {
-    this.worker.partitionComplete(partitionId);
+Job.prototype.onBucketComplete = function(bucketId) {
+    this.worker.bucketComplete(bucketId);
 }
 

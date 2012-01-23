@@ -117,7 +117,7 @@
 		}
 		all.push(current.jobId);
 		if (current.finished == true) {
-			html += tabhead(current.jobId, COMPLETE, true);
+			html += tabhead(current.jobId, COMPLETE, hidetitle);
 		} else {
 			html += tabhead(current.jobId, RUNNING);
 		}

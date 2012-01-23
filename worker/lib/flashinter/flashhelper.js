@@ -15,7 +15,7 @@ function addFlashBinary()
 	attributes.align = "middle";
 	
 	document.getElementById("bsmrplugin").innerHTML="";
-	swfobject.embedSWF("lib/JavascriptInterface.swf", "bsmrplugin", "523", "188", swfVersionStr, xiSwfUrlStr, flashvars, params, attributes);
+	swfobject.embedSWF("lib/flashinter/JavascriptInterface.swf", "bsmrplugin", "523", "188", swfVersionStr, xiSwfUrlStr, flashvars, params, attributes);
 	swfobject.createCSS("#bsmrplugin", "display:block;text-align:left;");	
 	}
 

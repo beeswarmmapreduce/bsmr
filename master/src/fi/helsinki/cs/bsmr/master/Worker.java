@@ -85,7 +85,7 @@ public class Worker implements WebSocket, WebSocket.OnTextMessage
 		lastHearbeat = -1;
 		lastProgress = -1;
 		
-		out.disconnect();
+		out.close();
 	}
 
 	/** WebSocket callback implementations **/

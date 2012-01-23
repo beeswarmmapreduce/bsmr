@@ -288,6 +288,7 @@ public class PartitionServlet extends HttpServlet
 			return done;
 		}
 		
+		@SuppressWarnings("unchecked")
 		private void storeKeys(InputStream is) throws IOException
 		{		
 			StringBuffer bufferedMessage = new StringBuffer();

@@ -29,6 +29,7 @@ package fi.helsinki.cs.bsmr.fs;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -80,8 +81,10 @@ public class HugeUTF8SplitSourceImpl implements SplitSource
 		
 		long skip = split * splitSize;
 		
-		InputStream is = new FileInputStream(fileName);
-		if (is == null) {
+		InputStream is;
+		try {
+			is = new FileInputStream(fileName);
+		} catch (FileNotFoundException e) {
 			Util.error("Could not open '"+fileName+"'", req, resp);
 			return;
 		}

@@ -256,7 +256,7 @@ public class AsyncSender implements Runnable
 			}
 			
 			if (tfe.out != null) {
-				tfe.out.disconnect();
+				tfe.out.close();
 			}
 			throw new InterruptedException("Stopping AsyncSender");
 		}

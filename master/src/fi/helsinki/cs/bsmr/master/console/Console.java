@@ -63,7 +63,7 @@ public Console(MasterContext master)
 
 public void disconnect()
 	{
-	out.disconnect();
+	out.close();
 	}
 
 @Override

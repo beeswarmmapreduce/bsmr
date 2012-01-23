@@ -226,7 +226,7 @@ public static String constructURL(String protocol, String remoteAddr,
 	return ret.toString();
 	}
 
-@SuppressWarnings("unchecked")
+@SuppressWarnings({ "unchecked", "rawtypes" })
 private static Set<Worker> parseWorkers(Object workersAsUrls,
 		MasterContext workers)
 	{

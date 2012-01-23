@@ -29,25 +29,23 @@ Localstore.prototype.write = function(splitId, bucketId, content, more) {
 }
 
 Localstore.prototype.canhaz = function(splitId, bucketId) {
-	var split = this.local[splitId];
-	if (typeof(split) == typeof(undefined)) {
-		console.log("Localstore::canhaz(), split was undefined");
+	var partition = this.local[splitId];
+	if (typeof(partition) == typeof(undefined)) {
 		return false;
 	}
-	var chunks = split[bucketId];
-	if (typeof(chunks) == typeof(undefined)) {
-		console.log("Localstore::canhaz(), chunks was undefined");
+	var chunk = partition[bucketId];
+	if (typeof(chunk) == typeof(undefined)) {
 		return false;
 	}
 	return true;
 }
 
 Localstore.prototype.feed = function(splitId, bucketId, target) {
-    var split = this.local[splitId];
-    var chunks = split[bucketId];
-    for (var i in chunks) {
-        var chunk = chunks[i];
-        target.write(splitId, bucketId, chunk, true);
+    var partition = this.local[splitId];
+    var chunk = partition[bucketId];
+    for (var i in chunk) {
+        var frame = chunk[i];
+        target.write(splitId, bucketId, frame, true);
     }
     target.write(splitId, bucketId, [], false);
 }

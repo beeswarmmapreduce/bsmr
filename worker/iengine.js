@@ -11,7 +11,7 @@ Iengine.prototype.write = function(splitId, pairs, more) {
     for (i in pairs) {
         var pair = pairs[i];
         var key = pair[0];
-        var bucketId = this.chooseBucket(key);
+        var bucketId = this.chooseBucket(key, this.R);
         this.local.write(splitId, bucketId, [pair], true);
     }
     if (! more) {

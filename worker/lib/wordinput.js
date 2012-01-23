@@ -1,7 +1,9 @@
-function wordInput(M) {
+function wordInput(filename) {
 
-    var URL = 'http://localhost:8080/fs/filesystem';
-    var FILENAME = "teksti.txt";
+	var URL = 'http://localhost:8080/fs/filesystem';
+    if (typeof(filename) == typeof(undefined)) {
+    	console.log('No filename given!')    	
+    }
 
     var maxlen = 10; 
 
@@ -13,7 +15,7 @@ function wordInput(M) {
         if (typeof(this.fullSize) == typeof(undefined)) {
             var input = this;
             var request = new XMLHttpRequest();
-            request.open('GET', URL + '?operation=sizeof&filename=' + FILENAME, true);  
+            request.open('GET', URL + '?operation=sizeof&filename=' + filename, true);  
             request.onreadystatechange = function() {  
                 if (request.readyState == 4) {  
                     if(request.status == 200) {
@@ -42,7 +44,7 @@ function wordInput(M) {
             return  0 < l && l <= maxlen;
         }
         var makepair = function(x) {
-            return [FILENAME, x];
+            return [filename, x];
         }
         var feedWords = function(splitId, text, extra) {
             var words = text.split(/\s+/);
@@ -61,7 +63,7 @@ function wordInput(M) {
         var length = Math.min(wanted, left);
 
         var request = new XMLHttpRequest();  
-        request.open('GET', URL + '?operation=read&filename=' + FILENAME + '&begin=' + begin + '&length=' + length, true);  
+        request.open('GET', URL + '?operation=read&filename=' + filename + '&begin=' + begin + '&length=' + length, true);  
         request.onreadystatechange = function() {  
             if (request.readyState == 4) {  
                 if(request.status == 200) {
@@ -75,6 +77,11 @@ function wordInput(M) {
         };  
         request.send(null);  
     }
-    return new Input(M);
+    
+	var factory = function(M) {
+	    return new Input(M);
+
+	}
+	return factory;
 }
    

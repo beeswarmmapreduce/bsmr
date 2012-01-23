@@ -124,9 +124,13 @@ flashCommunicator.addNotFoundListener(this.onNotFound);
 }
 
 
-//Factory method
 
-function flashInter(job, localStorage)
+function flashInter()
 	{
-	return new FlashInter(job, localStorage);
+	//Factory method
+	var factory = function(job, localStorage)
+		{
+		return new FlashInter(job, localStorage);
+		};
+	return factory;
 	}

@@ -1,4 +1,4 @@
-function noInter(job, localStore) {
+function noInter() {
     
     function Inter(job) {
         this.job = job;
@@ -12,5 +12,10 @@ function noInter(job, localStore) {
         }
         job.onChunkFail(splitId, bucketId);
     }
-    return new Inter(job);
+    
+    var factory = function(job, localStore) {
+    	return new Inter(job);
+    }
+    
+    return factory;
 }

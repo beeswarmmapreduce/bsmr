@@ -22,8 +22,9 @@ reducer = function() {
 }
 
 combiner = reducer;
-input = wordInput;
-inter = flashInter;
-output = consoleOut;
+
 chooseBucket = boringBucket;
 
+input = wordInput('loremipsum.txt');
+inter = flashInter();
+output = consoleOut();

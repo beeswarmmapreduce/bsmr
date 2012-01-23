@@ -1,4 +1,4 @@
-function consoleOut(job) {
+function consoleOut() {
     
     function Output(job) {
         this.job = job;
@@ -13,5 +13,10 @@ function consoleOut(job) {
             this.job.onBucketComplete(bucketId);
         }
     }
-    return new Output(job);
+    
+    var factory = function(job) {
+    	return new Output(job);    	
+    }
+    
+    return factory;
 }   

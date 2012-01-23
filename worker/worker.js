@@ -12,19 +12,10 @@ Worker.prototype._callMaster = function() {
     var PROTOCOL = "worker"
     this.ws = new WebSocket(this.masterUrl, PROTOCOL);
     var worker = this;
-    this.ws.onopen = function() {
-        worker._greet();
-    }
     this.ws.onmessage = function(m) {
         var msg = JSON.parse(m.data);
         worker._react(msg);
     }
-}
-
-Worker.prototype._greet = function(msg) {
-    var msg = {type: "ACK", payload: {action: "socket", protocol: "peer", port: 12345 + Math.floor(Math.random()*1000), resource: String(Math.random()).split(".")[1]}};
-    this.ws.send(JSON.stringify(msg));
-
 }
 
 Worker.prototype._react = function(msg) {

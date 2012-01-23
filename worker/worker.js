@@ -25,7 +25,7 @@ Worker.prototype._react = function(msg) {
     if (payload.job) {
         this._initjob(payload.job);
     }
-    if (action == "mapTask") {
+    if (action == "mapTask") { // map split
         var splitId = payload.mapStatus.splitId;
         this._job.onMap(splitId);
     }
@@ -44,14 +44,41 @@ Worker.prototype._react = function(msg) {
     }
 }
 
+Worker.prototype._sendACK = function(payload) {
+    var msg = {};        
+    msg.type =  "ACK";
+    msg.payload = payload;
+    this.ws.send(JSON.stringify(msg));	
+}
+
 Worker.prototype.reduceChunk = function(splitId, bucketId, unreachable) {
-        var msg = {type: "ACK", payload: {action: "reduceSplit", reduceStatus: {partitionId: bucketId, splitId: splitId}, unreachable: unreachable, jobId: this._job.id}};
-        this.ws.send(JSON.stringify(msg));
+		var reduceStatus = {};
+		reduceStatus.partitionId = bucketId;
+		reduceStatus.splitId = splitId;
+		var payload = {};
+		payload.action = "reduceSplit";
+		payload.reduceStatus = reduceStatus;
+		payload.unreachable = unreachable;
+		payload.jobId = this._job.id;
+		this._sendACK(payload);
 }
 
 Worker.prototype.bucketComplete = function(bucketId) {
-    var msg = {type: "ACK", payload: {action: "reduceTask", reduceStatus: {partitionId: bucketId}, unreachable: [], jobId: this._job.id}};
-    this.ws.send(JSON.stringify(msg));
+	var payload = {};
+	payload.action = "reduceTask";
+	payload.reduceStatus = {partitionId: bucketId};
+	payload.unreachable = [];
+	payload.jobId = this._job.id;
+	this._sendACK(payload);    
+}
+
+Worker.prototype.mapComplete = function(splitId) {
+	var payload = {};
+	payload.action = "mapTask";
+	payload.mapStatus = {splitId: splitId};
+	payload.reduceStatus = null;
+	payload.jobId = this._job.id;
+	this._sendACK(payload);
 }
 
 Worker.prototype.hb = function() {
@@ -64,7 +91,14 @@ Worker.prototype.hb = function() {
 	if (typeof(peerId) == typeof(undefined)) {
 		peerId = null;
 	}
-    var msg = { "type": "HB", "payload": { "action": worker._previousAction, "jobId": worker.jobId, "peerId": peerId}};
+	var payload = {};
+	payload.action = worker._previousAction;
+	payload.jobId = worker.jobId
+	payload.peerId = peerId;
+    var msg = {};
+    msg.type = "HB";
+    msg.payload = payload;
+    
     //console.log(msg);
     worker.ws.send(JSON.stringify(msg));
 }
@@ -93,11 +127,6 @@ Worker.prototype._initjob = function(requested) {
 
         this._job = new Job(requested, this);
     }
-}
-
-Worker.prototype.mapComplete = function(splitId) {
-    var msg = {type: "ACK", payload: {action: "mapTask", mapStatus: {splitId: splitId}, reduceStatus: null, jobId: this._job.id}};
-    this.ws.send(JSON.stringify(msg));
 }
 
 

@@ -22,7 +22,7 @@ reducer = function() {
 }
 
 combiner = reducer;
-input = debugInput;
+input = wordInput;
 inter = flashInter;
 output = consoleOut;
 chooseBucket = boringBucket;

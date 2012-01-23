@@ -13,7 +13,7 @@ var jobId = job.id;
 
 var flashCommunicator= new FlashCommunicator();
 
-
+var requestTimeout = null;
 
 // Starts feeding a chunk identified by splitId, partitionId from peerUrl
 // into the target 
@@ -27,6 +27,7 @@ this.feed = function(splitId, partitionId, _peerUrls, _target)
     peerUrls = _peerUrls;
     peerUrlIndex = 0;
 	
+    requestTimeout = setTimeout(self.onError,1000);
     flashCommunicator.sendRequest(peerUrls[peerUrlIndex], jobId, splitId, partitionId);
     }
 
@@ -82,6 +83,14 @@ this.onNotFound = function(peerId, jobId, splitId, partitionId)
 this.onResponse = function(peerId, jobId, splitId, partitionId, data)
 	{
 	console.log("FlashInter::onResponse()");
+	
+	if (requestTimeout!=null)
+		{
+		clearTimeout(requestTimeout);
+		requestTimeout = null;
+		}
+	
+	
 	target.write(splitId, partitionId, data);
 	}
 
@@ -93,10 +102,10 @@ this.onError = function(status)
 	
 	peerUrlIndex++;
 	
-	if (peerUrlIndex >= peerUrls.legth)
+	if (peerUrlIndex >= peerUrls.length)
 		 job.onSplitFail(currentSplitId, currentPartitionId);
 	else
-		 flashCommunicator.sendRequest(peerUrls[peerUrlIndex], jobId, splitId, partitionId);
+		 flashCommunicator.sendRequest(peerUrls[peerUrlIndex], jobId, currentSplitId, currentPartitionId);
 	
 	}
 

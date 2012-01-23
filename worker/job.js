@@ -22,7 +22,7 @@ Job.prototype.markUnreachable = function(url) {
     this.unreachable.push(url);
 }
 
-Job.prototype._nextChunkID = function(partitionId) {
+Job.prototype._nextChunkID = function() {
     for (var i = 0; i < this.M; i++) {
         if (!this.completedChunks[i]) {
             return i;

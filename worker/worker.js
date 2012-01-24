@@ -51,7 +51,7 @@ Worker.prototype._sendACK = function(payload) {
     this.ws.send(JSON.stringify(msg));	
 }
 
-Worker.prototype.reduceChunk = function(splitId, bucketId, unreachable) {
+Worker.prototype.suggestChunk = function(splitId, bucketId, unreachable) {
 		var reduceStatus = {};
 		reduceStatus.partitionId = bucketId;
 		reduceStatus.splitId = splitId;

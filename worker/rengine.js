@@ -2,7 +2,8 @@ function Rengine(reducer, output, job) {
   this.reducer = reducer;
   this.output = output;
   this.job = job;
-  this.cores = {}
+  this.cores = {};
+  this.saved = false;
 }
 
 Rengine.prototype._getcore = function(key) {
@@ -32,14 +33,25 @@ Rengine.prototype.saveResults = function(bucketId) {
         }
     }
     this.output.write(bucketId, [], false);
+    this.saved = true;
 }
 
 Rengine.prototype.reset = function() {
+	this.saved = false;
     this.cores = {};
 }
 
 Rengine.prototype.write = function(splitId, bucketId, pairs, more) {
+	if (this.saved) {
+		console.log('ERROR! Adding more data after saving results!');		
+	}
+	try {
     this._reduceSome(pairs);
+	} catch (e) {
+    	console.log('RED[' + bucketId + ',' + splitId + ',' + JSON.stringify(pairs) + ']');
+    	throw 'AAARGH!';
+	}
+
     if (!more) {
         this.job.onChunkComplete(splitId, bucketId);
     }

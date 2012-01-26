@@ -22,6 +22,7 @@ function Job(description, worker) {
 
 Job.prototype.onMap = function(splitId) {
 	console.log('MAP');
+	this.rengine = undefined;
     this.input.feed(splitId, this.mengine);
 }
 
@@ -32,6 +33,12 @@ Job.prototype.onReduceBucket = function(bucketId) {
 
 Job.prototype.onReduceChunk = function(splitId, bucketId, someUrls) {
 	console.log('RECHU(' + splitId + ')');
+	if (typeof(this.rengine) == typeof(undefined)) {
+		throw 'Received a ReduceChunk command while not reducing!';
+	}
+	if (bucketId != this.rengine.bucketId) {
+		throw 'Received a ReduceChunk command for bucket A while reducing bucket B!';
+	}
     this.iengine.feed(splitId, bucketId, someUrls, this.rengine)
 }
 
@@ -72,6 +79,7 @@ Job.prototype.suggestChunk = function(splitId, bucketId) {
 
 Job.prototype.onBucketComplete = function(bucketId) {
 	console.log('REBU-COMPLETE');
+	this.rengine = undefined;
     this.worker.bucketComplete(bucketId);
 }
 

@@ -1,5 +1,6 @@
 function Rengine(reducer, output, job, bucketId) {
   this.output = output;
+  this.bucketId = bucketId;
   this.job = job;
   this.buffer = [];
   this.rtask = new Rtask(reducer);
@@ -9,7 +10,7 @@ function Rengine(reducer, output, job, bucketId) {
 
 Rengine.prototype._nextChunk = function(bucketId) {
     if (this.chunkreg.allDone()) {
-        this.rtask.feed(bucketId, this.output);    	
+        this.rtask.feed(bucketId, this.output);
     } else {
     	var nextId = this.chunkreg.nextChunkID();
     	this.job.suggestChunk(nextId, bucketId);

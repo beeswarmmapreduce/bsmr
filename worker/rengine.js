@@ -1,59 +1,36 @@
-function Rengine(reducer, output, job) {
-  this.reducer = reducer;
+function Rengine(reducer, output, job, bucketId) {
   this.output = output;
   this.job = job;
-  this.cores = {};
-  this.saved = false;
+  this.buffer = [];
+  this.rtask = new Rtask(reducer);
+  this.chunkreg = new ChunkRegistrar(this.job.M);
+  this._nextChunk(bucketId);
 }
 
-Rengine.prototype._getcore = function(key) {
-    if (this.cores[key] == undefined) {
-        this.cores[key] = new Rcore(this.reducer());
-    }
-    return this.cores[key];
-}
-
-Rengine.prototype._reduceSome = function(pairs) {
-    for(var i in pairs) {
-        var pair = pairs[i];
-        var key = pair[0];
-        var value = pair[1];
-        var core = this._getcore(key);
-        core.reduce(value);
+Rengine.prototype._nextChunk = function(bucketId) {
+    if (this.chunkreg.allDone()) {
+        this.rtask.feed(bucketId, this.output);    	
+    } else {
+    	var nextId = this.chunkreg.nextChunkID();
+    	this.job.suggestChunk(nextId, bucketId);
     }
 }
 
-Rengine.prototype.saveResults = function(bucketId) {
-    for(var key in this.cores)
-    {
-        var values = this.cores[key].stop()
-        for(var i in values) {
-            var value = values[i];
-            this.output.write(bucketId, [[key, value]], true);
-        }
-    }
-    this.output.write(bucketId, [], false);
-    this.saved = true;
+Rengine.prototype.onChunkFail = function(splitId, bucketId) {
+	this.buffer = [];
+    this._nextChunk(bucketId);
 }
 
-Rengine.prototype.reset = function() {
-	this.saved = false;
-    this.cores = {};
-}
+// events from iengine
 
 Rengine.prototype.write = function(splitId, bucketId, pairs, more) {
-	if (this.saved) {
-		console.log('ERROR! Adding more data after saving results!');		
-	}
-	try {
-    this._reduceSome(pairs);
-	} catch (e) {
-    	console.log('RED[' + bucketId + ',' + splitId + ',' + JSON.stringify(pairs) + ']');
-    	throw 'AAARGH!';
-	}
-
+	this.buffer.push(pairs);
     if (!more) {
-        this.job.onChunkComplete(splitId, bucketId);
+    	for(var i in this.buffer) {
+    		var frame = this.buffer[i];
+    		this.rtask.reduceSome(frame);
+    	}
+        this.chunkreg.markDone(splitId);
+        this._nextChunk(bucketId);
     }
 }
-

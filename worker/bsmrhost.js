@@ -1,3 +1,4 @@
+"use strict";
 
 var importScripts = function(){
 	// Mimes webworker importScripts function. Respects import order, but does not block!
@@ -36,9 +37,11 @@ importScripts("console.js",
               "lib/nointer.js",
               "lib/wordinput.js",
               "localstore.js",
+              "chunkregistrar.js",
+              "rcore.js",
+              "rtask.js",
               "iengine.js",
               "rengine.js",
-              "rcore.js",
               "cengine.js",
               "mengine.js",
               "job.js",

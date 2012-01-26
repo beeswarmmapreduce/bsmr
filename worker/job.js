@@ -21,23 +21,20 @@ function Job(description, worker) {
 // events from worker
 
 Job.prototype.onMap = function(splitId) {
-	console.log('MAP');
 	this.rengine = undefined;
     this.input.feed(splitId, this.mengine);
 }
 
 Job.prototype.onReduceBucket = function(bucketId) {
-	console.log('REBU');
 	this.rengine = new Rengine(this.reducer, this.output, this, bucketId);
 }
 
 Job.prototype.onReduceChunk = function(splitId, bucketId, someUrls) {
-	console.log('RECHU(' + splitId + ')');
 	if (typeof(this.rengine) == typeof(undefined)) {
-		throw 'Received a ReduceChunk command while not reducing!';
+		console.log('Master fail: Received a ReduceChunk command while not reducing!');
 	}
 	if (bucketId != this.rengine.bucketId) {
-		throw 'Received a ReduceChunk command for bucket A while reducing bucket B!';
+		console.log('Master fail: Received a ReduceChunk command for bucket' + bucketId + ' while reducing bucket' + this.rengine.bucketId + '!');
 	}
     this.iengine.feed(splitId, bucketId, someUrls, this.rengine)
 }
@@ -55,21 +52,18 @@ Job.prototype.markUnreachable = function(url) {
 }
 
 Job.prototype.onChunkFail = function(splitId, bucketId) {
-	console.log('RECHU-FAIL');
 	this.rengine.onChunkFail(splitId, bucketId);
 }
 
 //events from iengine
 
 Job.prototype.onMapComplete = function(splitId) {
-	console.log('MAP-COMPLETE');
     this.worker.mapComplete(splitId)
 }
 
 //events from rengine
 
 Job.prototype.suggestChunk = function(splitId, bucketId) {
-	console.log('SUGGEST-CHUNK');
     var broken = this.unreachable;
     //this.unreachable = [];
 	this.worker.suggestChunk(splitId, bucketId, broken);
@@ -78,7 +72,6 @@ Job.prototype.suggestChunk = function(splitId, bucketId) {
 //events from output
 
 Job.prototype.onBucketComplete = function(bucketId) {
-	console.log('REBU-COMPLETE');
 	this.rengine = undefined;
     this.worker.bucketComplete(bucketId);
 }

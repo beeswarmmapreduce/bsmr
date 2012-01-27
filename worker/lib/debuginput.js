@@ -1,4 +1,4 @@
-function debugInput(M) {
+function debugInput(keys) {
     
     function Input(M) {
         this.M = M;
@@ -17,7 +17,7 @@ function debugInput(M) {
     }
     
     function Fake(splitId, M) {
-        this.ret = this._repe(15);
+        this.ret = this._repe(keys);
         var pairs = this._createseq(splitId, M);
         this._buffer = this._parts(pairs);
     }
@@ -74,6 +74,10 @@ function debugInput(M) {
         return ret;
     }
 
-    return new Input(M);
+	var factory = function(M) {
+	    return new Input(M);
+
+	}
+	return factory;
 }
    

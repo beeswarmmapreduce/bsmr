@@ -31,6 +31,7 @@ Rengine.prototype.write = function(splitId, bucketId, pairs, more) {
     		var frame = this.buffer[i];
     		this.rtask.reduceSome(frame);
     	}
+    	this.buffer = [];
         this.chunkreg.markDone(splitId);
         this._nextChunk(bucketId);
     }

@@ -36,12 +36,11 @@ Job.prototype.onReduceBucket = function(bucketId) {
 }
 
 Job.prototype.onReduceChunk = function(splitId, bucketId, someUrls) {
+	//filter messages related to obsolete reduce operations
 	if (typeof(this.rengine) == typeof(undefined)) {
-		console.log('Master fail: Received a ReduceChunk command while not reducing!');
 		return;
 	}
 	if (bucketId != this.rengine.bucketId) {
-		console.log('Master fail: Received a ReduceChunk command for bucket' + bucketId + ' while reducing bucket' + this.rengine.bucketId + '!');
 		return;
 	}
     this.iengine.feed(splitId, bucketId, someUrls, this.rengine)
@@ -60,7 +59,9 @@ Job.prototype.markUnreachable = function(url) {
 }
 
 Job.prototype.onChunkFail = function(splitId, bucketId) {
-	this.rengine.onChunkFail(splitId, bucketId);
+	if(typeof(this.rengine) != typeof(undefined)) {
+		this.rengine.onChunkFail(splitId, bucketId);
+	}
 }
 
 //events from iengine

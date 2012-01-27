@@ -27,4 +27,4 @@ chooseBucket = boringBucket;
 
 input = wordInput('loremipsum.txt');
 inter = flashInter();
-output = consoleOut();
+output = petriFSOut();

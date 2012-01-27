@@ -59,9 +59,13 @@ Job.prototype.markUnreachable = function(url) {
 }
 
 Job.prototype.onChunkFail = function(splitId, bucketId) {
-	if(typeof(this.rengine) != typeof(undefined)) {
-		this.rengine.onChunkFail(splitId, bucketId);
+	if(typeof(this.rengine) == typeof(undefined)) {
+		return;
 	}
+	if (bucketId != this.rengine.bucketId) {
+		return;		
+	}
+	this.rengine.onChunkFail(splitId, bucketId);
 }
 
 //events from iengine

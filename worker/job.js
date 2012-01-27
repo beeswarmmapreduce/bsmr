@@ -1,40 +1,48 @@
 function Job(description, worker) {
 	this.worker = worker;
     this.peerId = null;
+    this.unreachable = [];
     this.id = description.jobId;
     this.R = description.R;
     this.M = description.M;
-    this.output = description.output(this);
+    this.mapper = description.mapper;
     this.reducer = description.reducer;
+    this.combiner = description.combiner;    
+    this.mengine;
     this.rengine;
-    this.iengine = new Iengine(this.R, this, description.inter, description.chooseBucket);
-    var mengineout = this.iengine;
-    if (description.combiner) {
-        this.cengine = new Cengine(description.combiner, this.iengine);
-        mengineout = this.cengine;
-    }
-    this.mengine = new Mengine(description.mapper, mengineout);
+    this.cengine;
     this.input = description.input(this.M);
-    this.unreachable = [];
+    this.iengine = new Iengine(this.R, this, description.inter, description.chooseBucket);
+    this.output = description.output(this);
 }
 
 // events from worker
 
 Job.prototype.onMap = function(splitId) {
 	this.rengine = undefined;
+    var mengineout = this.iengine;
+    if (this.combiner) {
+        this.cengine = new Cengine(this.combiner, this.iengine);
+        mengineout = this.cengine;
+    }
+    this.mengine = new Mengine(this.mapper, mengineout);
     this.input.feed(splitId, this.mengine);
 }
 
 Job.prototype.onReduceBucket = function(bucketId) {
+	this.cengine = undefined;
+	this.mengine = undefined;
 	this.rengine = new Rengine(this.reducer, this.output, this, bucketId);
 }
 
 Job.prototype.onReduceChunk = function(splitId, bucketId, someUrls) {
 	if (typeof(this.rengine) == typeof(undefined)) {
 		console.log('Master fail: Received a ReduceChunk command while not reducing!');
+		return;
 	}
 	if (bucketId != this.rengine.bucketId) {
 		console.log('Master fail: Received a ReduceChunk command for bucket' + bucketId + ' while reducing bucket' + this.rengine.bucketId + '!');
+		return;
 	}
     this.iengine.feed(splitId, bucketId, someUrls, this.rengine)
 }
@@ -58,6 +66,8 @@ Job.prototype.onChunkFail = function(splitId, bucketId) {
 //events from iengine
 
 Job.prototype.onMapComplete = function(splitId) {
+	this.cengine = undefined;
+	this.mengine = undefined;
     this.worker.mapComplete(splitId)
 }
 

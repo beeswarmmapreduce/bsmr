@@ -24,7 +24,7 @@ Rtask.prototype.reduceSome = function(pairs) {
     }
 }
 
-Rtask.prototype.feed = function(bucketId, target) {
+Rtask.prototype.feed = function(id, target) {
 	if(this.dead) {
 		throw 'feed called on a dead rtask';		
 	}
@@ -33,9 +33,9 @@ Rtask.prototype.feed = function(bucketId, target) {
         var values = this.cores[key].stop()
         for(var i in values) {
             var value = values[i];
-            target.write(bucketId, [[key, value]], true);
+            target.write(id, [[key, value]], true);
         }
     }
-    target.write(bucketId, [], false);
+    target.write(id, [], false);
     this.dead = true;
 }

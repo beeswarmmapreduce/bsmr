@@ -1,0 +1,158 @@
+body
+{
+	background-color: #aaa;
+	font-family: sans-serif;
+	padding: 1em;
+}
+textarea {
+	width: 99%;
+	height: 20em;
+	font-family: monospace;
+}
+h3
+{
+	display: inline;
+}
+.grid {
+	width: 100%;
+	border-spacing: 0;
+	border-width: 0;
+	cursor: default;
+}
+
+.grid td {
+	background-color: #0ff;
+	width: 2%;
+	height: 2em;
+	border: thin solid #000;
+	border-width: 0 thin thin 0;
+	font-size: 0.7em;
+}
+
+.grid td:first-child {
+	border-width: 0 thin thin thin;
+}
+
+.grid tr:first-child td {
+	border-width: thin thin thin 0;
+}
+
+.grid tr:first-child td:first-child {
+	border-width: thin thin thin thin;
+}
+
+.grid td.gone {
+	background-color: #ddd;
+}
+
+.grid td.done {
+	background-color: #0a0;
+}
+
+.grid td.queued {
+	background-color: #ffa;
+}
+
+.grid td.unknown {
+	background-color: #fff;
+}
+
+td.disabled {
+	visibility: hidden;
+}
+
+#tabholder > div
+{
+	background-color: #ffd;
+	display: none;
+	border: thin solid #000;
+	padding: 1em;
+}
+#heads > td {
+	background-color: #ddc;
+	border: thin solid #000;
+	border-width: thin thin 0 thin;
+	padding: 0.4em 0.8em;
+	cursor: pointer;
+}
+#heads > td:hover {
+	background-color: #fff;
+}
+#heads > td.selected {
+	background-color: #ffd;
+	cursor: default;
+}
+.symbol {
+	font-family: symbola, sans-serif;
+}
+#workers {
+	padding: 1em;
+	width: 100%;
+	border: thin solid #000;
+	background-color: #ffe;
+}
+
+th.number, td.number {
+	text-align: right;
+	width: 9em;
+}
+
+td.status {
+	text-align: center;
+	width: 5em;
+
+}
+
+th.url, td.url {
+	text-align: left;
+}
+
+.jobtools {
+	text-align: right;
+	padding: 0 4%;
+	margin: 0 auto;
+	}
+.panel {
+	background-color: #bbb;
+	padding: 0.5em;
+	}
+
+.panel + .panel {
+	margin-top: 2em;
+	}
+
+#tabholder .panel {
+	background-color: #ffe;
+	border: thin solid #eee;
+}
+
+.tools {
+	padding: 0.3em 1em;
+	text-align: right;
+	width: 100%;
+	}
+.tools td:first-child {
+	text-align: left;
+}
+
+h2 {
+	margin: 0;
+	display: inline;
+	}
+h4 {
+	display: inline;
+
+}
+
+#tabholder .panel .tools {
+	padding-left: 0;
+	margin-top: 1em;
+}
+
+#tabholder .panel .tools:first-child {
+	margin-top: 0;
+}
+
+#url {
+	width: 20em;
+}

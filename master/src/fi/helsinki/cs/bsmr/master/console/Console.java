@@ -113,7 +113,9 @@ public void onMessage(String msg)
 				{
 				logger.finest(" ADDJOB, payload: " + payload);
 				}
-			addJob(payload);
+			int jobId = addJob(payload);
+			sendJobAdded(jobId);
+			
 			ok = true;
 			}
 		if ("REMOVEJOB".equals(type))
@@ -164,8 +166,9 @@ private void removeJob(Map<Object, Object> payload)
  * 
  * @param payload
  *            The payload part of the JSON message
+ * @return 
  */
-private void addJob(Map<Object, Object> payload)
+private int addJob(Map<Object, Object> payload)
 	{
 	int splits = Util.getIntFromJSONObject(payload
 			.get(Message.FIELD_NUM_SPLITS));
@@ -180,6 +183,7 @@ private void addJob(Map<Object, Object> payload)
 
 	Job newJob = master.createJob(splits, partitions, heartbeatTimeout,
 			acknowledgeTimeout, code, inputRef);
+	int jobId = newJob.getJobId();
 
 	logger.info("Adding new job: " + newJob);
 	try
@@ -193,7 +197,7 @@ private void addJob(Map<Object, Object> payload)
 						Level.SEVERE,
 						"This should never happen! A newly created job was already running/had already been ran on the master?!?",
 						jare);
-		return;
+		return jobId;
 		}
 
 	try
@@ -204,9 +208,18 @@ private void addJob(Map<Object, Object> payload)
 		{
 		/* NOP, because this just means that there is a job already running */
 		}
-
+		return jobId;
 	}
-
+/**
+ * Create a new JobAdded message and send it to the console.
+ * 
+ * @see Console#sendJobAdded(int)
+ */
+public void sendJobAdded(int jobId)
+	{
+	String msg = "{\"type\":\"JOBADDED\",\"payload\":{\"id\":" + jobId + "}}";
+	sendMessage(msg);
+	}
 
 /**
  * Create a new ConsoleInformation message and send it to the console.

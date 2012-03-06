@@ -58,7 +58,6 @@ private long startTime;
 private long finishTime;
 
 private Object code;
-private Object inputRef;
 
 /**
  * Create a new job
@@ -77,7 +76,7 @@ private Object inputRef;
  *            The code the workers are sent.
  */
 Job(int jobId, int splits, int partitions, int heartbeatTimeout,
-		int acknowledgeTimeout, Object code, Object inputRef)
+		int acknowledgeTimeout, Object code)
 	{
 	this.jobId = jobId;
 	this.state = State.NEW;
@@ -89,7 +88,6 @@ Job(int jobId, int splits, int partitions, int heartbeatTimeout,
 	this.acknowledgeTimeout = acknowledgeTimeout;
 
 	this.code = code;
-	this.inputRef = inputRef;
 	}
 
 /**
@@ -171,11 +169,6 @@ public int getJobId()
 public Object getCode()
 	{
 	return code;
-	}
-
-public Object getInputRef()
-	{
-	return inputRef;
 	}
 
 public long getStartTime()

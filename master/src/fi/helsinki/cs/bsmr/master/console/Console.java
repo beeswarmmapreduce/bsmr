@@ -179,10 +179,9 @@ private int addJob(Map<Object, Object> payload)
 	int acknowledgeTimeout = Util.getIntFromJSONObject(payload
 			.get("progressTimeout"));
 	Object code = payload.get(Message.FIELD_CODE);
-	Object inputRef = payload.get(Message.FIELD_INPUTREF);
 
 	Job newJob = master.createJob(splits, partitions, heartbeatTimeout,
-			acknowledgeTimeout, code, inputRef);
+			acknowledgeTimeout, code);
 	int jobId = newJob.getJobId();
 
 	logger.info("Adding new job: " + newJob);

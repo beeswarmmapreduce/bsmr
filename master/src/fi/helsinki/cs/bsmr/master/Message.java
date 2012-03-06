@@ -79,7 +79,6 @@ public static final String FIELD_SOCKET_PORT = "port";
 public static final String FIELD_SOCKET_RESOURCE = "resource";
 
 public static final String FIELD_CODE = "code";
-public static final String FIELD_INPUTREF = "inputRef";
 
 // var msg = {type: "ACK", payload: {action: "socket", protocol: "peer", port: 12345 + Math.floor(Math.random()*1000), resource: String(Math.random()).split(".")[1]}};
 //var msg = { "type": "HB", "payload": { "action": worker._previousAction, "jobId": worker.jobId, "peerId": peerId}};
@@ -391,7 +390,6 @@ public static Map<Object, Object> getJSONMapForJob(Job job)
 	jobMap.put(FIELD_NUM_SPLITS, job.getSplits());
 	jobMap.put(FIELD_NUM_PARTITIONS, job.getPartitions());
 	jobMap.put(FIELD_CODE, job.getCode());
-	jobMap.put(FIELD_INPUTREF, job.getInputRef());
 	return jobMap;
 	}
 

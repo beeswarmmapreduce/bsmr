@@ -25,25 +25,25 @@ var importScripts = function(){
 
 var basics = ["console.js"];
 var extras = [];
-var bsmr = ["lib/generator.js",
-            "lib/boringbucket.js",
-            "lib/nointer.js",
-            "lib/debuginput.js",
-            "lib/consoleout.js",
-            "lib/petrifsout.js",
-            "lib/nointer.js",
-            "lib/wordinput.js",
-            "localstore.js",
-            "chunkregistrar.js",
-            "rcore.js",
-            "rtask.js",
-            "iengine.js",
-            "rengine.js",
-            "cengine.js",
-            "mengine.js",
-            "job.js",
-            "worker.js",
-            "main.js"];
+var library = ["lib/boringbucket.js",
+               "lib/generator.js",
+               "lib/debug/consoleout.js",
+               "lib/debug/debuginput.js",
+               "lib/debug/nointer.js",
+               "lib/petrifs/petrifsout.js",
+               "lib/petrifs/wordinput.js"];
+
+var host = ["host/localstore.js",
+            "host/chunkregistrar.js",
+            "host/rcore.js",
+            "host/rtask.js",
+            "host/iengine.js",
+            "host/rengine.js",
+            "host/cengine.js",
+            "host/mengine.js",
+            "host/job.js",
+            "host/worker.js",
+            "host/main.js"];
 
 var flash = ["external/swfobject.js",
              "lib/flashinter/flashhelper.js",
@@ -56,7 +56,7 @@ if(typeof(document) != typeof(undefined)) {
 	extras = extras.concat(flash);
 }
 
-var imports = basics.concat(extras).concat(bsmr);
+var imports = basics.concat(extras).concat(library).concat(host);
 
 importScripts.apply(this, imports);
 

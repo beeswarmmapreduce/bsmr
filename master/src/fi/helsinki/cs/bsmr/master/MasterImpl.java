@@ -93,7 +93,7 @@ public synchronized boolean acknowledgeWork(Worker worker, Message msg)
 		// acknowledge data from worker
 		switch (msg.getAction())
 			{
-			case mapTask:
+			case mapSplit:
 				{
 				Split s = msg.getMapStatus().split;
 				if (s == null || s.getId() < 0
@@ -114,7 +114,7 @@ public synchronized boolean acknowledgeWork(Worker worker, Message msg)
 				break;
 				}
 
-			case reduceTask:
+			case reduceBucket:
 				{
 				Partition p = msg.getReduceStatus().partition;
 				if (p == null || p.getId() < 0
@@ -205,7 +205,7 @@ public synchronized Message selectTaskForWorker(Worker worker, Message msg)
 		}
 
 	if (msg.getJob() == activeJob
-			&& msg.getAction() == Message.Action.reduceSplit
+			&& msg.getAction() == Message.Action.reduceChunk
 			&& !activeJob.getPartitionInformation().isPartitionDone(
 					msg.getIncompleteReducePartition()))
 		{

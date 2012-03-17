@@ -53,7 +53,7 @@ DO, ACK, HB
 
 public enum Action
 {
-socket, mapTask, reduceTask, reduceSplit, idle
+socket, mapSplit, reduceBucket, reduceChunk, idle
 }
 
 public static final String FIELD_ACTION = "action";
@@ -270,7 +270,7 @@ private static Set<Worker> parseWorkers(Object workersAsUrls,
 
 	for (Object o : set)
 		{
-		if (!(o instanceof String))
+		if (o != null && !(o instanceof String))
 			{
 			logger.severe("payload contains non-string worker URLs");
 			continue;
@@ -424,7 +424,7 @@ public static Message pauseMessage()
  */
 public static Message mapThisMessage(Split s, Job j)
 	{
-	Message ret = new Message(Type.DO, Action.mapTask, j);
+	Message ret = new Message(Type.DO, Action.mapSplit, j);
 	ret.mapStatus = ret.new MapStatus(s);
 	return ret;
 	}
@@ -440,7 +440,7 @@ public static Message mapThisMessage(Split s, Job j)
  */
 public static Message reduceThatMessage(Partition p, Job j)
 	{
-	Message ret = new Message(Type.DO, Action.reduceTask, j);
+	Message ret = new Message(Type.DO, Action.reduceBucket, j);
 	ret.reduceStatus = ret.new ReduceStatus(p, null, null);
 	return ret;
 	}
@@ -462,7 +462,7 @@ public static Message reduceThatMessage(Partition p, Job j)
 public static Message findSplitAtMessage(Partition p, Split s, Job j,
 		Set<Worker> unreachableWorkers)
 	{
-	Message ret = new Message(Type.DO, Action.reduceSplit, j);
+	Message ret = new Message(Type.DO, Action.reduceChunk, j);
 	Set<Worker> hasSplit = new HashSet<Worker>();
 
 	for (Worker w : j.getSplitInformation().whoHasSplit(s))

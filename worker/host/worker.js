@@ -25,15 +25,15 @@ Worker.prototype._react = function(msg) {
     if (payload.job) {
         this._initjob(payload.job);
     }
-    if (action == "mapTask") { // map split
+    if (action == "mapSplit") {
         var splitId = payload.mapStatus.splitId;
         this._job.onMap(splitId);
     }
-    if (action == "reduceTask") { //reduce bucket
+    if (action == "reduceBucket") {
         var bucketId = payload.reduceStatus.partitionId
         this._job.onReduceBucket(bucketId);
     }
-    if (action == "reduceSplit") { //reduce chunk
+    if (action == "reduceChunk") {
         var bucketId = payload.reduceStatus.partitionId
         var splitId = payload.reduceStatus.splitId
         var urls = payload.reduceStatus.locations
@@ -56,7 +56,7 @@ Worker.prototype.suggestChunk = function(splitId, bucketId, unreachable) {
 		reduceStatus.partitionId = bucketId;
 		reduceStatus.splitId = splitId;
 		var payload = {};
-		payload.action = "reduceSplit";
+		payload.action = "reduceChunk";
 		payload.reduceStatus = reduceStatus;
 		payload.unreachable = unreachable;
 		payload.jobId = this._job.id;
@@ -65,7 +65,7 @@ Worker.prototype.suggestChunk = function(splitId, bucketId, unreachable) {
 
 Worker.prototype.bucketComplete = function(bucketId) {
 	var payload = {};
-	payload.action = "reduceTask";
+	payload.action = "reduceBucket";
 	payload.reduceStatus = {partitionId: bucketId};
 	payload.unreachable = [];
 	payload.jobId = this._job.id;
@@ -74,7 +74,7 @@ Worker.prototype.bucketComplete = function(bucketId) {
 
 Worker.prototype.mapComplete = function(splitId) {
 	var payload = {};
-	payload.action = "mapTask";
+	payload.action = "mapSplit";
 	payload.mapStatus = {splitId: splitId};
 	payload.reduceStatus = null;
 	payload.jobId = this._job.id;

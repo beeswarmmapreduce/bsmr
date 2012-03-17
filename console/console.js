@@ -347,7 +347,7 @@ function parseJobs(msg) {
 }
 
 function msgparse(msg) {
-	if (msg.type = 'STATUS') {
+	if (msg.type == 'STATUS') {
 		var payload = msg.payload;
 		var workers = payload.workers;
 		var partitions = payload.partitions;
@@ -360,6 +360,8 @@ function msgparse(msg) {
 		updateheads(hidenames);
 		updatefocus();
 		autoclear();
+	} else {
+		console.log('unknown msg type ' + msg.type);
 	}
 }
 

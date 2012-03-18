@@ -29,7 +29,7 @@ this.feed = function(splitId, bucketId, _peerUrls, _target)
 	
     requestTimeout = setTimeout(self.onError,1000);
     flashCommunicator.sendRequest(peerUrls[peerUrlIndex], jobId, splitId, bucketId);
-    }
+    };
 
 
 //interface that the FlashCommunicator calls
@@ -52,7 +52,7 @@ function Responder(peerId)
         	//buffer = undefined;
         	//buffer = new Array();
         	}
-		}
+		};
 	}
 
 this.onRequest = function(peerId, jobId, splitId, bucketId)
@@ -72,13 +72,13 @@ this.onRequest = function(peerId, jobId, splitId, bucketId)
 		console.log("FlashInter::onRequest(), we don't have the data");
 		flashCommunicator.sendNotFound(peerId, jobId, splitId, bucketId);
 		}
-	}
+	};
 
 
 this.onNotFound = function(peerId, jobId, splitId, bucketId)
 	{
 	self.onError("Requested Data Not Found");
-	}
+	};
 
 this.onResponse = function(peerId, jobId, splitId, bucketId, data)
 	{
@@ -92,7 +92,7 @@ this.onResponse = function(peerId, jobId, splitId, bucketId, data)
 	
 	
 	target.write(splitId, bucketId, data);
-	}
+	};
 
 this.onError = function(status)
 	{
@@ -107,13 +107,13 @@ this.onError = function(status)
 	else
 		 flashCommunicator.sendRequest(peerUrls[peerUrlIndex], jobId, currentSplitId, currentBucketId);
 	
-	}
+	};
 
 this.onIdChange = function(id)
 	{
 	console.log("FlashInter::onIdChange() "+id);
 	job.setOwnPeerId(id);
-	}
+	};
 
 //initialization
 flashCommunicator.addRequestListener(this.onRequest);

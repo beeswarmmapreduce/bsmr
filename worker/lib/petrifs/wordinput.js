@@ -2,7 +2,7 @@ function wordInput(filename) {
 
 	var URL = 'http://localhost:8080/fs/filesystem';
     if (typeof(filename) == typeof(undefined)) {
-    	console.log('No filename given!')    	
+    	console.log('No filename given!');
     }
 
     var maxlen = 10; 
@@ -22,30 +22,30 @@ function wordInput(filename) {
                         var fullSize = JSON.parse(request.responseText);
                         input.fullSize = fullSize;
                         input.blockSize = Math.ceil(fullSize / input.M);
-                        input.feed2(splitId, target)
+                        input.feed2(splitId, target);
                     }
                 }  
             };  
             request.send(null);
         }
         else {
-            this.feed2(splitId, target)
+            this.feed2(splitId, target);
         }
-    }
+    };
 
     Input.prototype.feed = function(splitId, target) {
-        this.computeSizes(splitId, target)
-    }
+        this.computeSizes(splitId, target);
+    };
 
     Input.prototype.feed2 = function(splitId, target) {
 
         var lengthOK = function(x) {
             var l = x.length;
             return  0 < l && l <= maxlen;
-        }
+        };
         var makepair = function(x) {
             return [filename, x];
-        }
+        };
         var feedWords = function(splitId, text, extra) {
             var words = text.split(/\s+/);
             var last = words.pop();
@@ -55,7 +55,7 @@ function wordInput(filename) {
             var shrt = words.filter(lengthOK);
             var pairs = shrt.map(makepair);
             target.write(splitId, pairs);
-        }
+        };
         var blockSize = this.blockSize;
         var begin = splitId * this.blockSize;
         var wanted = blockSize + maxlen;
@@ -76,12 +76,12 @@ function wordInput(filename) {
             }  
         };  
         request.send(null);  
-    }
+    };
     
 	var factory = function(M) {
 	    return new Input(M);
-
-	}
+	};
+	
 	return factory;
 }
    

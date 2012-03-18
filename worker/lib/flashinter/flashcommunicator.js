@@ -64,13 +64,13 @@ function FlashCommunicator()
 	   		connect(peerId);
 	   		}
 	   
-   		}
+   		};
    
    this.sendResponse = function(peerId, jobId, splitId, bucketId, data)
    		{
 	   	var response = createResponseMessage(jobId, splitId, bucketId, data);
 	   	sendMessage(peerId, response);	
-  		}
+  		};
   
    
    this.sendNotFound = function(peerId, jobId, splitId, bucketId)
@@ -78,34 +78,34 @@ function FlashCommunicator()
 	   	console.log("FlashCommunicator::sendNotFound()");
 	   	var message = createNotFoundMessage(jobId, splitId, bucketId);
 	   	sendMessage(peerId, message);	
-		}
+		};
    
    // Public interface for adding listeners 
    
    this.addResponseListener = function(listener)
    		{
 	   	responseListeners.push(listener);
-   		}
+   		};
    
    this.addRequestListener = function(listener)
 		{
 	   	requestListeners.push(listener);
-		}
+		};
    
    this.addErrorListener = function(listener)
 		{
 	   	errorListeners.push(listener);
-		}
+		};
    
    this.addIdChangeListener = function(listener)
 		{
 	   	idChangeListeners.push(listener);
-		}
+		};
    
    this.addNotFoundListener = function(listener)
 		{
 	   	notFoundListeners.push(listener);
-		}
+		};
    //Private helper functions
    
    
@@ -117,7 +117,7 @@ function FlashCommunicator()
 	   	request.splitId = splitId;
 	   	request.bucketId =bucketId;
    		return request;
-   		}
+   		};
    
    var createResponseMessage = function(jobId, splitId, bucketId, data)
    		{
@@ -128,7 +128,7 @@ function FlashCommunicator()
 		response.bucketId = bucketId;
    		response.data = data;
 		return response;
-   		}
+   		};
    
    var createNotFoundMessage = function(jobId, splitId, bucketId)
 		{
@@ -138,7 +138,7 @@ function FlashCommunicator()
 	   	message.splitId = splitId;
 	   	message.bucketId =bucketId;
 		return message;
-		}
+		};
    
    var queueRequestMessage = function(peerId, jobId, splitId, bucketId)
    		{
@@ -149,7 +149,7 @@ function FlashCommunicator()
 	   	
 	   	var request = createRequestMessage(jobId, splitId, bucketId); 
 	   	outgoingQueue[peerId].push(request);
-   		}
+   		};
    
    var sendQueuedRequestMessages = function(peerId) 
    		{
@@ -166,7 +166,7 @@ function FlashCommunicator()
 	   			sendMessage(peerId, request);
 	   			}		
 	   		}
-   		}
+   		};
    
    
  
@@ -178,24 +178,24 @@ function FlashCommunicator()
 		   return;
 	
 	   flashP2P.send(peerId, JSON.stringify(message));
-		}
+		};
    
    var connectToCirrus = function()
    		{
    		flashP2P.connectToCirrus("rtmfp://p2p.rtmfp.net/ac5e767303706ffbc314d1e3-7b419bc16675/");
-   		}
+   		};
   
    var listen = function()
    		{
    		console.log("FlashCommunicator::listen()\r\n");
    		flashP2P.listen();
-   		}
+   		};
    
    var connect = function(peerId)
 		{
 		console.log("FlashCommunicator::connect()"+"\r\n");
 		flashP2P.connect(peerId);
-		}
+		};
 
 
    
@@ -219,7 +219,7 @@ function FlashCommunicator()
 			}
 		
 		listen();
-   		}		
+   		};	
   
   
    this.onDataArrived = function(peerId, data)
@@ -227,7 +227,7 @@ function FlashCommunicator()
    		// A message has arrived from a remote peer whose peer id is peerID
 	    // This function will decode the message and act accordingly
 	   	
-	   	console.log("FlashCommunicator::onDataArrived(), peerId: "+peerId+" data: "+data+"\r\n")
+	   	console.log("FlashCommunicator::onDataArrived(), peerId: "+peerId+" data: "+data+"\r\n");
    
    		
 	   	var message = JSON.parse(data);
@@ -260,7 +260,7 @@ function FlashCommunicator()
    			}
    		
    		
-   		}	
+   		};
    		
    		
    this.onConnectionAccepted = function(peerId)
@@ -270,7 +270,7 @@ function FlashCommunicator()
 	   	console.log("FlashCommunicator::onConnectionAccepted(), connection from peer "+peerId+"\r\n");
    		connectedPeers[peerId] = true;
    		flashP2P.addDataListener(peerId,self.onDataArrived);
-   		}
+   		};
    		
    this.onPeerConnectionStatus = function(peerId, status, statusCode, statusLevel)		
    		{
@@ -296,7 +296,7 @@ function FlashCommunicator()
    				}
    			}
    		
-   		}
+   		};
    		
    
    //initialization	

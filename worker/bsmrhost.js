@@ -2,13 +2,14 @@
 
 var importScripts = function(){
 	// Mimes webworker importScripts function. Respects import order, but does not block!
+    var preImport = function(args){myImport.apply(null, args);};
 	var myImport = function() {
 		var args = Array.prototype.slice.call(arguments);
 	    var filename = args.shift();
 	    if (typeof(filename) == typeof(undefined)) {
 	        return;
 	    }
-	    var next = function(){myImport.apply(null, args);};
+	    var next = function(){preImport(args);};
 	    var tag = document.createElement('script');
 	    tag.type = 'text/javascript';
 	    tag.src = filename;
@@ -16,7 +17,7 @@ var importScripts = function(){
 	    tag.onload = next;
 	    var head = document.getElementsByTagName('head')[0];
 	    head.appendChild(tag);
-	}
+	};
     if (typeof(importScripts) == typeof(undefined)) {
     	return myImport;
     }

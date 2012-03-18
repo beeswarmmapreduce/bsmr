@@ -8,5 +8,5 @@ Cengine.prototype.write = function(splitId, pairs, more) {
     if (!more) {
         this.rtask.feed(splitId, this.output);
     }
-}
+};
 

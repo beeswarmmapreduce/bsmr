@@ -29,7 +29,7 @@ function creategrid(id, length, cellstatus) {
 				if (i >= length) {
 					classes = 'disabled';
 				}
-				html += '<td title="' + i + ', ' + classes + '" class="' + classes + '" id="grid-' + id + '-cell-' + i + '"></td>'
+				html += '<td title="' + i + ', ' + classes + '" class="' + classes + '" id="grid-' + id + '-cell-' + i + '"></td>';
 			i++;
 		}
 		html += '</tr>';
@@ -76,7 +76,7 @@ function updateworkers(workers) {
 		var timecell = '<td class="number">' + worker.connectTime+ '</td>';
 		var statuscell = '<td class="status">' + worker.status + '</td>';
 		var urlcell = '<td class="url">' + worker.url + '</td>';
-		html += '<tr>' + idcell + timecell + statuscell + urlcell + '</tr>'
+		html += '<tr>' + idcell + timecell + statuscell + urlcell + '</tr>';
 	}
 	document.getElementById('workers').innerHTML = html;
 }
@@ -85,7 +85,7 @@ function tabhead(id, statussymbol, hidetitle) {
 	var title = id;
 	var classes = '';
 	if (hidetitle == true) {
-		title = ''
+		title = '';
 	}
 	if (typeof(statussymbol) == typeof(undefined)) {
 		statussymbol = '';
@@ -99,7 +99,7 @@ function tabhead(id, statussymbol, hidetitle) {
 
 function updatenums(workers) {
 	var wc = 0;
-	for (var _ in workers) {
+	for (undefined in workers) {
 		wc += 1;
 	}
 	updatenum('wc', wc);
@@ -147,7 +147,7 @@ function tools(title, tools) {
 }
 
 function jobtab(id) {
-	var title = '<h3>job ' + id + '</h3>'
+	var title = '<h3>job ' + id + '</h3>';
 	var remove = '<input type="button" value="remove job" onclick="removejob(' + id + ')"/>';
 	var jtools = tools(title, remove);
 	var maph = '<h4>mapping</h4>';
@@ -166,8 +166,8 @@ function setcell(gridid, cellid, cellstatus) {
 	var id = 'grid-' + gridid + '-cell-' + cellid;
 	var cell = document.getElementById(id);
 	if (cell != null) {
-		cell.setAttribute('title', cellid + ', ' + cellstatus)
-		cell.setAttribute('class', cellstatus)
+		cell.setAttribute('title', cellid + ', ' + cellstatus);
+		cell.setAttribute('class', cellstatus);
 	}
 }
 
@@ -192,23 +192,23 @@ function updatesplits(id, splits) {
 }
 
 function updatebuckets(id, buckets) {
-	udpateparts('red-' + id, buckets);
+	updateparts('red-' + id, buckets);
 }
 
 function updatemap(jobId, finished, M, splits) {
-	var mapstat;
+	var mapstat = undefined;
 	if (finished) {
 		mapstat = 'gone'; // map results are discarded after the job is finished
 	}
 	var mgrid = creategrid('map-' + jobId, M, mapstat);
 	document.getElementById('map-' + jobId).innerHTML = mgrid;
 	if (finished != true) {
-		updatesplits(jobId, splits)
+		updatesplits(jobId, splits);
 	}
 }
 
 function updatered(jobId, finished, R, buckets) {
-	var redstat;
+	var redstat = undefined;;
 	if (finished) {
 		redstat = 'done'; // reduce results remain around
 	}
@@ -266,7 +266,7 @@ function updatetabs(buckets, splits) {
 }
 
 function switchlatest() {
-	var switchto = '+'
+	var switchto = '+';
 	if (running.length > 0) {
 		var oldest = running[0];
 		switchto = oldest.jobId;
@@ -299,11 +299,11 @@ function autoclear() {
 	}
 }
 
-function parseJobs(msg) {
+function updatejobs(msg) {
 	completed = [];
 	running = [];
 	queued = [];
-	var history = msg.jobHistory
+	var history = msg.jobHistory;
 	for (var i in history) {
 		var job = history[i];
 		completed.push(job);
@@ -333,7 +333,7 @@ function msgparse(msg) {
 		var workers = payload.workers;
 		var buckets = payload.buckets;
 		var splits = payload.splits;
-		var jobs = parseJobs(payload);
+		updatejobs(payload);
 		updateworkers(workers);
 		updatenums(workers);
 		updatetabs(buckets, splits);
@@ -372,7 +372,7 @@ function joblauncher() {
 	var defaultr = 100;
 	var mgrid = creategrid('mfoo', defaultm);
 	var rgrid = creategrid('rfoo', defaultr);
-	var title = '<h3><em>new job</em></h3>'
+	var title = '<h3><em>new job</em></h3>';
 	var add = '<input id="jobaddbutton" type="button" value="add job" onClick="addjob();" />';
 	var jtools = tools(title, add);
 	var maph = '<h4>mapping</h4>';
@@ -380,7 +380,7 @@ function joblauncher() {
 	var mapg = '<div id="newmfoo">' + mgrid + '</div>';
 	var map = tools(maph, mapc) + mapg;
 	var redh = '<h4>reducing</h4>';
-	var redc = '<input id="R" type="text" value="' + defaultr + '" onchange="updaterfoo();" /> reducers'
+	var redc = '<input id="R" type="text" value="' + defaultr + '" onchange="updaterfoo();" /> reducers';
 	var redg ='<div id="newrfoo">' + rgrid + '</div>';
 	var red = tools(redh, redc) + redg;
 	var codeh = '<h4>code</h4>';
@@ -434,7 +434,7 @@ function switchtab(id) {
 	if (nexthead != null) {
 		nexthead.setAttribute("class", "selected");
 	}
-	ctab = gettab(currenttab)
+	ctab = gettab(currenttab);
 	if (ctab != null) {
 		ctab.removeAttribute("style");
 	}

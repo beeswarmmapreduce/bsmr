@@ -42,17 +42,17 @@ function Generator() {
     this.buffer = [];
 }
 
-Generator.prototype._step = function(y) { }
+Generator.prototype._step = function(y) { };
 
 Generator.prototype._lastrun = function() {
     this.end = true;
-}
+};
 Generator.prototype._emit = function(x) {
     this.buffer.unshift(x);
-}
+};
 Generator.prototype.send = function(y) {
     if (this.end) {
-        throw new StopIteration
+        throw new StopIteration;
     }
     if (this.first) {
 	if(y != undefined) {
@@ -61,16 +61,18 @@ Generator.prototype.send = function(y) {
         this.first = false;
         return undefined;
     }
-    this._step(y)
+    this._step(y);
     return this.buffer.pop();
-}
+};
 Generator.prototype.next = function() {
     return this.send(undefined);
-}
+};
+
+/* The Standard Generator API defines these two methods, but we do not use them.
 Generator.prototype.throw = function(e) {
 
-}
+};
 Generator.prototype.close = function() {
 
-}
-
+};
+*/

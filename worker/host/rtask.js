@@ -9,7 +9,7 @@ Rtask.prototype._getcore = function(key) {
         this.cores[key] = new Rcore(this.reducer());
     }
     return this.cores[key];
-}
+};
 
 Rtask.prototype.reduceSome = function(pairs) {
 	if(this.dead) {
@@ -22,7 +22,7 @@ Rtask.prototype.reduceSome = function(pairs) {
         var core = this._getcore(key);
         core.reduce(value);
     }
-}
+};
 
 Rtask.prototype.feed = function(id, target) {
 	if(this.dead) {
@@ -30,7 +30,7 @@ Rtask.prototype.feed = function(id, target) {
 	}
     for(var key in this.cores)
     {
-        var values = this.cores[key].stop()
+        var values = this.cores[key].stop();
         for(var i in values) {
             var value = values[i];
             target.write(id, [[key, value]], true);
@@ -38,4 +38,4 @@ Rtask.prototype.feed = function(id, target) {
     }
     target.write(id, [], false);
     this.dead = true;
-}
+};

@@ -41,7 +41,7 @@ import javax.servlet.http.HttpServletResponse;
 
 /**
  * A servlet which serves two different styles of input files to BSMR workers. Sources can be
- * either raw UTF8 files or JSON dicts saved in the format used by PartitionServlet. Workers need
+ * either raw UTF8 files or JSON dicts saved in the format used by BucketServlet. Workers need
  * to address the splits /[inputRef]-[M]/[split] where inputRef is either an integer for the JSON
  * dicts from previous runs or a non-integer for UTF-8 files. M is the number of splits in this job
  * and split is the number of split the worker wants (0..M-1).
@@ -66,7 +66,7 @@ import javax.servlet.http.HttpServletResponse;
  * Note that due to the size of the enwiki.xml.gz, the size of that file is hard-coded.
  * 
  * @author stsavola
- * @see PartitionServlet
+ * @see BucketServlet
  */
 public class SplitServlet extends HttpServlet
 {

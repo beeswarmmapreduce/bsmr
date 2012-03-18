@@ -37,7 +37,7 @@
 
   <servlet>
     <servlet-name>Partitions</servlet-name>
-    <servlet-class>fi.helsinki.cs.bsmr.fs.PartitionServlet</servlet-class>
+    <servlet-class>fi.helsinki.cs.bsmr.fs.BucketServlet</servlet-class>
     <init-param>
     	<param-name>savePath</param-name>
     	<param-value>data/</param-value>

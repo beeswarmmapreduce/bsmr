@@ -15,12 +15,12 @@ Rengine.prototype._nextChunk = function(bucketId) {
     	var nextId = this.chunkreg.nextChunkID();
     	this.job.suggestChunk(nextId, bucketId);
     }
-}
+};
 
 Rengine.prototype.onChunkFail = function(splitId, bucketId) {
 	this.buffer = [];
     this._nextChunk(bucketId);
-}
+};
 
 // events from iengine
 
@@ -35,4 +35,4 @@ Rengine.prototype.write = function(splitId, bucketId, pairs, more) {
         this.chunkreg.markDone(splitId);
         this._nextChunk(bucketId);
     }
-}
+};

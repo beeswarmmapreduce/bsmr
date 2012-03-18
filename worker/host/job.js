@@ -27,13 +27,13 @@ Job.prototype.onMap = function(splitId) {
     }
     this.mengine = new Mengine(this.mapper, mengineout);
     this.input.feed(splitId, this.mengine);
-}
+};
 
 Job.prototype.onReduceBucket = function(bucketId) {
 	this.cengine = undefined;
 	this.mengine = undefined;
 	this.rengine = new Rengine(this.reducer, this.output, this, bucketId);
-}
+};
 
 Job.prototype.onReduceChunk = function(splitId, bucketId, someUrls) {
 	//filter messages related to obsolete reduce operations
@@ -43,8 +43,8 @@ Job.prototype.onReduceChunk = function(splitId, bucketId, someUrls) {
 	if (bucketId != this.rengine.bucketId) {
 		return;
 	}
-    this.iengine.feed(splitId, bucketId, someUrls, this.rengine)
-}
+    this.iengine.feed(splitId, bucketId, someUrls, this.rengine);
+};
 
 //events from inter
 
@@ -52,11 +52,11 @@ Job.prototype.setOwnPeerId = function(url) {
 	this.peerId = url;
 	console.log("Job::setOwnPeerId() " + this.peerId);
 	this.worker.hb();
-}
+};
 
 Job.prototype.markUnreachable = function(url) {
     this.unreachable.push(url);
-}
+};
 
 Job.prototype.onChunkFail = function(splitId, bucketId) {
 	if(typeof(this.rengine) == typeof(undefined)) {
@@ -66,15 +66,15 @@ Job.prototype.onChunkFail = function(splitId, bucketId) {
 		return;		
 	}
 	this.rengine.onChunkFail(splitId, bucketId);
-}
+};
 
 //events from iengine
 
 Job.prototype.onMapComplete = function(splitId) {
 	this.cengine = undefined;
 	this.mengine = undefined;
-    this.worker.mapComplete(splitId)
-}
+    this.worker.mapComplete(splitId);
+};
 
 //events from rengine
 
@@ -82,12 +82,12 @@ Job.prototype.suggestChunk = function(splitId, bucketId) {
     var broken = this.unreachable;
     //this.unreachable = [];
 	this.worker.suggestChunk(splitId, bucketId, broken);
-}
+};
 
 //events from output
 
 Job.prototype.onBucketComplete = function(bucketId) {
 	this.rengine = undefined;
     this.worker.bucketComplete(bucketId);
-}
+};
 

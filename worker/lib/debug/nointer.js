@@ -13,11 +13,11 @@ function noInter() {
         	job.markUnreachable(url);
         }
         job.onChunkFail(splitId, bucketId);
-    }
+    };
     
     var factory = function(job, localStore) {
     	return new Inter(job);
-    }
+    };
     
     return factory;
 }

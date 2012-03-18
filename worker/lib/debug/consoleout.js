@@ -12,11 +12,11 @@ function consoleOut() {
             this.pairs = [];
             this.job.onBucketComplete(bucketId);
         }
-    }
+    };
     
     var factory = function(job) {
     	return new Output(job);    	
-    }
+    };
     
     return factory;
 }   

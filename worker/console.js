@@ -6,6 +6,6 @@ if (typeof(console) == typeof(undefined)) {
       "log": function(msg) {
         self.postMessage(msg);
       }
-    }
+    };
 }
 

@@ -22,11 +22,11 @@ function petriFSOut() {
             xhr.send(result);  
             this.pairs = [];
         }
-    }
+    };
     
     var factory = function(job) {
     	return new Output(job);    	
-    }
+    };
     
     return factory;
 }   

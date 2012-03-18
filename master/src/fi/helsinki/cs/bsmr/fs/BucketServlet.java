@@ -76,11 +76,11 @@ import fi.helsinki.cs.bsmr.master.JSON;
  * @see SplitServlet
  *
  */
-public class PartitionServlet extends HttpServlet 
+public class BucketServlet extends HttpServlet 
 {
 	private static final long serialVersionUID = 1L;
 
-	private static Logger logger = Logger.getLogger(PartitionServlet.class.getCanonicalName());
+	private static Logger logger = Logger.getLogger(BucketServlet.class.getCanonicalName());
 	
 	private String savePath;
 	private Map<Integer, JobInfo> jobStore;

@@ -27,35 +27,35 @@ function FlashP2P()
 		{
 		console.log("FlashP2P::listen()\r\n");
 		getFlashMovie("JavascriptInterface").listen();
-		}	 	 
+		};
    
    this.connect = function(peerId)
     	{
     	console.log("FlashP2P::connect()\r\n");
     	getFlashMovie("JavascriptInterface").connect(peerId);
-    	}
+    	};
    
     this.send = function(peerId, data)
     	{
     	console.log("FlashP2P::send(), "+peerId+", "+data);
     	getFlashMovie("JavascriptInterface").send(peerId,data);
-    	}
+    	};
     	
     this.addCirrusConnectionListener = function(listener)
     	{
     	cirrusConnectionListeners.push(listener);
-    	}
+    	};
     	
     	
     this.addPeerConnectionListener = function(listener)
     	{
     	peerConnectionListeners.push(listener);
-    	}
+    	};
     
     this.addAcceptListener = function(listener)
     	{
     	acceptListeners.push(listener);
-    	}
+    	};
     
     this.addDataListener = function(peerId,listener)
     	{
@@ -64,14 +64,14 @@ function FlashP2P()
     	
     	if (dataListeners[peerId].indexOf(listener) == -1)
     		dataListeners[peerId].push(listener);  
-    	}
+    	};
     
     this.connectToCirrus = function(cirrusUrl)
     	{
     	console.log("FlashP2P::connectToCirrus() "+ cirrusUrl);
     	
     	getFlashMovie("JavascriptInterface").connectToCirrus(cirrusUrl);
-    	}
+    	};
     	
     
     
@@ -85,12 +85,12 @@ function FlashP2P()
     		{
     		listeners[i](peerId, data);
     		}
-		}
+		};
 		
     this.onCirrusConnectionStatus = function(nearId, statusCode, statusLevel)
     	{
-    	console.log("FlashP2P::onCirrusConnectionStatus(), ownId: "+nearId+"\r\n");
     	ownId = nearId;
+    	console.log("FlashP2P::onCirrusConnectionStatus(), ownId: "+ownId+"\r\n");
     	
     	var status = self.STATUS_UNKNOWN;
     	   
@@ -107,7 +107,7 @@ function FlashP2P()
     		{
     		cirrusConnectionListeners[i](nearId, status, statusCode, statusLevel);
     		}
-    	}
+    	};
     		
     this.onConnectionAccepted = function(peerId)
     	{
@@ -116,7 +116,7 @@ function FlashP2P()
     		{
     		acceptListeners[i](peerId);
     		}
-    	}	
+    	};
     	
 	this.onPeerConnectionStatus = function(peerId, statusCode, statusLevel)
      	{
@@ -137,6 +137,6 @@ function FlashP2P()
     		{
     		peerConnectionListeners[i](peerId, status, statusCode, statusLevel);
     		}
-     	}
+     	};
 				
     }

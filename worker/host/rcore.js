@@ -8,7 +8,7 @@ Rcore.prototype.reduce = function(value) {
     if (value) {
         this._step(value);
     }
-}
+};
 
 Rcore.prototype._step = function(v2) {
     var ret = this.reducer.send(v2); //TODO: Exceptions?
@@ -17,10 +17,10 @@ Rcore.prototype._step = function(v2) {
         if(typeof(ret) != typeof("")) {
             throw ("task returned " + typeof(ret) + ", should be " + typeof(""));
         }
-        this.results.push(ret)
+        this.results.push(ret);
         ret = this.reducer.next(); //TODO: Exceptions?
     }
-}
+};
 
 Rcore.prototype.stop = function() {
     try {
@@ -33,5 +33,5 @@ Rcore.prototype.stop = function() {
         return this.results;
     }
     throw "Unreachable line";
-}
+};
 

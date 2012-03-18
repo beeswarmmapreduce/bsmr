@@ -20,7 +20,7 @@ Iengine.prototype.write = function(splitId, pairs, more) {
         }
         this.job.onMapComplete(splitId);
     }
-}
+};
 
 Iengine.prototype.feed = function(splitId, bucketId, peerUrls, target) {
     if (this.local.canhaz(splitId, bucketId)) {
@@ -28,5 +28,5 @@ Iengine.prototype.feed = function(splitId, bucketId, peerUrls, target) {
     } else {
         this.inter.feed(splitId, bucketId, peerUrls, target);
     }
-}
+};
 

@@ -10,11 +10,11 @@ ChunkRegistrar.prototype.allDone = function() {
         }
     }
     return true;
-}
+};
 
 ChunkRegistrar.prototype._randInt = function(min, max) {
 	return min + Math.floor(Math.random() * (max - min));
-}
+};
 
 ChunkRegistrar.prototype.nextChunkID = function() {
 	var incomplete = []; 
@@ -28,8 +28,8 @@ ChunkRegistrar.prototype.nextChunkID = function() {
     	var i = this._randInt(0, left);
     	return incomplete[i];
     }
-}
+};
 
 ChunkRegistrar.prototype.markDone = function(splitId) {
     this.done[splitId] = true;
-}
+};

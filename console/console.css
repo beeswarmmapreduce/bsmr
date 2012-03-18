@@ -72,7 +72,7 @@ td.disabled {
 	background-color: #ddc;
 	border: thin solid #000;
 	border-width: thin thin 0 thin;
-	padding: 0.4em 0.8em;
+	padding: 0.4em 0;
 	cursor: pointer;
 }
 #heads > td:hover {
@@ -82,9 +82,30 @@ td.disabled {
 	background-color: #ffd;
 	cursor: default;
 }
+
+#heads > td span.title {
+	padding: 0 0.6em 0 0.2em;
+}
+
+#heads > td#newjob {
+	background-color: #f00;
+	padding: 0 0.5em;
+}
+
 .symbol {
+	margin: 0 0.2em;
+	background-color: #eed;
+	color: #000;
+	padding: 0.3em 0.5em;
+	border-radius: 5px;
+	border: thin solid #aaa;
 	font-family: symbola, sans-serif;
 }
+
+.symbol.running {
+	background-color: #fff;
+}
+
 #workers {
 	padding: 1em;
 	width: 100%;
@@ -155,4 +176,12 @@ h4 {
 
 #url {
 	width: 20em;
+}
+
+.symbol.our {
+	background-color: #aee;
+}
+
+.symbol.our.running {
+	background-color: #0ff;
 }

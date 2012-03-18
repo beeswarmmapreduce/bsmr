@@ -10,6 +10,8 @@ var completed = [];
 var running = [];
 var queued = [];
 
+var ourjobs = [];
+
 var tabs = {};
 var ws;
 
@@ -81,20 +83,54 @@ function updateworkers(workers) {
 	document.getElementById('workers').innerHTML = html;
 }
 
-function tabhead(id, statussymbol, hidetitle) {
-	var title = id;
-	var classes = '';
-	if (hidetitle == true) {
-		title = '';
+function newsymbol(id, statussymbol) {
+	var classes = ['symbol'];
+	if (ourjobs.indexOf(id) > -1 || id == '+') {
+		classes.push('our');
 	}
-	if (typeof(statussymbol) == typeof(undefined)) {
-		statussymbol = '';
+	if (statussymbol == RUNNING) {
+		classes.push('running');
+	}
+	var classatt = 'class="' + classes.join(' ') + '"';
+	
+	return '<span ' + classatt + ' id="status-' + id + '">' + statussymbol + '</span>';
+}
+
+function newtitle(id) {
+	var title = id;
+	if (id == '+') {
+		title = 'new';
+	}
+	var classes = ['title'];
+	var classatt = 'class="' + classes.join(' ') + '"';
+	return '<span ' + classatt + '">' + title + '</span>';
+}
+
+function tabhead(id, statussymbol, hidetitle) {
+	if (id == '+') {
+		statussymbol = '+';
+	}
+	var classes = [];
+	var inline = [];
+	if (typeof(statussymbol) != typeof(undefined)) {
+		symbol = newsymbol(id, statussymbol);
+		inline.push(symbol);
+	}
+	if (!hidetitle) {
+		var title = newtitle(id);
+		inline.push(title);
 	}
 	if (id == currenttab) {
-		classes = 'selected';
+		classes.push('selected');
 	}
-	var symbol = '<span class="symbol" id="status-' + id + '">' + statussymbol + '</span>';
-	return '<td id="head-' + id + '" class="' + classes + '" title="' + id + '" onClick="switchtab(\'' + id + '\');">' + symbol + ' ' + title + '</td>';
+	var idatt = 'id="head-' + id + '"';
+	var classatt = 'class="' + classes.join(' ') + '"';
+	var titleatt = 'title="' + id + '"';
+	var clickcode = "switchtab('" + id + "');";
+	var clickatt = 'onClick="' + clickcode + '"';
+	var atts = [idatt, classatt, titleatt, clickatt].join(' ');
+	var inner = inline.join(' ');
+	return '<td ' + atts + '>' + inner + '</td>';
 }
 
 function updatenums(workers) {
@@ -342,7 +378,9 @@ function msgparse(msg) {
 		updatefocus();
 		autoclear();
 	} else if(msg.type == 'JOBADDED') {
-		//Our new job was added to the queue
+		var payload = msg.payload;
+		var jobId = payload.id;
+		ourjobs.push(jobId);
 	} else {
 		console.log('unknown msg type ' + msg.type);
 	}

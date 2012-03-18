@@ -80,10 +80,7 @@ public static final String FIELD_SOCKET_RESOURCE = "resource";
 
 public static final String FIELD_CODE = "code";
 
-// var msg = {type: "ACK", payload: {action: "socket", protocol: "peer", port: 12345 + Math.floor(Math.random()*1000), resource: String(Math.random()).split(".")[1]}};
-//var msg = { "type": "HB", "payload": { "action": worker._previousAction, "jobId": worker.jobId, "peerId": peerId}};
-
-public static final String FIELD_PEERID = "peerId";
+public static final String FIELD_INTERURL = "interUrl";
 
 private Type type;
 private Action action;
@@ -94,7 +91,7 @@ private String socketUrl;
 private MapStatus mapStatus;
 private ReduceStatus reduceStatus;
 private Set<Worker> unreachableWorkers;
-private String peerId = null;
+private String interUrl = null;
 
 private Message(Type t, Action a)
 	{
@@ -170,12 +167,12 @@ private Message(Map<Object, Object> d, MasterContext master, String remoteAddr)
 
 		}
 	
-	if (payload.containsKey(FIELD_PEERID))
+	if (payload.containsKey(FIELD_INTERURL))
 		{
-		Object o = payload.get(FIELD_PEERID);
+		Object o = payload.get(FIELD_INTERURL);
 		if (o != null)
 			{
-			this.peerId = (String)o;
+			this.interUrl = (String)o;
 			}
 		}
 	
@@ -490,9 +487,9 @@ public String getSocketURL()
 	return socketUrl;
 	}
 
-public String getPeerId()
+public String getInterUrl()
 	{
-	return peerId;
+	return interUrl;
 	}
 
 /**

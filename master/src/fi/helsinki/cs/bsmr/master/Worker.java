@@ -173,9 +173,9 @@ public class Worker implements WebSocket, WebSocket.OnTextMessage
 		
 		if (msg.getType() == Type.HB) {
 			
-			if (msg.getPeerId() != null)
+			if (msg.getInterUrl() != null)
 				{
-				master.setWorkerURL(this, msg.getPeerId());
+				master.setWorkerURL(this, msg.getInterUrl());
 				}
 			else
 				{

@@ -1,6 +1,6 @@
 function Job(description, worker) {
 	this.worker = worker;
-    this.peerId = null;
+    this.interUrl = null;
     this.unreachable = [];
     this.id = description.jobId;
     this.R = description.R;
@@ -48,9 +48,9 @@ Job.prototype.onReduceChunk = function(splitId, bucketId, someUrls) {
 
 //events from inter
 
-Job.prototype.setOwnPeerId = function(url) {
-	this.peerId = url;
-	console.log("Job::setOwnPeerId() " + this.peerId);
+Job.prototype.setOwnInterUrl = function(url) {
+	this.interUrl = url;
+	console.log("Job::setOwnInterUrl() " + this.interUrl);
 	this.worker.hb();
 };
 

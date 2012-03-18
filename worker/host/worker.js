@@ -45,7 +45,7 @@ Worker.prototype._react = function(msg) {
 };
 
 Worker.prototype._sendACK = function(payload) {
-    var msg = {};        
+    var msg = {};
     msg.type =  "ACK";
     msg.payload = payload;
     this.ws.send(JSON.stringify(msg));	
@@ -82,15 +82,15 @@ Worker.prototype.mapComplete = function(splitId) {
 
 Worker.prototype.hb = function() {
 	var worker = this;
-	var peerId = null;
+	var interUrl = null;
 	var job = worker._job;
 	if (typeof(job) != typeof(undefined)) {
-  	    peerId = job.peerId || peerId;
+  	    interUrl = job.interUrl || interUrl;
 	}
 	var payload = {};
 	payload.action = worker._previousAction;
 	payload.jobId = worker.jobId;
-	payload.peerId = peerId;
+	payload.interUrl = interUrl;
     var msg = {};
     msg.type = "HB";
     msg.payload = payload;

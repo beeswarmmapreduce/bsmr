@@ -22,11 +22,11 @@ Iengine.prototype.write = function(splitId, pairs, more) {
     }
 };
 
-Iengine.prototype.feed = function(splitId, bucketId, peerUrls, target) {
+Iengine.prototype.feed = function(splitId, bucketId, interUrls, target) {
     if (this.local.canhaz(splitId, bucketId)) {
         this.local.feed(splitId, bucketId, target);
     } else {
-        this.inter.feed(splitId, bucketId, peerUrls, target);
+        this.inter.feed(splitId, bucketId, interUrls, target);
     }
 };
 

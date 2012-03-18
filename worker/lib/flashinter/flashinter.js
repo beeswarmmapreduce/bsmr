@@ -112,7 +112,7 @@ this.onError = function(status)
 this.onIdChange = function(id)
 	{
 	console.log("FlashInter::onIdChange() "+id);
-	job.setOwnPeerId(id);
+	job.setOwnInterUrl(id);
 	};
 
 //initialization

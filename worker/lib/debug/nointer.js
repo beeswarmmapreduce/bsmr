@@ -2,8 +2,8 @@ function noInter() {
     
     function Inter(job) {
         this.job = job;
-        var peerId = ('' + Math.random()).split('.')[1];
-        job.setOwnPeerId('nointer://' + peerId);
+        var interId = ('' + Math.random()).split('.')[1];
+        job.setOwnInterUrl('nointer://' + interId);
     }
     
     Inter.prototype.feed = function(splitId, bucketId, urls, target) {

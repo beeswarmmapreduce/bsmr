@@ -170,17 +170,17 @@ private void removeJob(Map<Object, Object> payload)
  */
 private int addJob(Map<Object, Object> payload)
 	{
-	int splits = Util.getIntFromJSONObject(payload
-			.get(Message.FIELD_NUM_SPLITS));
-	int partitions = Util.getIntFromJSONObject(payload
-			.get(Message.FIELD_NUM_PARTITIONS));
+	int maptasks = Util.getIntFromJSONObject(payload
+			.get(Message.FIELD_NUM_MAPTASKS));
+	int reducetasks = Util.getIntFromJSONObject(payload
+			.get(Message.FIELD_NUM_REDUCETASKS));
 	int heartbeatTimeout = Util.getIntFromJSONObject(payload
 			.get("heartbeatTimeout"));
 	int acknowledgeTimeout = Util.getIntFromJSONObject(payload
 			.get("progressTimeout"));
 	Object code = payload.get(Message.FIELD_CODE);
 
-	Job newJob = master.createJob(splits, partitions, heartbeatTimeout,
+	Job newJob = master.createJob(maptasks, reducetasks, heartbeatTimeout,
 			acknowledgeTimeout, code);
 	int jobId = newJob.getJobId();
 

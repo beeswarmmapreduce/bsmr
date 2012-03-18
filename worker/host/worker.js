@@ -19,6 +19,7 @@ Worker.prototype._callMaster = function() {
 }
 
 Worker.prototype._react = function(msg) {
+	console.log(JSON.stringify(msg));
     var payload = msg.payload;
     var action = payload.action;
     this._previousAction = action;
@@ -30,11 +31,11 @@ Worker.prototype._react = function(msg) {
         this._job.onMap(splitId);
     }
     if (action == "reduceBucket") {
-        var bucketId = payload.reduceStatus.partitionId
+        var bucketId = payload.reduceStatus.bucketId
         this._job.onReduceBucket(bucketId);
     }
     if (action == "reduceChunk") {
-        var bucketId = payload.reduceStatus.partitionId
+        var bucketId = payload.reduceStatus.bucketId
         var splitId = payload.reduceStatus.splitId
         var urls = payload.reduceStatus.locations
         this._job.onReduceChunk(splitId, bucketId, urls);
@@ -53,7 +54,7 @@ Worker.prototype._sendACK = function(payload) {
 
 Worker.prototype.suggestChunk = function(splitId, bucketId, unreachable) {
 		var reduceStatus = {};
-		reduceStatus.partitionId = bucketId;
+		reduceStatus.bucketId = bucketId;
 		reduceStatus.splitId = splitId;
 		var payload = {};
 		payload.action = "reduceChunk";
@@ -66,7 +67,7 @@ Worker.prototype.suggestChunk = function(splitId, bucketId, unreachable) {
 Worker.prototype.bucketComplete = function(bucketId) {
 	var payload = {};
 	payload.action = "reduceBucket";
-	payload.reduceStatus = {partitionId: bucketId};
+	payload.reduceStatus = {bucketId: bucketId};
 	payload.unreachable = [];
 	payload.jobId = this._job.id;
 	this._sendACK(payload);    

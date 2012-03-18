@@ -38,8 +38,8 @@ import fi.helsinki.cs.bsmr.master.JSON;
 import fi.helsinki.cs.bsmr.master.Job;
 import fi.helsinki.cs.bsmr.master.MasterContext;
 import fi.helsinki.cs.bsmr.master.Message;
-import fi.helsinki.cs.bsmr.master.Partition;
-import fi.helsinki.cs.bsmr.master.PartitionStore;
+import fi.helsinki.cs.bsmr.master.Bucket;
+import fi.helsinki.cs.bsmr.master.BucketStore;
 import fi.helsinki.cs.bsmr.master.Split;
 import fi.helsinki.cs.bsmr.master.SplitStore;
 import fi.helsinki.cs.bsmr.master.TimeContext;
@@ -116,7 +116,7 @@ public class ConsoleInformation
 		
 			// Job progress
 			SplitStore ss = currentJob.getSplitInformation();
-			PartitionStore ps = currentJob.getPartitionInformation();
+			BucketStore bs = currentJob.getBucketInformation();
 			
 			// Splits
 			Map<Object, Object> splitMap = new HashMap<Object, Object>();
@@ -129,7 +129,7 @@ public class ConsoleInformation
 			Map<Object, Object> queuedSplits = new HashMap<Object, Object>();
 			splitMap.put("queued", queuedSplits);
 			
-			for (int i = 0; i < currentJob.getSplits(); i++) {
+			for (int i = 0; i < currentJob.getMapTasks(); i++) {
 				Split split = new Split(i);
 				
 				Set<Worker> tmp;
@@ -152,25 +152,36 @@ public class ConsoleInformation
 			}
 			
 
-			// Partitions
-			Map<Object, Object> partitionMap = new HashMap<Object, Object>();
-			payload.put("partitions", partitionMap);
+			// Buckets
+			Map<Object, Object> bucketMap = new HashMap<Object, Object>();
+			payload.put("buckets", bucketMap);
 			
-			// done partitions
-			partitionMap.put("done", ps.getDonePartitionRanges());
+			// done buckets			
+			Map<Object, Object> doneBuckets = new HashMap<Object, Object>();
+			bucketMap.put("done", doneBuckets);
 			
-			Map<Object, Object> queuedPartitions = new HashMap<Object, Object>();
-			partitionMap.put("queued", queuedPartitions);
+			for (int i = 0; i < currentJob.getReduceTasks(); i++) {
+				Bucket bucket = new Bucket(i);
+				
+				Set<Integer> who;
+				who = bs.getAllDoneWorkers(bucket);
+				if (!who.isEmpty()) {
+					doneBuckets.put(i, who);
+				}
+			}
 			
-			for (int i = 0; i < currentJob.getPartitions(); i++) {
-				Partition partition = new Partition(i);
+			Map<Object, Object> queuedBuckets = new HashMap<Object, Object>();
+			bucketMap.put("queued", queuedBuckets);
+			
+			for (int i = 0; i < currentJob.getReduceTasks(); i++) {
+				Bucket bucket = new Bucket(i);
 				
 				Set<Worker> tmp;
-				tmp = ps.getAllQueuedWorkers(partition);
+				tmp = bs.getAllQueuedWorkers(bucket);
 				if (!tmp.isEmpty()) {
 					Set<Integer> who = new HashSet<Integer>();
 					for (Worker w : tmp) { who.add(w.hashCode()); }
-					queuedPartitions.put(i, who);
+					queuedBuckets.put(i, who);
 				}
 			}
 

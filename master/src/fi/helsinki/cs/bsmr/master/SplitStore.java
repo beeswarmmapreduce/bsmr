@@ -64,7 +64,7 @@ public class SplitStore implements Serializable
 		
 		this.workQueuePointer = -1;
 		
-		for (int i = 0; i < job.getSplits(); ++i) {
+		for (int i = 0; i < job.getMapTasks(); ++i) {
 			splitsDone.add(new HashSet<Worker>());
 			splitsQueued.add(new HashSet<Worker>());
 		}
@@ -105,14 +105,14 @@ public class SplitStore implements Serializable
 		boolean foundGoodCandidate;
 		
 		do {
-			workQueuePointer = (workQueuePointer + 1) % job.getSplits();
+			workQueuePointer = (workQueuePointer + 1) % job.getMapTasks();
 			ret = new Split(workQueuePointer);
 			i++;
 			
 			Set<Worker> workersWhoHaveSplit = whoHasSplit(ret); 
 			foundGoodCandidate = workersWhoHaveSplit.isEmpty() || unreachableWorkers.containsAll(workersWhoHaveSplit);
 			
-		} while (!foundGoodCandidate && i < job.getSplits());
+		} while (!foundGoodCandidate && i < job.getMapTasks());
 	
 		if (!foundGoodCandidate) {
 			return null;
@@ -147,7 +147,7 @@ public class SplitStore implements Serializable
 	 */
 	public void removeWorkerInformation(Worker w)
 	{
-		for (int i = 0; i < job.getSplits(); ++i) {
+		for (int i = 0; i < job.getMapTasks(); ++i) {
 			splitsDone.get(i).remove(w);
 			splitsQueued.get(i).remove(w);
 		}

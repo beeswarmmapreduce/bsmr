@@ -97,15 +97,15 @@ public synchronized boolean acknowledgeWork(Worker worker, Message msg)
 				{
 				Split s = msg.getMapStatus().split;
 				if (s == null || s.getId() < 0
-						|| s.getId() >= activeJob.getSplits())
+						|| s.getId() >= activeJob.getMapTasks())
 					{
 					logger
 							.severe("Worker tried to acknowledge an illegal split "
 									+ s
 									+ " ("
-									+ Message.FIELD_NUM_SPLITS
+									+ Message.FIELD_NUM_MAPTASKS
 									+ "="
-									+ activeJob.getSplits());
+									+ activeJob.getMapTasks());
 					}
 				else
 					{
@@ -116,35 +116,35 @@ public synchronized boolean acknowledgeWork(Worker worker, Message msg)
 
 			case reduceBucket:
 				{
-				Partition p = msg.getReduceStatus().partition;
-				if (p == null || p.getId() < 0
-						|| p.getId() >= activeJob.getPartitions())
+				Bucket b = msg.getReduceStatus().bucket;
+				if (b == null || b.getId() < 0
+						|| b.getId() >= activeJob.getReduceTasks())
 					{
 					logger
-							.severe("Worker tried to acknowledge an illegal partition "
-									+ p
+							.severe("Worker tried to acknowledge an illegal bucket "
+									+ b
 									+ " ("
-									+ Message.FIELD_NUM_PARTITIONS
-									+ "=" + activeJob.getPartitions());
+									+ Message.FIELD_NUM_REDUCETASKS
+									+ "=" + activeJob.getReduceTasks());
 					}
 				else
 					{
-					activeJob.getPartitionInformation().acknowledgeWork(worker,
-							p);
+					activeJob.getBucketInformation().acknowledgeWork(worker,
+							b);
 					}
 				break;
 				}
 			}
 		}
 
-	// Check if all partitions are reduced
-	boolean allPartitionsDone = activeJob.getPartitionInformation()
-			.areAllPartitionsDone();
+	// Check if all buckets are reduced
+	boolean allBucketsDone = activeJob.getBucketInformation()
+			.areAllBucketsDone();
 
 	// If the job is not yet marked as finished
 	// !activeJob.isFinished() is documentation. we don't execute this function
 	// if the job is finished
-	if (allPartitionsDone && activeJob.getState() != Job.State.FINISHED)
+	if (allBucketsDone && activeJob.getState() != Job.State.FINISHED)
 		{
 		finishCurrentJobAndStartNext();
 		return false;
@@ -152,7 +152,7 @@ public synchronized boolean acknowledgeWork(Worker worker, Message msg)
 
 	// This is important as there are cases when this point is entered even when
 	// the job was actually finished
-	return !allPartitionsDone;
+	return !allBucketsDone;
 	}
 
 private void pauseAllWorkers()
@@ -180,7 +180,7 @@ private void pauseAllWorkers()
 	}
 
 /**
- * Executes a worker message. Marks done splits or partitions and assigns new
+ * Executes a worker message. Marks done splits or buckets and assigns new
  * work. This method expects to receive an ACK message with the correct job id.
  * The worker is already synchronized on the master, but the same thread can
  * sync on the same object multiple times. Thus it is better to have the
@@ -206,42 +206,42 @@ public synchronized Message selectTaskForWorker(Worker worker, Message msg)
 
 	if (msg.getJob() == activeJob
 			&& msg.getAction() == Message.Action.reduceChunk
-			&& !activeJob.getPartitionInformation().isPartitionDone(
-					msg.getIncompleteReducePartition()))
+			&& !activeJob.getBucketInformation().isBucketDone(
+					msg.getIncompleteReduceBucket()))
 		{
 
-		Partition p = msg.getReduceStatus().partition;
+		Bucket p = msg.getReduceStatus().bucket;
 		Split s = msg.getReduceStatus().split;
 
 		boolean ok = true;
 
 		if (p == null || p.getId() < 0
-				|| p.getId() >= activeJob.getPartitions())
+				|| p.getId() >= activeJob.getReduceTasks())
 			{
 			ok = false;
 			}
 
-		if (s == null || s.getId() < 0 || s.getId() >= activeJob.getSplits())
+		if (s == null || s.getId() < 0 || s.getId() >= activeJob.getMapTasks())
 			{
 			ok = false;
 			}
 
 		if (ok)
 			{
-			return Message.findSplitAtMessage(msg.getReduceStatus().partition,
+			return Message.findSplitAtMessage(msg.getReduceStatus().bucket,
 					msg.getReduceStatus().split, activeJob, msg
 							.getUnareachableWorkers());
 			}
 
 		}
 
-	// All splits are done => Assign a partition for reducing (or the client
-	// specified a non-valid partition or split
+	// All splits are done => Assign a bucket for reducing (or the client
+	// specified a non-valid bucket or split
 
-	Partition nextPartition = activeJob.getPartitionInformation()
-			.selectPartitionToWorkOn(worker);
+	Bucket nextBucket = activeJob.getBucketInformation()
+			.selectBucketToWorkOn(worker);
 
-	return Message.reduceThatMessage(nextPartition, activeJob);
+	return Message.reduceThatMessage(nextBucket, activeJob);
 	}
 
 }

@@ -171,47 +171,28 @@ function setcell(gridid, cellid, cellstatus) {
 	}
 }
 
-function setcellsbyranges(gridid, ranges, cellstatus) {
-	for (var i in ranges) {
-		var range = ranges[i];
-		var start = range[0];
-		var end = range[1];
-		for (var j = start; j < end + 1; j++) {
-			setcell(gridid, j, cellstatus);
-		}
-	}
-}
-
 function setcellsbynodelists(gridid, nodelists, cellstatus) {
-	
 	for (var cellid in nodelists) {
-		var nodes =  nodelists[cellid];
 		setcell(gridid, cellid, cellstatus);
 	}
 }
 
-function updatesplits(id, splits) {
-	if (typeof(splits) == typeof(undefined)) {
+function updateparts(id, parts) {
+	if (typeof(parts) == typeof(undefined)) {
 		return;
 	}
-	for (var cellstatus in splits) {
-		var nodelists = splits[cellstatus];
-		setcellsbynodelists('map-' + id, nodelists, cellstatus);
+	for (var cellstatus in parts) {
+		var nodelists = parts[cellstatus];
+		setcellsbynodelists(id, nodelists, cellstatus);
 	}
 }
 
-function updatepartitions(id, partitions) {
-	if (typeof(partitions) == typeof(undefined)) {
-		return;
-	}
-	for (var cellstatus in partitions) {
-		var data = partitions[cellstatus];
-		if (cellstatus == 'done') {
-			setcellsbyranges('red-' + id, data, cellstatus);
-		} else {
-			setcellsbynodelists('red-' + id, data, cellstatus);
-		}
-	}
+function updatesplits(id, splits) {
+	updateparts('map-' + id, splits);
+}
+
+function updatebuckets(id, buckets) {
+	udpateparts('red-' + id, buckets);
 }
 
 function updatemap(jobId, finished, M, splits) {
@@ -226,7 +207,7 @@ function updatemap(jobId, finished, M, splits) {
 	}
 }
 
-function updatered(jobId, finished, R, partitions) {
+function updatered(jobId, finished, R, buckets) {
 	var redstat;
 	if (finished) {
 		redstat = 'done'; // reduce results remain around
@@ -235,7 +216,7 @@ function updatered(jobId, finished, R, partitions) {
 	document.getElementById('red-' + jobId).innerHTML = rgrid;
 
 	if (finished != true) {
-		updatepartitions(jobId, partitions);
+		updatebuckets(jobId, buckets);
 	}
 }
 
@@ -245,7 +226,7 @@ function updatecode(job) {
 	code.innerHTML = job.code;
 }
 
-function updatetab(job, partitions, splits) {
+function updatetab(job, buckets, splits) {
 	var jobId = job.jobId;
 	var finished = job.finished;
 	var M = job.M;
@@ -255,12 +236,12 @@ function updatetab(job, partitions, splits) {
 		newtab(jobId);
 	}
 	updatemap(jobId, finished, M, splits);
-	updatered(jobId, finished, R, partitions);
+	updatered(jobId, finished, R, buckets);
 	updatecode(job);
 	tabs[jobId] = true;
 }
 
-function updatetabs(partitions, splits) {
+function updatetabs(buckets, splits) {
 	for (var i in tabs) {
 		tabs[i] = false;
 	}
@@ -271,7 +252,7 @@ function updatetabs(partitions, splits) {
 	}
 	for (var i in running) {
 		var job = running[i];
-		updatetab(job, partitions, splits);
+		updatetab(job, buckets, splits);
 	}
 	for (var i in queued) {
 	  	var job = queued[i];
@@ -350,16 +331,18 @@ function msgparse(msg) {
 	if (msg.type == 'STATUS') {
 		var payload = msg.payload;
 		var workers = payload.workers;
-		var partitions = payload.partitions;
+		var buckets = payload.buckets;
 		var splits = payload.splits;
 		var jobs = parseJobs(payload);
 		updateworkers(workers);
 		updatenums(workers);
-		updatetabs(partitions, splits);
+		updatetabs(buckets, splits);
 		var hidenames = jobcount() > 10;
 		updateheads(hidenames);
 		updatefocus();
 		autoclear();
+	} else if(msg.type == 'JOBADDED') {
+		//Our new job was added to the queue
 	} else {
 		console.log('unknown msg type ' + msg.type);
 	}

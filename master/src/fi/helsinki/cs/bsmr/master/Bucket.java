@@ -30,18 +30,18 @@ package fi.helsinki.cs.bsmr.master;
 import java.io.Serializable;
 
 /**
- * A partition for reducing. 
+ * A bucket for reducing. 
  * 
  * @author stsavola
  *
  */
-public class Partition implements Serializable
+public class Bucket implements Serializable
 {
 	private static final long serialVersionUID = 1L;
 	
 	private int id;
 	
-	public Partition(int id)
+	public Bucket(int id)
 	{
 		this.id = id;
 	}
@@ -53,18 +53,18 @@ public class Partition implements Serializable
 
 	public String toString()
 	{
-		return "PartId: "+id;
+		return "BuckId: "+id;
 	}
 	
 	@Override
 	public int hashCode() {
-		return Partition.class.hashCode() ^ id;
+		return Bucket.class.hashCode() ^ id;
 	}
 	
 	@Override
 	public boolean equals(Object obj) {
-		if (! (obj instanceof Partition)) return false;
-		Partition b = (Partition)obj;
+		if (! (obj instanceof Bucket)) return false;
+		Bucket b = (Bucket)obj;
 		
 		return b.id == id;
 	}

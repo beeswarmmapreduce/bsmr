@@ -1,7 +1,7 @@
 <project name="bsmr" default="master">
 
 	<path id="compile.classpath">
-		<fileset dir="master/jetty-distribution-8.0.1.v20110908/lib">
+		<fileset dir="master/jetty-distribution-8.1.0.RC2/lib">
 			<include name="*.jar"/>
 		</fileset>
 		<fileset dir="lib">

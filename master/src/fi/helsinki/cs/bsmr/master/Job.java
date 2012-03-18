@@ -39,7 +39,7 @@ public class Job
 private int jobId;
 
 private SplitStore splitStore;
-private PartitionStore partitionStore;
+private BucketStore bucketStore;
 
 public enum State
 {
@@ -48,8 +48,8 @@ NEW, RUNNING, FINISHED
 
 private State state;
 
-private final int splits;
-private final int partitions;
+private final int maptasks;
+private final int reducetasks;
 
 private final long heartbeatTimeout;
 private final long acknowledgeTimeout;
@@ -64,10 +64,10 @@ private Object code;
  * 
  * @param jobId
  *            Unique identifier for this job.
- * @param splits
- *            The number of splits in this job.
- * @param partitions
- *            The number of partitions in this job.
+ * @param maptasks
+ *            The number of maptasks in this job.
+ * @param reducetasks
+ *            The number of reducetasks in this job.
  * @param heartbeatTimeout
  *            The heart beat timeout.
  * @param acknowledgeTimeout
@@ -75,14 +75,14 @@ private Object code;
  * @param code
  *            The code the workers are sent.
  */
-Job(int jobId, int splits, int partitions, int heartbeatTimeout,
+Job(int jobId, int maptasks, int reducetasks, int heartbeatTimeout,
 		int acknowledgeTimeout, Object code)
 	{
 	this.jobId = jobId;
 	this.state = State.NEW;
 
-	this.splits = splits;
-	this.partitions = partitions;
+	this.maptasks = maptasks;
+	this.reducetasks = reducetasks;
 
 	this.heartbeatTimeout = heartbeatTimeout;
 	this.acknowledgeTimeout = acknowledgeTimeout;
@@ -91,12 +91,12 @@ Job(int jobId, int splits, int partitions, int heartbeatTimeout,
 	}
 
 /**
- * Start this job and initialize the SplitStore and PartitionStore for this job.
+ * Start this job and initialize the SplitStore and BucketStore for this job.
  */
 public void startJob()
 	{
 	splitStore = new SplitStore(this);
-	partitionStore = new PartitionStore(this);
+	bucketStore = new BucketStore(this);
 	state = State.RUNNING;
 	startTime = TimeContext.now();
 	}
@@ -128,17 +128,17 @@ public long getWorkerAcknowledgeTimeout()
 /**
  * @return The number of splits in this job.
  */
-public int getSplits()
+public int getMapTasks()
 	{
-	return splits;
+	return maptasks;
 	}
 
 /**
- * @return The number of partitions in this job
+ * @return The number of reduce tasks in this job
  */
-public int getPartitions()
+public int getReduceTasks()
 	{
-	return partitions;
+	return reducetasks;
 	}
 
 /**
@@ -152,13 +152,13 @@ public SplitStore getSplitInformation()
 	}
 
 /**
- * Get more detailed information about the status of all partitions in the job.
+ * Get more detailed information about the status of all buckets in the job.
  * 
- * @return Information about the partitions.
+ * @return Information about the buckets.
  */
-public PartitionStore getPartitionInformation()
+public BucketStore getBucketInformation()
 	{
-	return partitionStore;
+	return bucketStore;
 	}
 
 public int getJobId()
@@ -183,7 +183,7 @@ public long getFinishTime()
 
 public String toString()
 	{
-	return "Job#" + jobId + " (M=" + splits + ", R=" + partitions + ")";
+	return "Job#" + jobId + " (M=" + maptasks + ", R=" + reducetasks + ")";
 	}
 
 @Override

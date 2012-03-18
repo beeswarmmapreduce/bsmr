@@ -67,11 +67,11 @@ public static final String FIELD_MAPSTATUS = "mapStatus";
 public static final String FIELD_REDUCESTATUS = "reduceStatus";
 public static final String FIELD_UNREACHABLE = "unreachable";
 
-public static final String FIELD_NUM_PARTITIONS = "R";
-public static final String FIELD_NUM_SPLITS = "M";
+public static final String FIELD_NUM_REDUCETASKS = "R";
+public static final String FIELD_NUM_MAPTASKS = "M";
 
 public static final String FIELD_SPLITID = "splitId";
-public static final String FIELD_PARTITIONID = "partitionId";
+public static final String FIELD_BUCKETID = "bucketId";
 public static final String FIELD_REDUCE_LOCATION = "locations";
 
 public static final String FIELD_SOCKET_PROTOCOL = "protocol";
@@ -387,8 +387,8 @@ public static Map<Object, Object> getJSONMapForJob(Job job)
 	{
 	Map<Object, Object> jobMap = new HashMap<Object, Object>();
 	jobMap.put(FIELD_JOBID, job.getJobId());
-	jobMap.put(FIELD_NUM_SPLITS, job.getSplits());
-	jobMap.put(FIELD_NUM_PARTITIONS, job.getPartitions());
+	jobMap.put(FIELD_NUM_MAPTASKS, job.getMapTasks());
+	jobMap.put(FIELD_NUM_REDUCETASKS, job.getReduceTasks());
 	jobMap.put(FIELD_CODE, job.getCode());
 	return jobMap;
 	}
@@ -430,26 +430,26 @@ public static Message mapThisMessage(Split s, Job j)
 	}
 
 /**
- * Create a message instructing a worker to reduce a partition.
+ * Create a message instructing a worker to reduce a bucket.
  * 
- * @param p
- *            The partition to reduce
+ * @param b
+ *            The bucket to reduce
  * @param j
  *            The job for which this task is for
  * @return The message
  */
-public static Message reduceThatMessage(Partition p, Job j)
+public static Message reduceThatMessage(Bucket b, Job j)
 	{
 	Message ret = new Message(Type.DO, Action.reduceBucket, j);
-	ret.reduceStatus = ret.new ReduceStatus(p, null, null);
+	ret.reduceStatus = ret.new ReduceStatus(b, null, null);
 	return ret;
 	}
 
 /**
  * Create a message instructing a worker where to find certain splits at.
  * 
- * @param p
- *            The partition the worker is currently reducing
+ * @param b
+ *            The bucket the worker is currently reducing
  * @param s
  *            For which split the message contains worker socket URLs for
  * @param j
@@ -459,7 +459,7 @@ public static Message reduceThatMessage(Partition p, Job j)
  *            message. The message will not contain URLs for these workers.
  * @return The message
  */
-public static Message findSplitAtMessage(Partition p, Split s, Job j,
+public static Message findSplitAtMessage(Bucket b, Split s, Job j,
 		Set<Worker> unreachableWorkers)
 	{
 	Message ret = new Message(Type.DO, Action.reduceChunk, j);
@@ -474,7 +474,7 @@ public static Message findSplitAtMessage(Partition p, Split s, Job j,
 		hasSplit.add(w);
 		}
 
-	ret.reduceStatus = ret.new ReduceStatus(p, s, hasSplit);
+	ret.reduceStatus = ret.new ReduceStatus(b, s, hasSplit);
 	return ret;
 	}
 
@@ -496,14 +496,14 @@ public String getPeerId()
 	}
 
 /**
- * Return which partition the worker is reducing. This is used when the worker
+ * Return which bucket the worker is reducing. This is used when the worker
  * has sent a reduceSplit message.
  * 
- * @return The partition the worker is currently reducing.
+ * @return The bucket the worker is currently reducing.
  */
-public Partition getIncompleteReducePartition()
+public Bucket getIncompleteReduceBucket()
 	{
-	return reduceStatus.partition;
+	return reduceStatus.bucket;
 	}
 
 public class MapStatus
@@ -538,9 +538,9 @@ public MapStatus createMapStatus(Map<?, ?> map)
 
 public class ReduceStatus
 {
-public ReduceStatus(Partition p, Split s, Set<Worker> l)
+public ReduceStatus(Bucket p, Split s, Set<Worker> l)
 	{
-	this.partition = p;
+	this.bucket = p;
 	this.split = s;
 	this.location = l;
 	}
@@ -549,7 +549,7 @@ public Map<Object, Object> asMap()
 	{
 	Map<Object, Object> ret = new HashMap<Object, Object>();
 
-	ret.put(FIELD_PARTITIONID, partition.getId());
+	ret.put(FIELD_BUCKETID, bucket.getId());
 	if (split != null)
 		ret.put(FIELD_SPLITID, split.getId());
 
@@ -566,7 +566,7 @@ public Map<Object, Object> asMap()
 	return ret;
 	}
 
-Partition partition;
+Bucket bucket;
 Split split;
 Set<Worker> location;
 }
@@ -577,15 +577,15 @@ public ReduceStatus createReduceStatus(Map<?, ?> map)
 		return null;
 
 	Split s = null;
-	Partition p = null;
+	Bucket p = null;
 
 	Object o1 = map.get(FIELD_SPLITID);
-	Object o2 = map.get(FIELD_PARTITIONID);
+	Object o2 = map.get(FIELD_BUCKETID);
 
 	if (o1 != null)
 		s = new Split(Util.getIntFromJSONObject(o1));
 	if (o2 != null)
-		p = new Partition(Util.getIntFromJSONObject(o2));
+		p = new Bucket(Util.getIntFromJSONObject(o2));
 
 	// TODO: no locations in ACK messsages
 

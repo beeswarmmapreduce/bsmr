@@ -1,0 +1,225 @@
+Bee Swarm MapReduce protocol
+
+Introduction
+We describe here the key protocols used in Bee Swarm MapReduce, a web-based
+clone of the Google MapReduce platform. There are two protocols described in
+this document. The first one is used to add new jobs to the master server
+that keeps track of progress and distributes tasks among workers. The second
+one is used between master and workers to coordinate computations.
+
+Terminology
+worker	A processing node, running in a browser.
+master	Server-side component which queues job, and schedules tasks to
+	workers. The workers register them selves with a master.
+job	A running instance of a MapReduce program.
+task	Unit of map/reduce work undertaken by a worker.
+M	The number of map tasks in a job.
+R	The number of reduce tasks in a job.
+split	A segment of the input data. There are M splits.
+bucket	The map results are divided into R buckets for reducing.
+chunk	Part of a bucket that was produced by mapping a split. The amount of
+        chunks is equalt to R times M.
+
+Console-Master Protocol
+
+{"type": "ADDJOB", "payload": {
+     "code": <string>,
+"R": <R_int>,
+"M": <M_int>,
+"heartbeatTimeout": <ms_int>,
+"progressTimeout": <ms_int>
+}}
+
+
+// code should set following variables:
+mapper <mapper funtion>
+reducer <reducer generator factory>
+combiner <combiner generator factory>
+chooseBucket <function>
+input <input object factory>
+inter <interstorage object factory>
+output <output object factory>
+
+{"type": "JOBADDED", "payload": {
+"id": <job id>
+}}
+// Do NOT broadcast, immediately followed by a new status message
+
+	{ "type": "STATUS", "payload": {
+            "time": <time_now>,
+            "job": {
+                       "id": <job_id_int>,
+                  "R": <R_int>,
+                   "M": <M_int>,
+                   "code": "<code_escaped_string>",
+                   "startTime": <start_time_millis>,
+            "finished": <boolean>,
+            },
+            "jobQueue" : [ { "id": -, "R": -, "M": -, "code": - }, 
+                      { "id": - ... } ], // no startTime
+            "jobHistory" : [ { -"-, "startTime": <ms>, 
+                               "finishTime": <ms> } ]
+
+
+            "workers": {
+                    "<worker_id_int>": {
+                            "status": <available_unavailable_dead_idle>,
+                            "url": <bs_url_str>,
+                            "connectTime": <millis>
+                    }
+            },
+            "splits": {
+                    "done" : {
+                            "<split_id_0>": [ <worker_id_1>, <wid_2> ],
+                            "<split_id_1>": [ <wid_1>, <wid_2> ]
+                    },
+                    "queued": {
+                            "<split_id_3>": [ <wid_1> ],
+                            "<split_id_4>": [ <wid_2> ]
+                    }
+            },
+            "partitions": {
+                 "done": {
+                            "<bucket_id_3>": [ <wid_1> ],
+                            "<bucket_id_4>": [ <wid_2> ]
+                    },
+                    "queued": {
+                            "<bucket_id_3>": [ <wid_1> ],
+                            "<bucket_id_4>": [ <wid_2> ]
+                    }
+
+
+            }
+    }
+}
+
+{"type": "REMOVEJOB", "payload": {
+"id": <job id>
+}}
+
+
+Master-Worker Protocol
+
+	/* instruct worker to start a map task */
+{"type": "DO",
+ "payload": {
+           "action": "mapSplit",
+        "mapStatus": {
+                "splitId": <int>
+                }
+        "job": {
+                "jobId": <int>,
+                "R": <int>,
+                "M": <int>,
+           "code": "<string>"
+}
+}
+}
+	
+
+	
+
+	/* acknowledge the completion of a map task to the master */
+{"type": "ACK",
+ "payload": {
+           "action": "mapSplit",
+        "mapStatus": {
+                "splitId": <int>
+        },
+     "jobId": <int>
+ }
+}
+
+
+	/* instruct worker to initiate a reduce task */
+{"type": "DO",
+ "payload": {
+           "action": "reduceBucket",
+        "reduceStatus": {
+                "bucketId": <int>
+        },
+        "job": {
+                "id": <int>,
+                "R": <int>,
+                "M": <int>,
+           "code": "<string>"
+}
+}
+}
+	
+
+	/* suggest next chunk to be reduce, and notify that zero or more chunk locations that are known to be unreachable from the workers network location */
+{"type": "ACK",
+ "payload": {
+           "action": "reduceChunk",
+        "reduceStatus": {
+                "bucketId": <int>,
+                "splitId": <int>
+},
+"unreachable": [
+        "<string>",
+        "<string>",
+        ...     
+        ],
+     "jobId": <int>
+     }
+}
+
+
+	/* command worker to try reducing a chunk */
+{"type": "DO",
+ "payload": {
+           "action": "reduceChunk",
+"reduceStatus": {
+                "bucketId": <int>,
+                "splitId": <int>,
+                "locations": [
+                        "<string>",
+                        "<string>",
+                        ...
+                        ]
+},
+        "job": {
+                "id": <int>,
+                "R": <int>,
+                "M": <int>,
+           "code": "<string>"
+}
+}
+}
+	
+
+
+	/* acknowledge the completion of a reduce task to the master and notify that zero or more chunk locations are unreachable */
+{"type": "ACK",
+ "payload": {
+           "action": "reduceBucket",
+        "reduceStatus": {
+                "bucketId": <int>
+                },
+"unreachable": [
+        "<string>",
+        "<string>",
+        ],
+     "jobId": <int>
+}
+}
+
+
+	/* Instruct worker to enter idle state */
+{"type": "DO",
+ "payload": {
+           "action": "idle"
+}
+}
+	
+
+
+	/* heartbeat from worker to master to maintain alive state, to deliver intermediate storage address, and to report current action to master for debugging purposes */
+{"type": "HB",
+ "payload": {
+           "action": "<string>",
+"jobId": <int>,
+"interUrl": <string>
+ }
+}

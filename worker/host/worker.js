@@ -76,7 +76,6 @@ Worker.prototype.mapComplete = function(splitId) {
 	var payload = {};
 	payload.action = "mapSplit";
 	payload.mapStatus = {splitId: splitId};
-	payload.reduceStatus = null;
 	payload.jobId = this._job.id;
 	this._sendACK(payload);
 };
@@ -88,7 +87,6 @@ Worker.prototype.hb = function() {
 	if (typeof(job) != typeof(undefined)) {
   	    peerId = job.peerId || peerId;
 	}
-
 	var payload = {};
 	payload.action = worker._previousAction;
 	payload.jobId = worker.jobId;
@@ -96,7 +94,6 @@ Worker.prototype.hb = function() {
     var msg = {};
     msg.type = "HB";
     msg.payload = payload;
-    
     //console.log(msg);
     worker.ws.send(JSON.stringify(msg));
 };

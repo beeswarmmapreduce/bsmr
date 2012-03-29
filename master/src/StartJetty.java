@@ -46,8 +46,6 @@ public class StartJetty
 
         ContextHandlerCollection multiContext = new ContextHandlerCollection();
         multiContext.addHandler(createMasterWebApp());
-        multiContext.addHandler(createWorkerWebApp());
-        multiContext.addHandler(createConsoleWebApp());
         multiContext.addHandler(createStaticWebApp());
 
         
@@ -78,23 +76,7 @@ public class StartJetty
 		context.setParentLoaderPriority(true);
 		return context;
 	}
-	
-	private static WebAppContext createWorkerWebApp()
-	{
-		WebAppContext context = new WebAppContext();
-		context.setResourceBase("worker");
-		context.setContextPath("/worker");
-		return context;
-	}
-	
-	private static WebAppContext createConsoleWebApp()
-	{
-		WebAppContext context = new WebAppContext();
-		context.setResourceBase("console");
-		context.setContextPath("/console");
-		return context;
-	}
-	
+		
 	private static WebAppContext createStaticWebApp()
 	{
 		WebAppContext context = new WebAppContext();

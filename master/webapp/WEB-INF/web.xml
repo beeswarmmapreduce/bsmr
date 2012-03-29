@@ -18,15 +18,6 @@
   </servlet>
 
   <servlet>
-    <servlet-name>Splits</servlet-name>
-    <servlet-class>fi.helsinki.cs.bsmr.fs.SplitServlet</servlet-class>
-    <init-param>
-    	<param-name>loadPath</param-name>
-    	<param-value>static/data/</param-value>
-    </init-param>
-  </servlet>
-
-  <servlet>
     <servlet-name>Fs</servlet-name>
     <servlet-class>fi.helsinki.cs.bsmr.fs.FsServlet</servlet-class>
     <init-param>
@@ -35,34 +26,14 @@
     </init-param>
   </servlet>	
 
-  <servlet>
-    <servlet-name>Partitions</servlet-name>
-    <servlet-class>fi.helsinki.cs.bsmr.fs.BucketServlet</servlet-class>
-    <init-param>
-    	<param-name>savePath</param-name>
-    	<param-value>static/data/</param-value>
-    </init-param>
-    <load-on-startup>2</load-on-startup>
-  </servlet>
-
   <servlet-mapping>
     <servlet-name>Master</servlet-name>
     <url-pattern>/bsmr/*</url-pattern>
   </servlet-mapping>
 
   <servlet-mapping>
-    <servlet-name>Splits</servlet-name>
-    <url-pattern>/fs/splits/*</url-pattern>
-  </servlet-mapping>
-
-  <servlet-mapping>
     <servlet-name>Fs</servlet-name>
     <url-pattern>/fs/filesystem</url-pattern>
-  </servlet-mapping>
-  
-  <servlet-mapping>
-    <servlet-name>Partitions</servlet-name>
-    <url-pattern>/fs/partitions/*</url-pattern>
   </servlet-mapping>
   
 </web-app>

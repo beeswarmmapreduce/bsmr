@@ -22,7 +22,7 @@
     <servlet-class>fi.helsinki.cs.bsmr.fs.SplitServlet</servlet-class>
     <init-param>
     	<param-name>loadPath</param-name>
-    	<param-value>data/</param-value>
+    	<param-value>static/data/</param-value>
     </init-param>
   </servlet>
 
@@ -31,7 +31,7 @@
     <servlet-class>fi.helsinki.cs.bsmr.fs.FsServlet</servlet-class>
     <init-param>
     	<param-name>loadPath</param-name>
-    	<param-value>data/</param-value>
+    	<param-value>static/data/</param-value>
     </init-param>
   </servlet>	
 
@@ -40,7 +40,7 @@
     <servlet-class>fi.helsinki.cs.bsmr.fs.BucketServlet</servlet-class>
     <init-param>
     	<param-name>savePath</param-name>
-    	<param-value>data/</param-value>
+    	<param-value>static/data/</param-value>
     </init-param>
     <load-on-startup>2</load-on-startup>
   </servlet>

@@ -48,6 +48,8 @@ public class StartJetty
         multiContext.addHandler(createMasterWebApp());
         multiContext.addHandler(createWorkerWebApp());
         multiContext.addHandler(createConsoleWebApp());
+        multiContext.addHandler(createStaticWebApp());
+
         
         server.setHandler(multiContext);
 		
@@ -90,6 +92,14 @@ public class StartJetty
 		WebAppContext context = new WebAppContext();
 		context.setResourceBase("console");
 		context.setContextPath("/console");
+		return context;
+	}
+	
+	private static WebAppContext createStaticWebApp()
+	{
+		WebAppContext context = new WebAppContext();
+		context.setResourceBase("static");
+		context.setContextPath("/static");
 		return context;
 	}
 }

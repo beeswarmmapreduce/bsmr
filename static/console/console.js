@@ -15,7 +15,8 @@ var ourjobs = [];
 var tabs = {};
 var ws;
 
-var MASTER = "ws://localhost:8080/bsmr";
+var DEFAULTMASTER = "ws://localhost:8080/bsmr";
+var masterurl = DEFAULTMASTER;
 
 function creategrid(id, length, cellstatus) {
 	if (typeof(cellstatus) == typeof(undefined)) {
@@ -544,7 +545,7 @@ function createnum(id, value) {
 
 function createbody() {
 	var title = '<h1>Bee Swarm MapReduce</h1>';
-	var url = '<em>' + MASTER + '</em>';
+	var url = '<em id="murl">-</em>';
 	var states = '(' + createnum('cj', 0) + ' completed, ' + createnum('qj', 0) + ' queued, and ' + createnum('rj', 0) + ' running)';
 	var connect = 'Connected to ' + url + ' with ' + createnum('wc', 0) + ' available workers and ' + createnum('jc', 0) + ' jobs ' + states + '.';
 	var ja = jobarea();
@@ -552,12 +553,38 @@ function createbody() {
 	return tools(title, connect) + ja + wa;
 }
 
+function parseParams() {
+    var query = window.location.href.split('?')[1];
+    var defs = [];
+    if (query !== undefined) {
+        defs = query.split('&');
+    }
+    var params = {};
+    for (var i in defs) {
+        var parts = defs[i].split("=");
+        params[parts[0]] = parts[1];
+    }
+    return params;
+}
+
+function connectToMaster(masterurl) {
+	var murl = document.getElementById('murl');
+	ws = new WebSocket(masterurl, "console");
+	ws.onmessage = function(e) { msgparse(JSON.parse(e.data)); };
+	ws.onopen = function(e) { murl.innerHTML = masterurl; };	
+}
+
 function init() {
+	var params = parseParams();
+	var target = masterurl;
+	var masterd = params.master;
+	if (typeof(masterd) != typeof(undefined)) {
+		target = 'ws://' + masterd + '/bsmr';}
+	
 	document.getElementById('body').innerHTML = createbody();
 	newtab('+');
 	updateheads();
 	switchlatest();
-	ws = new WebSocket(MASTER, "console");
-	ws.onmessage = function(e) { msgparse(JSON.parse(e.data)); };
+	connectToMaster(target);
 }
 

@@ -1,30 +1,24 @@
 "use strict";
 
-var importScripts = function(){
-	// Mimes webworker importScripts function. Respects import order, but does not block!
-    var preImport = function(args){myImport.apply(null, args);};
-	var myImport = function() {
-		var args = Array.prototype.slice.call(arguments);
-	    var filename = args.shift();
-	    if (typeof(filename) == typeof(undefined)) {
-	        return;
-	    }
-	    var next = function(){preImport(args);};
-	    var tag = document.createElement('script');
-	    tag.type = 'text/javascript';
-	    tag.src = filename;
-	    tag.onreadystatechange = next;
-	    tag.onload = next;
-	    var head = document.getElementsByTagName('head')[0];
-	    head.appendChild(tag);
-	};
-    if (typeof(importScripts) == typeof(undefined)) {
-    	return myImport;
+// Mimes webworker importScripts function.
+// Respects import order, but does not block!
+function myImport() {
+	var args = Array.prototype.slice.call(arguments);
+    var filename = args.shift();
+    if (typeof(filename) == typeof(undefined)) {
+        return;
     }
-    return importScripts;
-}();
+    var preImport = function(args){myImport.apply(null, args);};
+    var next = function(){preImport(args);};
+    var tag = document.createElement('script');
+    tag.type = 'text/javascript';
+    tag.src = filename;
+    tag.onreadystatechange = next;
+    tag.onload = next;
+    var head = document.getElementsByTagName('head')[0];
+    head.appendChild(tag);
+};
 
-var basics = ["console.js"];
 var extras = [];
 var library = ["lib/boringbucket.js",
                "lib/generator.js",
@@ -52,12 +46,9 @@ var flash = ["external/swfobject.js",
              "lib/flashinter/flashcommunicator.js",
              "lib/flashinter/flashinter.js"];
 
-// add extras that do not work inside webworkers
-if(typeof(document) != typeof(undefined)) {
-	extras = extras.concat(flash);
-}
+extras = extras.concat(flash);
 
-var imports = basics.concat(extras).concat(library).concat(host);
+var imports = extras.concat(library).concat(host);
 
-importScripts.apply(this, imports);
+myImport.apply(this, imports);
 

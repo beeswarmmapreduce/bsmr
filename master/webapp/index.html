@@ -25,16 +25,22 @@
 	<h2>Example Use</h2>
 	<ol>
 		<li>Install and run Google Chrome (known to work)</li>
-		<li>Open the <a href="/static/exampleapp/app.html">example application</a> in one tab</li>
-		<li>Go to the <a href="/static/console">console</a> in another tab and start a job</li>
+		<li>Go to the <a href="/static/console">console</a> in one tab</li>
+		<li>Notice that the worker list at the bottom is empty</li>
+		<li>Open the <a href="/static/exampleapp/app.html">example application</a> in another tab</li>
+		<li>Go back to the console tab</li>
+		<li>Witness one worker appear in the worker list</li>
+		<li>Add a job from the console</li>
+		<li>Navigate to the new job within the console</li>
+		<li>Monitor job progress in the console</li>
 		<li>Watch results appear in the data <a href="/static/data">folder</a></li>
 	</ol>
 	<p> You may wish to run a worker node
-	<a href="/static/worker/sandbox.html">separately</a>
-	to debug its behaviour.
+	<a href="/static/worker/sandbox.html?master=127.0.0.1:8080">separately</a>
+	to debug its behavior.
 	</p>
 
-	
+	<h2>Security Limitations</h2>
 	<p>
 	In a real use scenario one should disable http access to the server entirely,
 	and only allow WebSocket connections to the worker interface. Master also

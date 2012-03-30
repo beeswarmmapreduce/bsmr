@@ -210,13 +210,13 @@ public synchronized Message selectTaskForWorker(Worker worker, Message msg)
 					msg.getIncompleteReduceBucket()))
 		{
 
-		Bucket p = msg.getReduceStatus().bucket;
+		Bucket b = msg.getReduceStatus().bucket;
 		Split s = msg.getReduceStatus().split;
 
 		boolean ok = true;
 
-		if (p == null || p.getId() < 0
-				|| p.getId() >= activeJob.getReduceTasks())
+		if (b == null || b.getId() < 0
+				|| b.getId() >= activeJob.getReduceTasks())
 			{
 			ok = false;
 			}
@@ -228,7 +228,7 @@ public synchronized Message selectTaskForWorker(Worker worker, Message msg)
 
 		if (ok)
 			{
-			return Message.findSplitAtMessage(msg.getReduceStatus().bucket,
+			return Message.findChunkAtMessage(msg.getReduceStatus().bucket,
 					msg.getReduceStatus().split, activeJob, msg
 							.getUnareachableWorkers());
 			}

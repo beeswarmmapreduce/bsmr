@@ -53,7 +53,7 @@ DO, ACK, HB
 
 public enum Action
 {
-socket, mapSplit, reduceBucket, reduceChunk, idle
+mapSplit, reduceBucket, reduceChunk, idle
 }
 
 public static final String FIELD_ACTION = "action";
@@ -74,10 +74,6 @@ public static final String FIELD_SPLITID = "splitId";
 public static final String FIELD_BUCKETID = "bucketId";
 public static final String FIELD_REDUCE_LOCATION = "locations";
 
-public static final String FIELD_SOCKET_PROTOCOL = "protocol";
-public static final String FIELD_SOCKET_PORT = "port";
-public static final String FIELD_SOCKET_RESOURCE = "resource";
-
 public static final String FIELD_CODE = "code";
 
 public static final String FIELD_INTERURL = "interUrl";
@@ -87,7 +83,6 @@ private Action action;
 
 private Job job;
 
-private String socketUrl;
 private MapStatus mapStatus;
 private ReduceStatus reduceStatus;
 private Set<Worker> unreachableWorkers;
@@ -99,7 +94,6 @@ private Message(Type t, Action a)
 	this.action = a;
 
 	this.job = null;
-	this.socketUrl = null;
 	this.mapStatus = null;
 	this.reduceStatus = null;
 	this.unreachableWorkers = null;
@@ -111,7 +105,6 @@ private Message(Type t, Action a, Job j)
 	this.action = a;
 	this.job = j;
 
-	this.socketUrl = null;
 	this.mapStatus = null;
 	this.reduceStatus = null;
 	this.unreachableWorkers = null;
@@ -175,10 +168,8 @@ private Message(Map<Object, Object> d, MasterContext master, String remoteAddr)
 			this.interUrl = (String)o;
 			}
 		}
-	
-	this.socketUrl = constructURL((String) payload.get(FIELD_SOCKET_PROTOCOL),
-			remoteAddr, payload.get(FIELD_SOCKET_PORT), (String) payload
-					.get(FIELD_SOCKET_RESOURCE));
+
+	//remotrAddr
 	this.mapStatus = createMapStatus((Map<?, ?>) payload.get(FIELD_MAPSTATUS));
 	this.reduceStatus = createReduceStatus((Map<?, ?>) payload
 			.get(FIELD_REDUCESTATUS));
@@ -443,7 +434,7 @@ public static Message reduceThatMessage(Bucket b, Job j)
 	}
 
 /**
- * Create a message instructing a worker where to find certain splits at.
+ * Create a message instructing a worker where to find certain chunk at.
  * 
  * @param b
  *            The bucket the worker is currently reducing
@@ -456,7 +447,7 @@ public static Message reduceThatMessage(Bucket b, Job j)
  *            message. The message will not contain URLs for these workers.
  * @return The message
  */
-public static Message findSplitAtMessage(Bucket b, Split s, Job j,
+public static Message findChunkAtMessage(Bucket b, Split s, Job j,
 		Set<Worker> unreachableWorkers)
 	{
 	Message ret = new Message(Type.DO, Action.reduceChunk, j);
@@ -480,11 +471,6 @@ public Set<Worker> getUnareachableWorkers()
 	if (unreachableWorkers == null)
 		return Collections.emptySet();
 	return unreachableWorkers;
-	}
-
-public String getSocketURL()
-	{
-	return socketUrl;
 	}
 
 public String getInterUrl()

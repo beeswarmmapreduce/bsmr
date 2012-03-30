@@ -172,19 +172,9 @@ public class Worker implements WebSocket, WebSocket.OnTextMessage
 		}
 		
 		if (msg.getType() == Type.HB) {
-			
-			if (msg.getInterUrl() != null)
-				{
+			if (msg.getInterUrl() != null) {
 				master.setWorkerURL(this, msg.getInterUrl());
-				}
-			else
-				{
-				master.setWorkerURL(this, msg.getSocketURL());
-				}
-		}
-
-		if (msg.getAction() == Message.Action.socket) {
-			//master.setWorkerURL(this, msg.getSocketURL());
+			}
 		}
 	
 		if (msg.getJob() != null && msg.getJob() != master.getActiveJob()) {
@@ -194,8 +184,8 @@ public class Worker implements WebSocket, WebSocket.OnTextMessage
 		
 		if (!master.isJobRunning()) {
 			
-			if (msg.getType() == Type.ACK && msg.getAction() != Message.Action.socket) {
-				logger.warning("A worker sent a non-heartbeat, non-socket while no active job");
+			if (msg.getType() == Type.ACK) {
+				logger.warning("A worker sent a non-heartbeat while no active job");
 			}
 			
 			lastHearbeat = TimeContext.now();

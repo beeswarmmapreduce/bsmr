@@ -2,7 +2,7 @@ function wordInput(filename) {
 
 	var URL = 'http://localhost:8080/fs/filesystem';
     if (typeof(filename) == typeof(undefined)) {
-    	console.log('No filename given!');
+    	console.error('wordinput error: No filename given!');
     }
 
     var maxlen = 10; 

@@ -32,7 +32,8 @@ import java.util.Iterator;
 import java.util.Set;
 
 /**
- * This is a Set wrapper which disregards workers who are unavailable. Using this
+ * This is a Set wrapper which disregards workers who are known to be unreachable.
+ * The reachability status reported by workers does not affect this. Using this
  * structure there is no need to copy the full set of workers and then remove unavailable
  * workers. Note that only a subset of Set functionality is supported. Unsupported
  * functions will throw a RuntimeException
@@ -40,7 +41,7 @@ import java.util.Set;
  * @author stsavola
  *
  */
-public class AvailableWorkerSet implements Set<Worker> 
+public class ReachableWorkerSet implements Set<Worker> 
 {
 	private Set<Worker> superSet;
 	private Job job;
@@ -52,7 +53,7 @@ public class AvailableWorkerSet implements Set<Worker>
 	 * @param job The job whose heart beat and acknowledgment timeout parameters are used 
 	 *            to classify worker state.
 	 */
-	public AvailableWorkerSet(Set<Worker> set, Job job) 
+	public ReachableWorkerSet(Set<Worker> set, Job job) 
 	{
 		this.superSet = set;
 		this.job      = job;
@@ -62,7 +63,7 @@ public class AvailableWorkerSet implements Set<Worker>
 	@Override
 	public boolean contains(Object o) {
 		Worker w = (Worker)o;
-		return (superSet.contains(w) && w.isAvailable(job));
+		return (superSet.contains(w) && w.isReachable(job));
 	}
 
 	@Override
@@ -72,7 +73,7 @@ public class AvailableWorkerSet implements Set<Worker>
 			if (! (o instanceof Worker)) { return false; }
 			Worker w = (Worker)o;
 			
-			if (!superSet.contains(w) || !w.isAvailable(job)) {
+			if (!superSet.contains(w) || !w.isReachable(job)) {
 				return false;
 			}
 		
@@ -84,7 +85,7 @@ public class AvailableWorkerSet implements Set<Worker>
 	public boolean isEmpty()
 	{
 		for (Worker w : superSet) {
-			if (w.isAvailable(job)) {
+			if (w.isReachable(job)) {
 				return false;
 			}
 		}
@@ -94,15 +95,15 @@ public class AvailableWorkerSet implements Set<Worker>
 	@Override
 	public Iterator<Worker> iterator()
 	{
-		return new AvailableWorkerIterator();
+		return new ReachableWorkerIterator();
 	}
 	
-	private class AvailableWorkerIterator implements Iterator<Worker>
+	private class ReachableWorkerIterator implements Iterator<Worker>
 	{
 		private Worker next;
 		private Iterator<Worker> iter;
 		
-		private AvailableWorkerIterator() 
+		private ReachableWorkerIterator() 
 		{
 			iter = superSet.iterator();
 			windUp();
@@ -135,7 +136,7 @@ public class AvailableWorkerSet implements Set<Worker>
 					return;
 				}
 				next = iter.next();
-			} while (!next.isAvailable(job));
+			} while (!next.isReachable(job));
 		}
 		
 		

@@ -73,17 +73,21 @@ public class SplitStore implements Serializable
 	}
 	
 	/**
-	 * Provide a set of available Workers who have calculated a split. the availability of the workers depends on the
+	 * Provide a set of available Workers who can provide a split. the availability of the workers depends on the
 	 * Job this SplitStore has been created for. 
 	 * 
 	 * @param s The split we want workers for
 	 * @return A set of available workers.
 	 */
-	public Set<Worker> whoHasSplit(Split s)
+	public Set<Worker> canProvideSplit(Split s)
 	{
-		return new AvailableWorkerSet(splitsDone.get(s.getId()), job);
+		return new ReachableWorkerSet(splitsDone.get(s.getId()), job);
 	}
 	
+	public boolean hasSplit(Worker w, Split s) {
+		Set<Worker> who = splitsDone.get(s.getId());
+		return who.contains(w);
+	}
 
 	/**
 	 * Finds next split to work on. It skips splits that have already been calculated by other workers. Workers who
@@ -101,7 +105,6 @@ public class SplitStore implements Serializable
 		int i = 0;
 		Split ret;
 		
-		
 		boolean foundGoodCandidate;
 		
 		do {
@@ -109,7 +112,12 @@ public class SplitStore implements Serializable
 			ret = new Split(workQueuePointer);
 			i++;
 			
-			Set<Worker> workersWhoHaveSplit = whoHasSplit(ret); 
+			Set<Worker> workersWhoHaveSplit = canProvideSplit(ret);
+			/*
+			if (hasSplit(toWhom, ret)) {
+				workersWhoHaveSplit.add(toWhom);
+			}
+			*/
 			foundGoodCandidate = workersWhoHaveSplit.isEmpty() || unreachableWorkers.containsAll(workersWhoHaveSplit);
 			
 		} while (!foundGoodCandidate && i < job.getMapTasks());

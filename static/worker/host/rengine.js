@@ -19,7 +19,8 @@ Rengine.prototype._nextChunk = function(bucketId) {
 
 Rengine.prototype.onChunkFail = function(splitId, bucketId) {
 	this.buffer = [];
-    this._nextChunk(bucketId);
+    //this._nextChunk(bucketId);
+	this.job.suggestChunk(splitId, bucketId);
 };
 
 // events from iengine

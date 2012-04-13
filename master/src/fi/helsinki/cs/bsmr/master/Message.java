@@ -169,48 +169,16 @@ private Message(Map<Object, Object> d, MasterContext master, String remoteAddr)
 			}
 		}
 
-	//remotrAddr
+	//remoteAddr is the detected ip address of the worker, and could later be
+	//filled in the interUrl
 	this.mapStatus = createMapStatus((Map<?, ?>) payload.get(FIELD_MAPSTATUS));
 	this.reduceStatus = createReduceStatus((Map<?, ?>) payload
 			.get(FIELD_REDUCESTATUS));
 
 	this.unreachableWorkers = parseWorkers(payload.get(FIELD_UNREACHABLE),
 			master);
-	}
-
-/**
- * A simple utility function to construct a URL String for a protocol, remote
- * address, port and resource.
- * 
- * @param protocol
- *            The protocol to use (ws)
- * @param remoteAddr
- *            The remote address (123.45.67.89)
- * @param port
- *            The port the endpoint is listening at (12345)
- * @param resource
- *            The "path" in the URL after the address and port
- * @return The constructed url: [protocol]://[remoteAddr]:[port]/[resource]
- */
-public static String constructURL(String protocol, String remoteAddr,
-		Object port, String resource)
-	{
-	if (protocol == null || port == null || resource == null)
-		return null;
-
-	StringBuffer ret = new StringBuffer();
-	ret.append(protocol);
-	ret.append("://");
-	ret.append(remoteAddr);
-	ret.append(":");
-	ret.append(port);
-	if (resource.length() > 0 && resource.charAt(0) != '/')
-		{
-		ret.append('/');
-		}
-	ret.append(resource);
-
-	return ret.toString();
+	//Set<Worker> urlless = null;
+	//this.unreachableWorkers.addAll(urlless);
 	}
 
 @SuppressWarnings({ "unchecked", "rawtypes" })
@@ -453,7 +421,7 @@ public static Message findChunkAtMessage(Bucket b, Split s, Job j,
 	Message ret = new Message(Type.DO, Action.reduceChunk, j);
 	Set<Worker> hasSplit = new HashSet<Worker>();
 
-	for (Worker w : j.getSplitInformation().whoHasSplit(s))
+	for (Worker w : j.getSplitInformation().canProvideSplit(s))
 		{
 
 		if (unreachableWorkers.contains(w) || w.getSocketURL() == null)

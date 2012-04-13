@@ -19,6 +19,7 @@ function Job(description, worker) {
 // events from worker
 
 Job.prototype.onMap = function(splitId) {
+	console.log('mapSplit'+splitId+'('+this.iengine.local.splitcount()+')');
 	this.rengine = undefined;
     var mengineout = this.iengine;
     if (this.combiner) {
@@ -43,6 +44,8 @@ Job.prototype.onReduceChunk = function(splitId, bucketId, someUrls) {
 	if (bucketId != this.rengine.bucketId) {
 		return;
 	}
+	
+	//someUrls may be empty, as we might be the only node with the data
     this.iengine.feed(splitId, bucketId, someUrls, this.rengine);
 };
 
@@ -55,6 +58,7 @@ Job.prototype.setOwnInterUrl = function(url) {
 };
 
 Job.prototype.markUnreachable = function(url) {
+	//the unreachable label is only removed when we switch jobs
     this.unreachable.push(url);
 };
 
@@ -80,7 +84,6 @@ Job.prototype.onMapComplete = function(splitId) {
 
 Job.prototype.suggestChunk = function(splitId, bucketId) {
     var broken = this.unreachable;
-    //this.unreachable = [];
 	this.worker.suggestChunk(splitId, bucketId, broken);
 };
 
@@ -88,6 +91,7 @@ Job.prototype.suggestChunk = function(splitId, bucketId) {
 
 Job.prototype.onBucketComplete = function(bucketId) {
 	this.rengine = undefined;
-    this.worker.bucketComplete(bucketId);
+    var broken = this.unreachable;
+    this.worker.bucketComplete(bucketId, broken);
 };
 

@@ -63,11 +63,11 @@ Worker.prototype.suggestChunk = function(splitId, bucketId, unreachable) {
 		this._sendACK(payload);
 };
 
-Worker.prototype.bucketComplete = function(bucketId) {
+Worker.prototype.bucketComplete = function(bucketId, unreachable) {
 	var payload = {};
 	payload.action = "reduceBucket";
 	payload.reduceStatus = {bucketId: bucketId};
-	payload.unreachable = [];
+	payload.unreachable = unreachable;
 	payload.jobId = this._job.id;
 	this._sendACK(payload);    
 };

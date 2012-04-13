@@ -27,7 +27,8 @@ this.feed = function(splitId, bucketId, _peerUrls, _target)
     peerUrls = _peerUrls;
     peerUrlIndex = 0;
 	
-    requestTimeout = setTimeout(self.onError,1000);
+    var timeoutcb = function() {self.onError('timeout');};
+    requestTimeout = setTimeout(timeoutcb, 1000);
     flashCommunicator.sendRequest(peerUrls[peerUrlIndex], jobId, splitId, bucketId);
     };
 

@@ -199,18 +199,21 @@ function jobtab(id) {
 	return jtools + panel(map + red + code);
 }
 
-function setcell(gridid, cellid, cellstatus) {
+function setcell(gridid, cellid, cellstatus, label) {
 	var id = 'grid-' + gridid + '-cell-' + cellid;
 	var cell = document.getElementById(id);
 	if (cell != null) {
 		cell.setAttribute('title', cellid + ', ' + cellstatus);
 		cell.setAttribute('class', cellstatus);
+		cell.innerHTML = label;
 	}
 }
 
 function setcellsbynodelists(gridid, nodelists, cellstatus) {
 	for (var cellid in nodelists) {
-		setcell(gridid, cellid, cellstatus);
+		var nodes = nodelists[cellid];
+		var label = nodes.length;
+		setcell(gridid, cellid, cellstatus, label);
 	}
 }
 
@@ -407,8 +410,8 @@ function updaterfoo() {
 }
 
 function joblauncher() {
-	var defaultm = 100;
-	var defaultr = 100;
+	var defaultm = 1000;
+	var defaultr = 1000;
 	var mgrid = creategrid('mfoo', defaultm);
 	var rgrid = creategrid('rfoo', defaultr);
 	var title = '<h3><em>new job</em></h3>';

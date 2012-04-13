@@ -1,24 +1,27 @@
-function Localstore() {
+function Localstore(chooseBucket) {
+    this.chooseBucket = chooseBucket;
     this.local = {};
     this.tmp = {};
 }
 
 Localstore.prototype._write = function(splitId, bucketId, content) {
     if(!this.tmp[splitId]) {
-        this.tmp[splitId] = {};
+        this.tmp[splitId] = new Chunkstore();
     }
-    if(!this.tmp[splitId][bucketId]) {
-        this.tmp[splitId][bucketId] = [];
-    }
-    this.tmp[splitId][bucketId].push(content);
+    this.tmp[splitId].write(bucketId, content, true);
 };
 
 Localstore.prototype._commit = function(splitId, bucketId) {
-    if(!this.local[splitId]) {
-        this.local[splitId] = {};
-    }
-    this.local[splitId][bucketId] = this.tmp[splitId][bucketId];
-    this.tmp[splitId][bucketId] = undefined;
+    this.local[splitId] = this.tmp[splitId];
+    this.tmp[splitId] = undefined;
+};
+
+Localstore.prototype._getChunk = function(splitId, bucketId) {
+	var chunks = this.local[splitId];
+	if (typeof(chunks) == typeof(undefined)) {
+		return null;
+	}
+	return chunks._getChunk(bucketId);
 };
 
 Localstore.prototype.write = function(splitId, bucketId, content, more) {
@@ -30,22 +33,18 @@ Localstore.prototype.write = function(splitId, bucketId, content, more) {
 
 Localstore.prototype.canhaz = function(splitId, bucketId) {
 	var chunks = this.local[splitId];
-	if (typeof(chunks) == typeof(undefined)) {
-		return false;
+	return typeof(chunks) != typeof(undefined);
+};
+
+Localstore.prototype.splitcount = function() {
+	var count = 0;
+	for(undefined in this.local) {
+		count += 1;			
 	}
-	var chunk = chunks[bucketId];
-	if (typeof(chunk) == typeof(undefined)) {
-		return false;
-	}
-	return true;
+	return count;
 };
 
 Localstore.prototype.feed = function(splitId, bucketId, target) {
     var chunks = this.local[splitId];
-    var chunk = chunks[bucketId];
-    for (var i in chunk) {
-        var frame = chunk[i];
-        target.write(splitId, bucketId, frame, true);
-    }
-    target.write(splitId, bucketId, [], false);
+    chunks.feed(splitId, bucketId, target);
 };

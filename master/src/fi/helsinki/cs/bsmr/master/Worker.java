@@ -264,6 +264,12 @@ public class Worker implements WebSocket, WebSocket.OnTextMessage
 		return ( (TimeContext.now() - lastHearbeat)    < job.getWorkerHeartbeatTimeout());
 	}
 	
+	public boolean isReachable(Job job)
+	{
+		if (getSocketURL() == null) {return false;}
+		return isAvailable(job);
+	}
+	
 	/**
 	 * Whether this worker has acknowledged work within the acknowledgment timeout specified for
 	 * this job. Note that the acknowledgment timer is updated only for messages acknowledging work.

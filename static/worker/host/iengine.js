@@ -2,7 +2,7 @@
 function Iengine(R, job, inter, chooseBucket) {
     this.R = R;
     this.job = job;
-    this.local = new Localstore();
+    this.local = new Localstore(chooseBucket);
     this.inter = inter(job, this.local);
     this.chooseBucket = chooseBucket;
 }
@@ -26,7 +26,13 @@ Iengine.prototype.feed = function(splitId, bucketId, interUrls, target) {
     if (this.local.canhaz(splitId, bucketId)) {
         this.local.feed(splitId, bucketId, target);
     } else {
-        this.inter.feed(splitId, bucketId, interUrls, target);
+    	if(interUrls.length > 0) {
+    		this.inter.feed(splitId, bucketId, interUrls, target);
+    	} else {
+    		console.log('master expects us to reduce stuff we can not reach');
+    		console.log(this.local.items() + " local chunks available");
+    		this.job.onChunkFail(splitId, bucketId);
+    	}
     }
 };
 

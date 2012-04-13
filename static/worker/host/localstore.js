@@ -6,7 +6,7 @@ function Localstore(chooseBucket, R) {
 }
 
 Localstore.prototype._commit = function(splitId) {
-	var existing = this._getmapresults(splitId);
+	var existing = this._getmapresult(splitId);
 	if (existing != null) {
 		console.error('redundant work done for split ' + splitId);
 	}

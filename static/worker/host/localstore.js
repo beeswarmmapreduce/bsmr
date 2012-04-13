@@ -6,6 +6,10 @@ function Localstore(chooseBucket, R) {
 }
 
 Localstore.prototype._commit = function(splitId) {
+	var existing = this._getmapresults(splitId);
+	if (existing != null) {
+		console.error('redundant work done for split ' + splitId);
+	}
     this.mapresults[splitId] = this.tmpresults[splitId];
     this.tmpresults[splitId] = undefined;
 };
@@ -21,7 +25,7 @@ Localstore.prototype._getmapresult = function(splitId) {
 Localstore.prototype._getbuffer = function(splitId) {
 	var buffer = this.buffers[splitId];
 	if (typeof(buffer) == typeof(undefined)) {
-		buffer = new Mapresult();
+		buffer = new Mapresult(this.R);
 	    this.buffers[splitId] = buffer;
 	}
 	return buffer;

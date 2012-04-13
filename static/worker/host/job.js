@@ -19,7 +19,6 @@ function Job(description, worker) {
 // events from worker
 
 Job.prototype.onMap = function(splitId) {
-	console.log('mapSplit'+splitId+'('+this.iengine.local.splitcount()+')');
 	this.rengine = undefined;
     var mengineout = this.iengine;
     if (this.combiner) {

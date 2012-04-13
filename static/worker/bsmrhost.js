@@ -30,6 +30,7 @@ var library = ["lib/boringbucket.js",
 
 var host = ["host/chunk.js",
             "host/mapresult.js",
+            "host/mapresults.js",
             "host/localstore.js",
             "host/chunkregistrar.js",
             "host/rcore.js",

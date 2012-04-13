@@ -9,7 +9,7 @@ function Iengine(R, job, inter, chooseBucket) {
 
 Iengine.prototype.write = function(splitId, pairs, more) {
     this.local.write(splitId, pairs, more);
-    if (! more) {
+    if (!more || typeof(more) == typeof(undefined)) {
         this.job.onMapComplete(splitId);
     }
 };

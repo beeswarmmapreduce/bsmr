@@ -528,7 +528,7 @@ function jobarea() {
 	var nuke = '<input type="button" value="nuke all" onclick="nukejobs();" />';
 	var clear = '<input type="button" value="clear old" onclick="clearjobs();" />';
 	var aclear = '<input id="autoc" type="checkbox" /> autoclear';
-	var afollow = '<input id="autof" type="checkbox" /> autofollow';
+	var afollow = '<input id="autof" type="checkbox" checked="checked" /> autofollow';
 	var controls = nuke + clear + aclear + afollow;
 	var toolb = tools(title, controls);
 	var tabview = '<table><tr id="heads"></tr></table><div id="tabholder"></div>';

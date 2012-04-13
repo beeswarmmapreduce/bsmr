@@ -1,61 +1,43 @@
 function Localstore(chooseBucket, R) {
     this.chooseBucket = chooseBucket;
     this.R = R;
-    this.mapresults = {};
-    this.buffers = {};
+    this.results = new Mapresults();
+    this.temporary = new Mapresults();
 }
 
 Localstore.prototype._commit = function(splitId) {
-	var existing = this._getmapresult(splitId);
-	if (existing != null) {
-		console.error('redundant work done for split ' + splitId);
+	if (!this.temporary.canhaz(splitId)) {
+		console.error('commit failed, missing split-' + splitId);
 	}
-    this.mapresults[splitId] = this.tmpresults[splitId];
-    this.tmpresults[splitId] = undefined;
-};
-
-Localstore.prototype._getmapresult = function(splitId) {
-	var mapresult = this.mapresults[splitId];
-	if (typeof(mapresult) == typeof(undefined)) {
-		return null;
+	if (this.results.canhaz(splitId)) {
+		console.error('redundant work done for split-' + splitId);
 	}
-	return mapresult;
-};
-
-Localstore.prototype._getbuffer = function(splitId) {
-	var buffer = this.buffers[splitId];
-	if (typeof(buffer) == typeof(undefined)) {
-		buffer = new Mapresult(this.chooseBucket, this.R);
-	    this.buffers[splitId] = buffer;
-	}
-	return buffer;
+	var result = this.temporary.get(splitId);
+    this.results.set(splitId, result);
+    this.temporary.set(splitId, undefined);
 };
 
 Localstore.prototype.write = function(splitId, pairs, more) {
-	var buffer = this._getbuffer(splitId);
+	if (!this.temporary.canhaz(splitId)) {
+		var m = new Mapresult(this.chooseBucket, this.R);
+        this.temporary.set(splitId, m);
+	}
+	var buffer = this.temporary.get(splitId);
     buffer.write(splitId, pairs, more);
-    if (!more) {
+    if (!more || typeof(more) == typeof(undefined)) {
         this._commit(splitId);
     }
 };
 
 Localstore.prototype.canhaz = function(splitId, bucketId) {
-	var mapresult = this._getmapresult(splitId);
-	if (mapresult == null) {
-		return false;
-	}
-	return true;
+	return this.results.canhaz(splitId);
 };
 
 Localstore.prototype.splitcount = function() {
-	var count = 0;
-	for(undefined in this.mapresults) {
-		count += 1;			
-	}
-	return count;
+	return this.results.splitcount();
 };
 
 Localstore.prototype.feed = function(splitId, bucketId, target) {
-	var mapresult = this._getmapresult(splitId);
+	var mapresult = this.results.get(splitId);
     mapresult.feed(splitId, bucketId, target);
 };

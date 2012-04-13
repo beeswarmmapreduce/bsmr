@@ -31,14 +31,12 @@ Job.prototype.onMap = function(splitId) {
 };
 
 Job.prototype.onReduceBucket = function(bucketId) {
-	console.log('rb-' + bucketId);
 	this.cengine = undefined;
 	this.mengine = undefined;
 	this.rengine = new Rengine(this.reducer, this.output, this, bucketId);
 };
 
 Job.prototype.onReduceChunk = function(splitId, bucketId, someUrls) {
-	console.log('rc-' + splitId + '-' + bucketId);
 	//filter messages related to obsolete reduce operations
 	if (typeof(this.rengine) == typeof(undefined)) {
 		return;

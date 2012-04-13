@@ -112,13 +112,12 @@ public class SplitStore implements Serializable
 			ret = new Split(workQueuePointer);
 			i++;
 			
-			Set<Worker> workersWhoHaveSplit = canProvideSplit(ret);
-			/*
 			if (hasSplit(toWhom, ret)) {
-				workersWhoHaveSplit.add(toWhom);
+				foundGoodCandidate = false;
+			} else {
+				Set<Worker> workersWhoHaveSplit = canProvideSplit(ret);
+				foundGoodCandidate = workersWhoHaveSplit.isEmpty() || unreachableWorkers.containsAll(workersWhoHaveSplit);
 			}
-			*/
-			foundGoodCandidate = workersWhoHaveSplit.isEmpty() || unreachableWorkers.containsAll(workersWhoHaveSplit);
 			
 		} while (!foundGoodCandidate && i < job.getMapTasks());
 	

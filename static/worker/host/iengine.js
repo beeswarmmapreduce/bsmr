@@ -8,16 +8,8 @@ function Iengine(R, job, inter, chooseBucket) {
 }
 
 Iengine.prototype.write = function(splitId, pairs, more) {
-    for (i in pairs) {
-        var pair = pairs[i];
-        var key = pair[0];
-        var bucketId = this.chooseBucket(key, this.R);
-        this.local.write(splitId, bucketId, [pair], true);
-    }
+    this.local.write(splitId, pairs, more);
     if (! more) {
-        for (var bucketId = 0; bucketId < this.R; bucketId += 1) {
-            this.local.write(splitId, bucketId, [], false);
-        }
         this.job.onMapComplete(splitId);
     }
 };

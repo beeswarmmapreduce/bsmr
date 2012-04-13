@@ -31,7 +31,7 @@ Localstore.prototype._getbuffer = function(splitId) {
 	return buffer;
 };
 
-Iengine.prototype.write = function(splitId, pairs, more) {
+Localstore.prototype.write = function(splitId, pairs, more) {
 	var buffer = this._getbuffer(splitId);
     buffer.write(splitId, pairs, more);
     if (!more) {

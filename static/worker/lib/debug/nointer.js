@@ -15,7 +15,7 @@ function noInter() {
         job.onChunkFail(splitId, bucketId);
     };
     
-    var factory = function(job, localStore) {
+    var factory = function(job) {
     	return new Inter(job);
     };
     

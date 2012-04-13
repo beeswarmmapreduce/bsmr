@@ -1,4 +1,4 @@
-function FlashInter(job, localStorage)
+function FlashInter(job)
 {
 var self = this;	
 
@@ -10,6 +10,7 @@ var peerUrlIndex = null;
 var currentSplitId = null;
 var currentBucketId = null;
 var jobId = job.id;
+var localStorage = job.local;
 
 var flashCommunicator= new FlashCommunicator();
 
@@ -129,9 +130,9 @@ flashCommunicator.addNotFoundListener(this.onNotFound);
 function flashInter()
 	{
 	//Factory method
-	var factory = function(job, localStorage)
+	var factory = function(job)
 		{
-		return new FlashInter(job, localStorage);
+		return new FlashInter(job);
 		};
 	return factory;
 	}

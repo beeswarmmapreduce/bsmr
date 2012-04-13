@@ -25,7 +25,7 @@ Localstore.prototype._getmapresult = function(splitId) {
 Localstore.prototype._getbuffer = function(splitId) {
 	var buffer = this.buffers[splitId];
 	if (typeof(buffer) == typeof(undefined)) {
-		buffer = new Mapresult(this.R);
+		buffer = new Mapresult(this.chooseBucket, this.R);
 	    this.buffers[splitId] = buffer;
 	}
 	return buffer;

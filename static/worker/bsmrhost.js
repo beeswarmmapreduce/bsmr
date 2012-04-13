@@ -28,7 +28,8 @@ var library = ["lib/boringbucket.js",
                "lib/petrifs/petrifsout.js",
                "lib/petrifs/wordinput.js"];
 
-var host = ["host/chunkstore.js",
+var host = ["host/chunk.js",
+            "host/mapresult.js",
             "host/localstore.js",
             "host/chunkregistrar.js",
             "host/rcore.js",

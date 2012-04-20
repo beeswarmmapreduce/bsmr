@@ -1,44 +1,14 @@
-How to get a multi-firefox setup to use the cluster.
 
-List of cluster computers:
- http://www.cs.helsinki.fi/u/jjaakkol/hpc-report.txt
+To run the system you need to
 
-Always check that list and find a free one
+1) install master dependencies with detdeps.sh
+The Jetty versions are constantly changing so you might need to change the version number, and fix a few things here or there
 
-Dependencies: 
-^^^^^^^^^^^^^
- a. You must have X11 running on your client. 
-    Use a CS department Linux box if you get issues.
+2) use compile-server script to compile the server
 
- b. Install the Linux version of FireFox 4 beta in your FS home dir.
-    This README assumes it's available at ~/firefox/
+3) navigate to http://127.0.0.1:8080/ (where 127.0.0.1 is the machine ip address) for a greeter
 
- c. Have a checkout of bsmr in your FS home dir.
-    This README assumes it's available at ~/bsmr
+to start nodes on a headless server you may use...
 
-    If this checkout is not done by eclipse, use the compile-server.sh script
-    to compile the classes.
+xvfb-run google-chrome "http://127.0.0.1:8080/worker/sandbox.html?master=127.0.0.1:8080"
 
-Install procedure:
-^^^^^^^^^^^^^^^^^^
-1. Log on to a cluster (any one of them is good):
-    ssh -X ukko[XXX].hpc.cs.helsinki.fi
-
-2. Start the profile manager:
-    ~/firefox/firefox -no-remote -ProfileManager
-
-3. Create N profiles called BSMR#t where t is 1..N
-
-4. Install the BS extension on each profile (replace N)
-    ~/bsmr/bsmr-browsers.sh ~/firefox/firefox https://addons.mozilla.org/en-US/firefox/addon/242722/ N
-  (the script finishes when all browsers are closed)
-
-How to use:
-^^^^^^^^^^^
-1. Use screen or log in twice to the server (remember ssh -X). 
-
-VTa: cd ~/bsmr/ && ./server.sh
-
-VTb: ./bsmr-browsers.sh ~/firefox/firefox ~/bsmr-test/worker/index.html 2
-   (use the last parameter to say how many clients to start)
-  

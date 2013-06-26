@@ -24,6 +24,7 @@ var library = ["lib/boringbucket.js",
                "lib/generator.js",
                "lib/debug/consoleout.js",
                "lib/debug/debuginput.js",
+               "lib/debug/sesameinput.js",
                "lib/debug/nointer.js",
                "lib/petrifs/petrifsout.js",
                "lib/petrifs/wordinput.js"];

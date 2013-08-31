@@ -24,7 +24,16 @@
     	<param-name>loadPath</param-name>
     	<param-value>static/data/</param-value>
     </init-param>
-  </servlet>	
+  </servlet>
+
+  <servlet>
+    <servlet-name>Db</servlet-name>
+    <servlet-class>fi.helsinki.cs.bsmr.db.DbServlet</servlet-class>
+    <init-param>
+    	<param-name>dbDirectory</param-name>
+    	<param-value>static/data/</param-value>
+    </init-param>
+  </servlet>
 
   <servlet-mapping>
     <servlet-name>Master</servlet-name>
@@ -34,6 +43,11 @@
   <servlet-mapping>
     <servlet-name>Fs</servlet-name>
     <url-pattern>/fs/filesystem</url-pattern>
+  </servlet-mapping>
+
+  <servlet-mapping>
+    <servlet-name>Db</servlet-name>
+    <url-pattern>/db/db</url-pattern>
   </servlet-mapping>
   
 </web-app>

@@ -1,9 +1,7 @@
 #!/bin/bash
 
-CP="master/bin"
-for FILE in $(find master/jetty-*/lib/*) lib/*.jar; do
-	CP=$CP":"$FILE
-done
+cd $(dirname $0)/master
 
-java -classpath $CP StartJetty
+mvn install
+mvn exec:java -Dexec.classpathScope="test" -Dexec.mainClass="StartJetty"
 

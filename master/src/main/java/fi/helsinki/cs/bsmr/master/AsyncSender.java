@@ -3,7 +3,7 @@ package fi.helsinki.cs.bsmr.master;
 /**
  * The MIT License
  * 
- * Copyright (c) 2010   Department of Computer Science, University of Helsinki
+ * Copyright (c) 2010-2014   Department of Computer Science, University of Helsinki
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -256,7 +256,7 @@ public class AsyncSender implements Runnable
 			}
 			
 			if (tfe.out != null) {
-				tfe.out.close();
+				tfe.out.disconnect();
 			}
 			throw new InterruptedException("Stopping AsyncSender");
 		}

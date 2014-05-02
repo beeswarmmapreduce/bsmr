@@ -22,7 +22,7 @@
     <servlet-class>fi.helsinki.cs.bsmr.fs.FsServlet</servlet-class>
     <init-param>
     	<param-name>loadPath</param-name>
-    	<param-value>static/data/</param-value>
+    	<param-value>/static/data/</param-value>
     </init-param>
   </servlet>
 

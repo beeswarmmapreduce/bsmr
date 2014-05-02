@@ -106,6 +106,7 @@ public void init(ServletConfig config) throws ServletException
 		}
 		
 	
+	loadPath = config.getServletContext().getRealPath(".")+"/../../../../"+loadPath;
 	
 	logger.info("loadPath: '"+loadPath+"'");
 		

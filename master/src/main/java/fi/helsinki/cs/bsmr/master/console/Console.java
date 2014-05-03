@@ -3,7 +3,7 @@ package fi.helsinki.cs.bsmr.master.console;
 /**
  * The MIT License
  * 
- * Copyright (c) 2010   Department of Computer Science, University of Helsinki
+ * Copyright (c) 2010-2014   Department of Computer Science, University of Helsinki
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -63,7 +63,7 @@ public Console(MasterContext master)
 
 public void disconnect()
 	{
-	out.close();
+	out.disconnect();
 	}
 
 @Override

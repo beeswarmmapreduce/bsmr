@@ -1,7 +1,7 @@
 /**
  * The MIT License
  * 
- * Copyright (c) 2010   Department of Computer Science, University of Helsinki
+ * Copyright (c) 2010-2014   Department of Computer Science, University of Helsinki
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -70,8 +70,8 @@ public class StartJetty
 	private static WebAppContext createMasterWebApp() 
 	{
 		WebAppContext context = new WebAppContext();
-		context.setResourceBase("master/webapp");
-		context.setDescriptor("master/webapp/WEB-INF/web.xml");
+		context.setResourceBase("src/main/webapp");
+		context.setDescriptor("src/main/webapp/WEB-INF/web.xml");
 		context.setContextPath("/");
 		context.setParentLoaderPriority(true);
 		return context;
@@ -80,7 +80,7 @@ public class StartJetty
 	private static WebAppContext createStaticWebApp()
 	{
 		WebAppContext context = new WebAppContext();
-		context.setResourceBase("static");
+		context.setResourceBase("../static");
 		context.setContextPath("/static");
 		return context;
 	}

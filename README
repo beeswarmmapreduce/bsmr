@@ -1,14 +1,11 @@
 
-To run the system you need to
+To run the system you need Java 6, maven. Then:
 
-1) install master dependencies with detdeps.sh
-The Jetty versions are constantly changing so you might need to change the version number, and fix a few things here or there
+1) Compile and run test server ./server.sh
 
-2) use compile-server script to compile the server
-
-3) navigate to http://127.0.0.1:8080/ (where 127.0.0.1 is the machine ip address) for a greeter
+2) navigate to http://localhost:8080/ (where 127.0.0.1 is the machine ip address) for a greeter
 
 to start nodes on a headless server you may use...
 
-xvfb-run google-chrome "http://127.0.0.1:8080/worker/sandbox.html?master=127.0.0.1:8080"
+xvfb-run google-chrome "http://localhost:8080/static/exampleapp/app.html"
 

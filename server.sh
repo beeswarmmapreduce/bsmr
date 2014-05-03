@@ -2,6 +2,6 @@
 
 cd $(dirname $0)/master
 
-mvn install
+mvn install && \
 mvn exec:java -Dexec.classpathScope="test" -Dexec.mainClass="StartJetty"
 

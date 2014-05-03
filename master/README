@@ -1,30 +1,35 @@
-== Dependencies ==
+== Quick start ==
 
-You need Jetty (developed with version 8.0.0.M2, and later ported to use
-8.0.1.v20110908). To retrieve & untar, you can try getdeps.sh. Otherwise
-download it manually and make sure the jetty is available as
-master/jetty-distribution-8.0.1.v20110908
-
-Note! The Eclipse project file refers to this directory and the libraries 
-contain the version number of Eclipse. So if you use a different version of 
-jetty, you need to configure the Eclipse build path (right click the project,
-Build Path->Configure Build Path, libraries tab).
+Run ./server.sh in the project root directory to build and start the
+BSMR master server.
 
 == Compiling ==
 
-In Eclipse, it's automatic. Otherwise, compile the classes using all libraries
-in jetty-../lib in the class path.
+From the command line in the master/ directory: mvn install
 
-You can also use the compile-server.sh in the project root, or the ant script.
+In Eclipse, it's automatic. You should make sure you have the m2e plugin
+installed though. It integrates maven with eclipse and makes your life
+much easier.
+
+You can also use the server.sh in the project root. It runs mvn install
+and then runs the test server.
+
+== Dependencies ==
+
+Maven takes care of downloading the appropriate dependencies.
 
 == Javadoc ==
 
-To get spiffy documentation of the BSMR master classes, run "ant" at the project
-root. That will create HTML javadoc in the master/doc directory.
+To get spiffy documentation of the BSMR master classes, run "mvn install".
+That will create HTML javadoc in the master/target/apidocs directory.
 
 == Running ==
 
-In Eclipse, right click the StartJetty class in master/src, then Run As -> Java
+From the command line, you can use ./serve.rsh in the project root directory.
+
+In Eclipse, right click the StartJetty class in master/src/test/java, then 
+Run As -> Java
+
 Application After you've ran it once, you can find it in the "play" button 
 located on the Eclipse toolbar.
 

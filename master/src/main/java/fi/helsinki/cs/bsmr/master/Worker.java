@@ -95,7 +95,7 @@ public class Worker implements WebSocket, WebSocket.OnTextMessage
 	{
 		TimeContext.markTime();
 		
-		logger.fine("onConnect()");
+		logger.fine("onOpen()");
 		this.out = out;
 
 		this.lastHearbeat = this.lastProgress = TimeContext.now();

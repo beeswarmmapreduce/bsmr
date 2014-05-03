@@ -142,7 +142,7 @@ public class ReachableWorkerSet implements Set<Worker>
 		
 	}
 
-	/** Unimplemented Set<T> methods **/
+	// Unimplemented Set methods
 
 	@Override
 	public boolean add(Worker arg0) 

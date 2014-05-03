@@ -69,13 +69,13 @@ import javax.servlet.http.HttpServletResponse;
  *  
  *  Example URLs: 
  *  
- *  http://localhost:8080/fs/filesystem?operation=read&filename=alphabet.txt&begin=2&length=3
+ *  http://localhost:8080/fs/filesystem?operation=read&amp;filename=alphabet.txt&amp;begin=2&amp;length=3
  *
- *  http://localhost:8080/fs/filesystem?operation=write&filename=alphabet.txt&begin=2&length=3
+ *  http://localhost:8080/fs/filesystem?operation=write&amp;filename=alphabet.txt&amp;begin=2&amp;length=3
  * 
- *  http://localhost:8080/fs/filesystem?operation=sizeof&filename=alphabet.txt
+ *  http://localhost:8080/fs/filesystem?operation=sizeof&amp;filename=alphabet.txt
  *  
- *  http://localhost:8080/fs/filesystem?operation=ls&filename=
+ *  http://localhost:8080/fs/filesystem?operation=ls&amp;filename=
  * 
  * @author pzsavola
  * @see FsServlet

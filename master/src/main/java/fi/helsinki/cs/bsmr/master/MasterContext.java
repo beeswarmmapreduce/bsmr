@@ -64,21 +64,21 @@ public interface MasterContext
 	// Worker functionality
 
 	/**
-	 * Add a new worker. This should be called only from the worker onConnect callback.
+	 * Add a new worker. This should be called only from the worker onOpen callback.
 	 * 
 	 * @param worker The worker to add
 	 * @throws WorkerInIllegalStateException The exception is thrown if the worker was already registered. 
-	 * @see Worker#onConnect
+	 * @see Worker#onOpen
 	 */
 	public void   addWorker(Worker worker) throws WorkerInIllegalStateException;
 	
 	/**
 	 * Remove all information relating to this worker. This should be called only from the
-	 * worker onDisconnect callback.
+	 * worker onClose callback.
 	 * 
 	 * @param worker The worker to remove
 	 * @throws WorkerInIllegalStateException The exception is thrown if the worker is not registered.
-	 * @see Worker#onDisconnect()
+	 * @see Worker#onClose(int, String)
 	 */
 	public void   removeWorker(Worker worker) throws WorkerInIllegalStateException;
 	
@@ -117,7 +117,7 @@ public interface MasterContext
 	
 	/**
 	 * Create a new job. The Master is responsible for creating a unique id for the job.
-	 * @see Job#Job(int, int, int, int, int, Object, Object)
+	 * @see Job#Job(int, int, int, int, int, Object)
 	 * @return the new Job.
 	 */
 	public Job     createJob(int maptasks, int reducetasks, int heartbeatTimeout, int acknowledgeTimeout, Object code);
